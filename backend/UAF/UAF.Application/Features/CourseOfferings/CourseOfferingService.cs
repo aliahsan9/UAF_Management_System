@@ -25,10 +25,10 @@ public sealed class CourseOfferingService
         if (status.HasValue && !Enum.IsDefined(status.Value))
             throw new ArgumentOutOfRangeException(nameof(status));
         var offerings = await _repository.GetOfferingsAsync(sessionId, courseId, status, ct);
-        var result = new List<CourseOfferingResponse>(offerings.Count);
-        foreach (var offering in offerings)
-            result.Add(await MapAsync(offering, ct));
-        return result;
+        var counts = await _repository.GetActiveEnrollmentCountsAsync(offerings.Select(x => x.Id).ToArray(), ct);
+        return offerings.Select(offering => new CourseOfferingResponse(
+            offering.Id, offering.CourseId, offering.AcademicSessionId, offering.Section, offering.Capacity,
+            offering.InstructorEmployeeId, offering.Status, counts.GetValueOrDefault(offering.Id))).ToArray();
     }
 
     public async Task<CourseOfferingResponse> GetOfferingAsync(Guid id, CancellationToken ct = default) =>
