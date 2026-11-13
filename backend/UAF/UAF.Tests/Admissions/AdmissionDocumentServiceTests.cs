@@ -44,6 +44,41 @@ public sealed class AdmissionDocumentServiceTests
     }
 
     [Fact]
+    public async Task ApplicantCannotUploadAfterApplicationIsSubmitted()
+    {
+        var ownerId = Guid.NewGuid();
+        var app = new AdmissionApplication("UAF-TEST-006", "Applicant", "applicant@example.com",
+            Guid.NewGuid(), new DateOnly(2026, 11, 13), ownerUserId: ownerId);
+        app.Submit();
+        var storage = new FakeStorage();
+        var service = new AdmissionDocumentService(new FakeRepository(app), storage, new FakeUnitOfWork());
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.UploadForApplicantAsync(ownerId, app.Id, AdmissionDocumentType.IdentityDocument,
+                "identity.pdf", "application/pdf", new MemoryStream("%PDF-1.7"u8.ToArray())));
+
+        Assert.Equal(0, storage.SavedFiles);
+    }
+
+    [Fact]
+    public async Task UploadRejectsFilesLargerThanTenMegabytes()
+    {
+        var ownerId = Guid.NewGuid();
+        var app = new AdmissionApplication("UAF-TEST-007", "Applicant", "applicant@example.com",
+            Guid.NewGuid(), new DateOnly(2026, 11, 13), ownerUserId: ownerId);
+        var storage = new FakeStorage();
+        var bytes = new byte[AdmissionDocumentService.MaximumFileSizeBytes + 1];
+        "%PDF-"u8.CopyTo(bytes);
+        var service = new AdmissionDocumentService(new FakeRepository(app), storage, new FakeUnitOfWork());
+
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            service.UploadForApplicantAsync(ownerId, app.Id, AdmissionDocumentType.AcademicTranscript,
+                "transcript.pdf", "application/pdf", new MemoryStream(bytes)));
+
+        Assert.Equal(0, storage.SavedFiles);
+    }
+
+    [Fact]
     public async Task UploadRejectsFileWithMismatchedSignature()
     {
         var ownerId = Guid.NewGuid();
