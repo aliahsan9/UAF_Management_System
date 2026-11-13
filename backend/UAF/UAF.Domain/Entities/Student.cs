@@ -51,6 +51,16 @@ public sealed class Student : AuditableEntity
 
     public StudentStatus Status { get; private set; }
 
+    public void ChangeAcademicProgram(Guid academicProgramId)
+    {
+        if (academicProgramId == Guid.Empty)
+            throw new ArgumentException("An academic program must be specified.", nameof(academicProgramId));
+        if (Status is StudentStatus.Graduated or StudentStatus.Withdrawn)
+            throw new InvalidOperationException("A graduated or withdrawn student cannot change academic program.");
+        AcademicProgramId = academicProgramId;
+        MarkUpdated();
+    }
+
     public void UpdateContactDetails(string email, string? phoneNumber)
     {
         SetEmail(email);
