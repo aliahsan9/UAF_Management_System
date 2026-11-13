@@ -20,6 +20,9 @@ public sealed class CourseEnrollment : AuditableEntity
         if (courseOfferingId == Guid.Empty)
             throw new ArgumentException("A course offering must be specified.", nameof(courseOfferingId));
 
+        if (enrolledOn == default)
+            throw new ArgumentOutOfRangeException(nameof(enrolledOn), "An enrollment date is required.");
+
         StudentId = studentId;
         CourseOfferingId = courseOfferingId;
         EnrolledOn = enrolledOn;
