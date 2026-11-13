@@ -47,7 +47,7 @@ public sealed class AttendanceService
     public async Task<AttendanceSessionResponse> GetAsync(Guid sessionId, Guid actorId, bool privileged, CancellationToken ct, bool departmentAdmin = false)
     {
         var session = await _repository.GetSessionAsync(sessionId, ct) ?? throw new KeyNotFoundException("Attendance session was not found.");
-        if (!await _repository.CanManageOfferingAsync(session.CourseOfferingId, actorId, privileged, ct, departmentAdmin))
+        if (!await _repository.CanManageOfferingAsync(session.CourseOfferingId, actorId, privileged, ct, departmentAdmin, allowClosed: true))
             throw new UnauthorizedAccessException("You are not authorized to view attendance for this course offering.");
         var marks = await _repository.GetMarksAsync(sessionId, ct);
         return new(session.Id, session.CourseOfferingId, session.AttendanceDate, session.Topic, session.Status,
