@@ -8,14 +8,13 @@ public sealed class AcademicSessionConfiguration : IEntityTypeConfiguration<Acad
 {
     public void Configure(EntityTypeBuilder<AcademicSession> builder)
     {
-        builder.ToTable("AcademicSessions");
+        builder.ToTable("AcademicSessions", table => table.HasCheckConstraint(
+            "CK_AcademicSessions_DateRange", "[EndDate] > [StartDate]"));
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Name).HasMaxLength(100).IsRequired();
         builder.Property(x => x.Code).HasMaxLength(30).IsRequired();
         builder.Property(x => x.Status).HasConversion<int>().IsRequired();
         builder.HasIndex(x => x.Code).IsUnique();
-        builder.ToTable(table => table.HasCheckConstraint(
-            "CK_AcademicSessions_DateRange", "[EndDate] > [StartDate]"));
     }
 }
 
@@ -23,7 +22,8 @@ public sealed class CourseConfiguration : IEntityTypeConfiguration<Course>
 {
     public void Configure(EntityTypeBuilder<Course> builder)
     {
-        builder.ToTable("Courses");
+        builder.ToTable("Courses", table => table.HasCheckConstraint(
+            "CK_Courses_CreditHours", "[CreditHours] > 0 AND [CreditHours] <= 10"));
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Code).HasMaxLength(30).IsRequired();
         builder.Property(x => x.Title).HasMaxLength(180).IsRequired();
@@ -32,8 +32,6 @@ public sealed class CourseConfiguration : IEntityTypeConfiguration<Course>
         builder.HasIndex(x => new { x.DepartmentId, x.Code }).IsUnique();
         builder.HasOne<Department>().WithMany().HasForeignKey(x => x.DepartmentId)
             .OnDelete(DeleteBehavior.Restrict);
-        builder.ToTable(table => table.HasCheckConstraint(
-            "CK_Courses_CreditHours", "[CreditHours] > 0 AND [CreditHours] <= 10"));
     }
 
 }
