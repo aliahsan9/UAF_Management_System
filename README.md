@@ -488,3 +488,11 @@ The backend now includes an initial Finance module:
 All routes currently require FinanceOfficer or SuperAdmin. Student self-service fee-account access, payment gateway reconciliation, bank integration, scheduled late-fee calculation, reversal/refund workflows, and immutable payment audit events remain future hardening work. Late fees are currently supplied explicitly by an authorized Finance Officer; do not assume an official UAF late-fee policy.
 
 The module has domain tests authored. No .NET build, test run, migration generation, or database update has been performed in this environment. Create and apply an EF Core migration after reviewing the model and running the full test suite locally.
+
+
+Run the fee payment concurrency integration test against a dedicated SQL Server instance (the test creates and drops a temporary database; the account needs permission to create and drop databases):
+
+```powershell
+$env:UAF_TEST_SQLSERVER_CONNECTION_STRING = "Server=localhost;Database=master;Trusted_Connection=True;TrustServerCertificate=True;"
+dotnet test backend/UAF/UAF.Tests/UAF.Tests.csproj --filter "Category=SqlServerIntegration"
+```
