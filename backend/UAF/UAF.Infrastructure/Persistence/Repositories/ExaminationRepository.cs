@@ -91,6 +91,7 @@ internal sealed class ExaminationRepository : IExaminationRepository
             throw new InvalidOperationException("Results can only be submitted for a published course offering.");
         var enrolledIds = await _db.CourseEnrollments.Where(x => x.CourseOfferingId == exam.CourseOfferingId && x.Status == EnrollmentStatus.Enrolled)
             .Select(x => x.StudentId).ToArrayAsync(ct);
+        if (enrolledIds.Length == 0) throw new InvalidOperationException("An examination cannot be submitted without enrolled students.");
         var markedIds = await _db.ExaminationResults.Where(x => x.ExaminationId == examinationId).Select(x => x.StudentId).ToArrayAsync(ct);
         if (enrolledIds.Except(markedIds).Any()) throw new InvalidOperationException("Every currently enrolled student must have a marks record before submission. Record absences as zero marks.");
         exam.Submit(actorId, DateTimeOffset.UtcNow);
