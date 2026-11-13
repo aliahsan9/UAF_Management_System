@@ -104,9 +104,11 @@ internal sealed class ExaminationRepository : IExaminationRepository
     public async Task<IReadOnlyList<ExaminationResultView>> GetResultsAsync(Guid id, CancellationToken ct) =>
         await (from result in _db.ExaminationResults.AsNoTracking()
                join student in _db.Students.AsNoTracking() on result.StudentId equals student.Id
+               join exam in _db.Examinations.AsNoTracking() on result.ExaminationId equals exam.Id
                where result.ExaminationId == id
                orderby student.RegistrationNumber
-               select new ExaminationResultView(result.StudentId, student.RegistrationNumber, student.FullName, result.MarksObtained, result.IsAbsent, result.Remarks)).ToListAsync(ct);
+               select new ExaminationResultView(result.StudentId, student.RegistrationNumber, student.FullName,
+                   result.MarksObtained, result.IsAbsent, !result.IsAbsent && result.MarksObtained >= exam.PassingMarks, result.Remarks)).ToListAsync(ct);
     public async Task<IReadOnlyList<ExaminationListItem>> GetOfferingExaminationsAsync(Guid offeringId, CancellationToken ct) =>
         await _db.Examinations.AsNoTracking().Where(x => x.CourseOfferingId == offeringId).OrderBy(x => x.ScheduledDate)
             .Select(x => new ExaminationListItem(x.Id, x.Title, x.Type, x.ScheduledDate, x.MaximumMarks, x.PassingMarks, x.Status)).ToListAsync(ct);
