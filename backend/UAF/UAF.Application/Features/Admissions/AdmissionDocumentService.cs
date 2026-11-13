@@ -37,7 +37,10 @@ public sealed class AdmissionDocumentService
         if (application.Status != AdmissionStatus.Draft)
             throw new InvalidOperationException("Documents can only be uploaded while the application is a draft.");
 
-        var safeName = Path.GetFileName(fileName?.Trim() ?? string.Empty);
+        var normalizedName = (fileName ?? string.Empty).Trim().Replace('\\\\', '/');
+        var safeName = Path.GetFileName(normalizedName);
+        if (string.IsNullOrWhiteSpace(safeName) || safeName.Length > 255 || safeName.Any(char.IsControl))
+            throw new ArgumentException("A safe file name up to 255 characters is required.", nameof(fileName));
         var extension = Path.GetExtension(safeName).ToLowerInvariant();
         var expectedType = extension switch
         {
