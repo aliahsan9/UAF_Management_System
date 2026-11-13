@@ -9,7 +9,7 @@ public interface IStudentRepository
     Task<bool> AcademicProgramIsActiveAsync(Guid academicProgramId, CancellationToken cancellationToken = default);
     Task<(IReadOnlyList<Student> Items, int TotalCount)> GetPageAsync(
         int page, int pageSize, Guid? academicProgramId, StudentStatus? status,
-        CancellationToken cancellationToken = default);
+        string? search, string sortBy, string sortDirection, CancellationToken cancellationToken = default);
     Task<Student?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task AddAsync(Student student, CancellationToken cancellationToken = default);
 }
