@@ -12,6 +12,7 @@ public sealed class ExaminationConfiguration : IEntityTypeConfiguration<Examinat
             t.HasCheckConstraint("CK_Examinations_Marks", "[MaximumMarks] > 0 AND [PassingMarks] >= 0 AND [PassingMarks] <= [MaximumMarks]");
         });
         b.HasKey(x => x.Id);
+        b.Property(x => x.RowVersion).IsRowVersion();
         b.Property(x => x.Title).HasMaxLength(160).IsRequired();
         b.Property(x => x.Type).HasConversion<int>().IsRequired();
         b.Property(x => x.Status).HasConversion<int>().IsRequired();
@@ -33,6 +34,7 @@ public sealed class ExaminationResultConfiguration : IEntityTypeConfiguration<Ex
         b.ToTable("ExaminationResults", t =>
             t.HasCheckConstraint("CK_ExaminationResults_Marks", "[MarksObtained] >= 0"));
         b.HasKey(x => x.Id);
+        b.Property(x => x.RowVersion).IsRowVersion();
         b.Property(x => x.MarksObtained).HasPrecision(10, 2).IsRequired();
         b.Property(x => x.Remarks).HasMaxLength(500).IsRequired();
         b.Property(x => x.RecordedAtUtc).IsRequired();
