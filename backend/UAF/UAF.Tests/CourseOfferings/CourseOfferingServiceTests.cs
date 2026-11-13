@@ -123,6 +123,15 @@ public sealed class CourseOfferingServiceTests
         public Task<int> GetActiveEnrollmentCountAsync(Guid id, CancellationToken ct = default) =>
             Task.FromResult(_enrollments.Values.Count(x => x.CourseOfferingId == id && x.Status == EnrollmentStatus.Enrolled));
         public Task AddOfferingAsync(CourseOffering offering, CancellationToken ct = default) { _offerings.Add(offering.Id, offering); return Task.CompletedTask; }
+        public Task UpdateOfferingAsync(Guid offeringId, int capacity, Guid? instructorEmployeeId, CancellationToken ct = default)
+        {
+            var offering = _offerings[offeringId];
+            var enrolled = _enrollments.Values.Count(x => x.CourseOfferingId == offeringId && x.Status == EnrollmentStatus.Enrolled);
+            if (capacity < enrolled) throw new InvalidOperationException();
+            offering.UpdateCapacity(capacity);
+            offering.AssignInstructor(instructorEmployeeId);
+            return Task.CompletedTask;
+        }
         public Task<IReadOnlyList<CourseEnrollment>> GetEnrollmentsAsync(Guid id, CancellationToken ct = default) =>
             Task.FromResult((IReadOnlyList<CourseEnrollment>)_enrollments.Values.Where(x => x.CourseOfferingId == id).ToArray());
         public Task<CourseEnrollment?> GetEnrollmentAsync(Guid id, CancellationToken ct = default)
