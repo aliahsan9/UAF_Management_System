@@ -27,12 +27,18 @@ internal sealed class AttendanceReportingRepository : IAttendanceReportingReposi
             .Where(x => x.CourseOfferingId == offeringId && x.Status != EnrollmentStatus.Dropped && x.Status != EnrollmentStatus.Withdrawn)
             .Select(x => new { x.StudentId, x.Status, x.Student.RegistrationNumber, x.Student.FullName })
             .OrderBy(x => x.RegistrationNumber).ToListAsync(ct);
-        var marks = finalizedSessionIds.Length == 0
-            ? new List<(Guid StudentId, AttendanceStatus Status)>()
-            : await _db.StudentAttendances.AsNoTracking()
+        List<(Guid StudentId, AttendanceStatus Status)> marks;
+        if (finalizedSessionIds.Length == 0)
+        {
+            marks = new List<(Guid StudentId, AttendanceStatus Status)>();
+        }
+        else
+        {
+            var markRows = await _db.StudentAttendances.AsNoTracking()
                 .Where(x => finalizedSessionIds.Contains(x.AttendanceSessionId))
-                .Select(x => new { x.StudentId, x.Status }).ToListAsync(ct)
-                .ContinueWith(t => t.Result.Select(x => (x.StudentId, x.Status)).ToList(), ct);
+                .Select(x => new { x.StudentId, x.Status }).ToListAsync(ct);
+            marks = markRows.Select(x => (x.StudentId, x.Status)).ToList();
+        }
         var byStudent = marks.GroupBy(x => x.StudentId).ToDictionary(g => g.Key, g => (IReadOnlyList<AttendanceStatus>)g.Select(x => x.Status).ToArray());
         var students = roster.Select(x => new AttendanceReportStudentSource(x.StudentId, x.RegistrationNumber, x.FullName, x.Status,
             byStudent.TryGetValue(x.StudentId, out var values) ? values : Array.Empty<AttendanceStatus>())).ToArray();
