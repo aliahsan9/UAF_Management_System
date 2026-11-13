@@ -30,6 +30,7 @@ public static class DependencyInjection
         services.AddScoped<AttendanceReportingService>();
         services.AddScoped<ExaminationService>();
         services.AddScoped<GradingService>();
+        services.AddScoped<GradeAppealService>();
         return services;
     }
 }
