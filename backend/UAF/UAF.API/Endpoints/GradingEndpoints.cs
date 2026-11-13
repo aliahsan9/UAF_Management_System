@@ -27,10 +27,9 @@ public static class GradingEndpoints
             .RequireAuthorization(AuthorizationPolicies.CourseGradeManagement);
         grades.MapPost("/offerings/{offeringId:guid}/students/{studentId:guid}/finalize", async (Guid offeringId, Guid studentId, FinalizeCourseGradeRequest request, HttpContext http, GradingService service, CancellationToken ct) =>
         {
-            if (request.StudentId != studentId) throw new ArgumentException("Route student ID must match request student ID.");
-            var result = await service.FinalizeCourseGradeAsync(offeringId, request, GetActorId(http.User),
+            var result = await service.FinalizeCourseGradeAsync(offeringId, studentId, request, GetActorId(http.User),
                 IsPrivileged(http.User), http.User.IsInRole("DepartmentAdmin"), ct);
-            return Results.Created($"/api/v1/grading/offerings/{offeringId}/students/{studentId}/finalize", result);
+            return Results.Ok(result);
         }).WithName("FinalizeStudentCourseGrade");
 
         var records = endpoints.MapGroup("/api/v1/academic-records")
