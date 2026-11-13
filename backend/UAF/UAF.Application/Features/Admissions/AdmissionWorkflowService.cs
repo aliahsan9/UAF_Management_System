@@ -22,8 +22,8 @@ public sealed class AdmissionWorkflowService
         EnsureIds(applicationId, actorUserId);
         if (decision is not AdmissionStatus.Accepted and not AdmissionStatus.Rejected and not AdmissionStatus.Waitlisted)
             throw new ArgumentOutOfRangeException(nameof(decision));
-        if ((decision is AdmissionStatus.Rejected or AdmissionStatus.Waitlisted) && string.IsNullOrWhiteSpace(remarks))
-            throw new ArgumentException("A reason is required for rejection and waitlisting.", nameof(remarks));
+        if (string.IsNullOrWhiteSpace(remarks))
+            throw new ArgumentException("Decision remarks are required.", nameof(remarks));
         return _repository.RecordDecisionAsync(applicationId, actorUserId, decision, remarks, DateTimeOffset.UtcNow, ct);
     }
 
