@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Microsoft.AspNetCore.RateLimiting;
 using UAF.Application.Features.Authentication.Abstractions;
 using UAF.Application.Features.Authentication.Models;
 
@@ -29,6 +30,7 @@ public static class AuthenticationEndpoints
                 : Results.BadRequest(new { error = result.Error });
         })
         .AllowAnonymous()
+        .RequireRateLimiting("auth")
         .WithName("RegisterAccount");
 
         group.MapPost("/login", async (
@@ -48,6 +50,7 @@ public static class AuthenticationEndpoints
                 : Results.Unauthorized();
         })
         .AllowAnonymous()
+        .RequireRateLimiting("auth")
         .WithName("Login");
 
         group.MapGet("/me", (ClaimsPrincipal user) => Results.Ok(new
