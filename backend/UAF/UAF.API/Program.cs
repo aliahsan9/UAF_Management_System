@@ -1,5 +1,6 @@
 using System.Threading.RateLimiting;
 using Scalar.AspNetCore;
+using UAF.API.Authorization;
 using UAF.API.Endpoints;
 using UAF.API.Extensions;
 using UAF.API.Middleware;
@@ -16,6 +17,14 @@ builder.Services.AddOpenApi();
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddJwtAuthentication(builder.Configuration);
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(AuthorizationPolicies.AdmissionsStaff, policy =>
+        policy.RequireRole("Registrar", "DepartmentAdmin", "SuperAdmin"));
+
+    options.AddPolicy(AuthorizationPolicies.AdmissionsDecision, policy =>
+        policy.RequireRole("Registrar", "SuperAdmin"));
+});
 
 builder.Services.AddRateLimiter(options =>
 {
