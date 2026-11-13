@@ -91,5 +91,5 @@ public sealed class ExaminationService
         return exam;
     }
     private static ExaminationResponse ToResponse(Examination x) => new(x.Id, x.CourseOfferingId, x.Title, x.Type, x.ScheduledDate,
-        x.MaximumMarks, x.PassingMarks, x.Status, x.SubmittedByUserId, x.SubmittedAtUtc, x.ApprovedByUserId, x.ApprovedAtUtc, x.PublishedByUserId, x.PublishedAtUtc);
+        x.MaximumMarks, x.PassingMarks, x.WeightPercentage, x.Status, x.SubmittedByUserId, x.SubmittedAtUtc, x.ApprovedByUserId, x.ApprovedAtUtc, x.PublishedByUserId, x.PublishedAtUtc);
 }
