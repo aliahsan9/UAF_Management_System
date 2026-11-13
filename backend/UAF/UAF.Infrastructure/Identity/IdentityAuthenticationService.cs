@@ -8,13 +8,16 @@ public sealed class IdentityAuthenticationService : IAuthenticationService
 {
     private const string StudentRole = "Student";
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly IJwtTokenGenerator _tokenGenerator;
 
     public IdentityAuthenticationService(
         UserManager<ApplicationUser> userManager,
+        SignInManager<ApplicationUser> signInManager,
         IJwtTokenGenerator tokenGenerator)
     {
         _userManager = userManager;
+        _signInManager = signInManager;
         _tokenGenerator = tokenGenerator;
     }
 
@@ -66,13 +69,17 @@ public sealed class IdentityAuthenticationService : IAuthenticationService
         var email = request.Email.Trim().ToLowerInvariant();
         var user = await _userManager.FindByEmailAsync(email);
 
-        // Use a generic response to avoid disclosing whether an email exists.
+        // Generic response prevents account enumeration.
         if (user is null || !user.IsActive)
             return AuthenticationResult.Failure("Invalid email or password.");
 
-        var validPassword = await _userManager.CheckPasswordAsync(user, request.Password);
+        // SignInManager performs lockout-aware password verification.
+        var signInResult = await _signInManager.CheckPasswordSignInAsync(
+            user,
+            request.Password,
+            lockoutOnFailure: true);
 
-        if (!validPassword)
+        if (!signInResult.Succeeded)
             return AuthenticationResult.Failure("Invalid email or password.");
 
         return await CreateAuthenticationResultAsync(user);
