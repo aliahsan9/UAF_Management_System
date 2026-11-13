@@ -186,7 +186,34 @@ dotnet user-secrets set "Jwt:SigningKey" "<generate-a-cryptographically-random-s
 
 The API refuses to start if issuer, audience, or a signing key of at least 32 bytes is missing. Access tokens currently expire after 15 minutes. After applying migrations, role creation can be enabled for a one-time development startup using the environment variable `Identity__SeedRolesOnStartup=true`; disable it again after roles are seeded. Production role provisioning should be performed through a controlled administrative process.
 
-Academic structure routes (all require DepartmentAdmin or SuperAdmin):\n\n| Method | Route | Purpose |\n|---|---|---|\n| GET / POST | `/api/v1/academic-structure/universities` | List / create university records |\n| PUT | `/api/v1/academic-structure/universities/{id}` | Update university details |\n| GET / POST | `/api/v1/academic-structure/campuses` | List / create campuses (`universityId` query filter supported) |\n| PUT / DELETE | `/api/v1/academic-structure/campuses/{id}` | Update / deactivate a campus |\n| GET / POST | `/api/v1/academic-structure/faculties` | List / create faculties (`universityId` query filter supported) |\n| PUT / DELETE | `/api/v1/academic-structure/faculties/{id}` | Update / deactivate a faculty |\n| GET / POST | `/api/v1/academic-structure/departments` | List / create departments (`facultyId` query filter supported) |\n| PUT / DELETE | `/api/v1/academic-structure/departments/{id}` | Update / deactivate a department |\n| GET / POST | `/api/v1/academic-structure/programs` | List / create academic programs (`departmentId` query filter supported) |\n| PUT / DELETE | `/api/v1/academic-structure/programs/{id}` | Update / deactivate an academic program |\n\nCodes are normalized to uppercase and checked for duplicates within their parent. Database unique indexes remain the final integrity safeguard. Parent records must exist; inactive faculties and departments cannot be used to create children. Deactivation is a soft state change and does not delete historical records.\n\nStudent management routes (all require Registrar, DepartmentAdmin, or SuperAdmin):
+Academic structure routes (all require DepartmentAdmin or SuperAdmin):\n\n| Method | Route | Purpose |\n|---|---|---|\n| GET / POST | `/api/v1/academic-structure/universities` | List / create university records |\n| PUT | `/api/v1/academic-structure/universities/{id}` | Update university details |\n| GET / POST | `/api/v1/academic-structure/campuses` | List / create campuses (`universityId` query filter supported) |\n| PUT / DELETE | `/api/v1/academic-structure/campuses/{id}` | Update / deactivate a campus |\n| GET / POST | `/api/v1/academic-structure/faculties` | List / create faculties (`universityId` query filter supported) |\n| PUT / DELETE | `/api/v1/academic-structure/faculties/{id}` | Update / deactivate a faculty |\n| GET / POST | `/api/v1/academic-structure/departments` | List / create departments (`facultyId` query filter supported) |\n| PUT / DELETE | `/api/v1/academic-structure/departments/{id}` | Update / deactivate a department |\n| GET / POST | `/api/v1/academic-structure/programs` | List / create academic programs (`departmentId` query filter supported) |\n| PUT / DELETE | `/api/v1/academic-structure/programs/{id}` | Update / deactivate an academic program |\n\nCodes are normalized to uppercase and checked for duplicates within their parent. Database unique indexes remain the final integrity safeguard. Parent records must exist; inactive faculties and departments cannot be used to create children. Deactivation is a soft state change and does not delete historical records.\n\nAcademic session routes (all require Registrar, DepartmentAdmin, or SuperAdmin):
+
+| Method | Route | Purpose |
+|---|---|---|
+| GET | `/api/v1/academic-sessions?status=Planned` | List sessions, optionally filtered by lifecycle status |
+| GET | `/api/v1/academic-sessions/{id}` | Session details |
+| POST | `/api/v1/academic-sessions` | Create a planned session |
+| PUT | `/api/v1/academic-sessions/{id}` | Update a planned session |
+| POST | `/api/v1/academic-sessions/{id}/activate` | Activate a planned session |
+| POST | `/api/v1/academic-sessions/{id}/complete` | Complete an active session |
+| POST | `/api/v1/academic-sessions/{id}/cancel` | Cancel a planned or active session |
+
+Session codes are unique and normalized to uppercase. End dates must be later than start dates. Active and completed sessions cannot be edited; lifecycle transitions are enforced in the domain.
+
+Course catalogue routes (all require Registrar, DepartmentAdmin, or SuperAdmin):
+
+| Method | Route | Purpose |
+|---|---|---|
+| GET | `/api/v1/courses?departmentId={id}&isActive=true` | List courses with optional department and active-state filters |
+| GET | `/api/v1/courses/{id}` | Course details |
+| POST | `/api/v1/courses` | Create a course under an active department |
+| PUT | `/api/v1/courses/{id}` | Update course catalogue details |
+| DELETE | `/api/v1/courses/{id}` | Soft-deactivate a course |
+| POST | `/api/v1/courses/{id}/reactivate` | Reactivate a course |
+
+Course codes are unique within their department, not globally. Credit hours must be greater than zero and no more than 10, matching the existing domain and database constraint. A course cannot be deactivated while it has draft or published offerings; historical offerings are retained. The course catalogue is separate from session-specific course offerings and student enrollment.
+
+Student management routes (all require Registrar, DepartmentAdmin, or SuperAdmin):
 
 | Method | Route | Purpose |
 |---|---|---|
@@ -258,8 +285,9 @@ These are engineering objectives; their implementation and verification will be 
 - [x] Set up the initial ASP.NET Core Identity and JWT authentication foundation.
 - [ ] Add email verification, refresh-token rotation/revocation, password reset, and MFA.
 - [x] Add admissions and academic-structure authorization policies (role seeding still requires migration and runtime verification).
-- [x] Implement university, campus, faculty, department, and academic-program management endpoints with parent validation and unique-code checks.\n- [ ] Add academic-session management endpoints and lifecycle tests.
-- [x] Implement initial administrative student-management workflows.\n- [ ] Extend admissions and undergraduate application workflows with applicant ownership, document handling, and integration tests.
+- [x] Implement university, campus, faculty, department, and academic-program management endpoints with parent validation and unique-code checks.\n- [x] Add academic-session management endpoints and lifecycle tests. (Execution pending.)
+- [x] Implement initial administrative student-management workflows.
+- [x] Implement academic-session lifecycle and course catalogue management (build/test execution pending).\n- [ ] Extend admissions and undergraduate application workflows with applicant ownership, document handling, and integration tests.
 - [ ] Develop fee and identity-card workflows.
 - [ ] Expand academic, LMS, examination, and employee modules.
 - [x] Add initial unit tests for admission application workflows (execution still pending).\n- [x] Implement administrative student registration, profile maintenance, program assignment, paginated search, and status lifecycle endpoints.\n- [x] Add student-management application unit tests (execution still pending).
