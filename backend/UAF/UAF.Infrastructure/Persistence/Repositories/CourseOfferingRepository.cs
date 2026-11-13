@@ -51,6 +51,27 @@ internal sealed class CourseOfferingRepository : ICourseOfferingRepository
     public Task<bool> StudentIsEligibleAsync(Guid studentId, CancellationToken ct = default) =>
         _dbContext.Students.AnyAsync(x => x.Id == studentId && x.Status == StudentStatus.Active, ct);
 
+
+    public async Task UpdateOfferingAsync(Guid offeringId, int capacity, Guid? instructorEmployeeId, CancellationToken ct = default)
+    {
+        if (instructorEmployeeId == Guid.Empty)
+            throw new ArgumentException("Instructor employee ID cannot be an empty GUID.", nameof(instructorEmployeeId));
+
+        // Serialize capacity changes with enrollment transactions so seats cannot be over-allocated.
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
+        var offering = await _dbContext.CourseOfferings.FirstOrDefaultAsync(x => x.Id == offeringId, ct)
+            ?? throw new KeyNotFoundException($"Course offering '{offeringId}' was not found.");
+        var enrolledCount = await _dbContext.CourseEnrollments.CountAsync(
+            x => x.CourseOfferingId == offeringId && x.Status == EnrollmentStatus.Enrolled, ct);
+        if (capacity < enrolledCount)
+            throw new InvalidOperationException($"Capacity cannot be lower than the {enrolledCount} currently enrolled students.");
+
+        offering.UpdateCapacity(capacity);
+        offering.AssignInstructor(instructorEmployeeId);
+        await _dbContext.SaveChangesAsync(ct);
+        await transaction.CommitAsync(ct);
+    }
+
     public async Task<CourseEnrollment> EnrollAsync(Guid studentId, Guid offeringId, DateOnly enrolledOn, CancellationToken ct = default)
     {
         // Serializable isolation protects the seat-count predicate from concurrent inserts.
