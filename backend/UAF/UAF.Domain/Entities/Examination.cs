@@ -5,7 +5,7 @@ namespace UAF.Domain.Entities;
 public sealed class Examination : AuditableEntity
 {
     private Examination() { Title = string.Empty; }
-    public Examination(Guid courseOfferingId, string title, ExaminationType type, DateOnly scheduledDate, decimal maximumMarks, decimal passingMarks)
+    public Examination(Guid courseOfferingId, string title, ExaminationType type, DateOnly scheduledDate, decimal maximumMarks, decimal passingMarks, decimal weightPercentage)
     {
         if (courseOfferingId == Guid.Empty) throw new ArgumentException("Course offering is required.", nameof(courseOfferingId));
         Title = NormalizeTitle(title);
