@@ -1,6 +1,7 @@
 using System.Data;
 using Microsoft.EntityFrameworkCore;
 using UAF.Application.Features.Transcripts.Abstractions;
+using UAF.Application.Features.Transcripts.Models;
 using UAF.Domain.Entities;
 namespace UAF.Infrastructure.Persistence.Repositories;
 internal sealed class TranscriptRepository : ITranscriptRepository
@@ -20,9 +21,10 @@ internal sealed class TranscriptRepository : ITranscriptRepository
         await _db.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
     }
-    public async Task<IReadOnlyList<AcademicTranscript>> GetForStudentAsync(Guid studentId, CancellationToken ct) =>
+    public async Task<IReadOnlyList<TranscriptListItem>> GetForStudentAsync(Guid studentId, CancellationToken ct) =>
         await _db.AcademicTranscripts.AsNoTracking().Where(x => x.StudentId == studentId)
-            .OrderByDescending(x => x.IssuedAtUtc).ToListAsync(ct);
+            .OrderByDescending(x => x.IssuedAtUtc)
+            .Select(x => new TranscriptListItem(x.Id, x.VerificationCode, x.SnapshotSha256, x.IssuedAtUtc)).ToListAsync(ct);
     public Task<AcademicTranscript?> GetForStudentAsync(Guid transcriptId, Guid studentId, CancellationToken ct) =>
         _db.AcademicTranscripts.AsNoTracking().SingleOrDefaultAsync(x => x.Id == transcriptId && x.StudentId == studentId, ct);
     public Task<AcademicTranscript?> GetByVerificationCodeAsync(string code, CancellationToken ct) =>
