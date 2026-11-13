@@ -134,9 +134,74 @@ public sealed class AdmissionDocumentServiceTests
             service.RejectAsync(upload.Id, Guid.NewGuid(), " "));
     }
 
+    [Fact]
+    public async Task SubmissionIsBlockedUntilEveryRequiredDocumentIsVerified()
+    {
+        var ownerId = Guid.NewGuid();
+        var app = new AdmissionApplication("UAF-TEST-008", "Applicant", "applicant@example.com",
+            Guid.NewGuid(), new DateOnly(2026, 11, 13), ownerUserId: ownerId);
+        var repository = new FakeRepository(app);
+        var unitOfWork = new FakeUnitOfWork();
+        var service = new AdmissionDocumentService(repository, new FakeStorage(), unitOfWork);
+        var staffId = Guid.NewGuid();
+
+        await service.ConfigureRequirementsAsync(app.AcademicProgramId, staffId,
+            new[] { AdmissionDocumentType.IdentityDocument, AdmissionDocumentType.AcademicTranscript });
+
+        var readiness = await service.GetSubmissionReadinessAsync(ownerId, app.Id);
+        Assert.False(readiness.CanSubmit);
+        Assert.Equal(2, readiness.MissingVerifiedDocumentTypes.Count);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.SubmitMyApplicationAsync(ownerId, app.Id));
+
+        var upload = await service.UploadForApplicantAsync(ownerId, app.Id,
+            AdmissionDocumentType.IdentityDocument, "identity.pdf", "application/pdf",
+            new MemoryStream("%PDF-1.7 identity"u8.ToArray()));
+        await service.VerifyAsync(upload.Id, staffId, null);
+
+        readiness = await service.GetSubmissionReadinessAsync(ownerId, app.Id);
+        Assert.False(readiness.CanSubmit);
+        Assert.Contains(AdmissionDocumentType.AcademicTranscript, readiness.MissingVerifiedDocumentTypes);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.SubmitMyApplicationAsync(ownerId, app.Id));
+    }
+
+    [Fact]
+    public async Task SubmissionSucceedsWhenAllConfiguredDocumentsAreVerified()
+    {
+        var ownerId = Guid.NewGuid();
+        var app = new AdmissionApplication("UAF-TEST-009", "Applicant", "applicant@example.com",
+            Guid.NewGuid(), new DateOnly(2026, 11, 13), ownerUserId: ownerId);
+        var repository = new FakeRepository(app);
+        var service = new AdmissionDocumentService(repository, new FakeStorage(), new FakeUnitOfWork());
+        var staffId = Guid.NewGuid();
+
+        await service.ConfigureRequirementsAsync(app.AcademicProgramId, staffId,
+            new[] { AdmissionDocumentType.AcademicTranscript });
+        var upload = await service.UploadForApplicantAsync(ownerId, app.Id,
+            AdmissionDocumentType.AcademicTranscript, "transcript.pdf", "application/pdf",
+            new MemoryStream("%PDF-1.7 transcript"u8.ToArray()));
+        await service.VerifyAsync(upload.Id, staffId, "Verified");
+
+        var readiness = await service.GetSubmissionReadinessAsync(ownerId, app.Id);
+        Assert.True(readiness.CanSubmit);
+        await service.SubmitMyApplicationAsync(ownerId, app.Id);
+        Assert.Equal(AdmissionStatus.Submitted, app.Status);
+    }
+
+    [Fact]
+    public async Task SubmissionIsBlockedWhenProgramHasNoConfiguredChecklist()
+    {
+        var ownerId = Guid.NewGuid();
+        var app = new AdmissionApplication("UAF-TEST-010", "Applicant", "applicant@example.com",
+            Guid.NewGuid(), new DateOnly(2026, 11, 13), ownerUserId: ownerId);
+        var service = new AdmissionDocumentService(new FakeRepository(app), new FakeStorage(), new FakeUnitOfWork());
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.SubmitMyApplicationAsync(ownerId, app.Id));
+    }
+
     private sealed class FakeRepository(AdmissionApplication application) : IAdmissionDocumentRepository
     {
         private readonly Dictionary<Guid, AdmissionDocument> _documents = new();
+        private readonly List<AdmissionDocumentRequirement> _requirements = new();
         public Task<AdmissionApplication?> GetOwnedApplicationAsync(Guid applicationId, Guid ownerUserId, CancellationToken ct = default) =>
             Task.FromResult(application.Id == applicationId && application.OwnerUserId == ownerUserId ? application : null);
         public Task<AdmissionDocument?> GetOwnedDocumentAsync(Guid applicationId, Guid documentId, Guid ownerUserId, CancellationToken ct = default)
@@ -155,6 +220,26 @@ public sealed class AdmissionDocumentServiceTests
             IReadOnlyList<AdmissionDocument> documents = _documents.Values.Where(x => x.ApplicationId == applicationId).ToArray();
             return Task.FromResult(documents);
         }
+        public Task<IReadOnlyList<AdmissionDocumentRequirement>> GetRequirementsForProgramAsync(Guid academicProgramId, CancellationToken ct = default)
+        {
+            IReadOnlyList<AdmissionDocumentRequirement> items = _requirements.Where(x => x.AcademicProgramId == academicProgramId).ToArray();
+            return Task.FromResult(items);
+        }
+        public Task<bool> AcademicProgramExistsAsync(Guid academicProgramId, CancellationToken ct = default) =>
+            Task.FromResult(application.AcademicProgramId == academicProgramId);
+        public Task<IReadOnlyCollection<AdmissionDocumentType>> GetVerifiedDocumentTypesAsync(Guid applicationId, CancellationToken ct = default)
+        {
+            IReadOnlyCollection<AdmissionDocumentType> types = _documents.Values
+                .Where(x => x.ApplicationId == applicationId && x.Status == AdmissionDocumentStatus.Verified)
+                .Select(x => x.DocumentType).Distinct().ToArray();
+            return Task.FromResult(types);
+        }
+        public Task AddRequirementAsync(AdmissionDocumentRequirement requirement, CancellationToken ct = default)
+        {
+            _requirements.Add(requirement);
+            return Task.CompletedTask;
+        }
+        public void RemoveRequirement(AdmissionDocumentRequirement requirement) => _requirements.Remove(requirement);
         public Task AddAsync(AdmissionDocument document, CancellationToken ct = default)
         {
             _documents.Add(document.Id, document);
