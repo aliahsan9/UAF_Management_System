@@ -6,6 +6,7 @@ using UAF.Application.Features.Students;
 using UAF.Application.Features.CourseOfferings;
 using UAF.Application.Features.Fees;
 using UAF.Application.Features.Employees;
+using UAF.Application.Features.Attendance;
 
 namespace UAF.Application;
 
@@ -23,6 +24,7 @@ public static class DependencyInjection
         services.AddScoped<CourseOfferingService>();
         services.AddScoped<FeeService>();
         services.AddScoped<EmployeeService>();
+        services.AddScoped<AttendanceService>();
         return services;
     }
 }
