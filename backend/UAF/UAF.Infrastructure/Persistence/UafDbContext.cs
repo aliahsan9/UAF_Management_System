@@ -8,16 +8,9 @@ using UAF.Infrastructure.Identity;
 
 namespace UAF.Infrastructure.Persistence;
 
-/// <summary>
-/// EF Core database context for university records and ASP.NET Core Identity.
-/// Authentication identities are deliberately separate from academic domain entities.
-/// </summary>
 public sealed class UafDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>, IUnitOfWork
 {
-    public UafDbContext(DbContextOptions<UafDbContext> options)
-        : base(options)
-    {
-    }
+    public UafDbContext(DbContextOptions<UafDbContext> options) : base(options) { }
 
     public DbSet<University> Universities => Set<University>();
     public DbSet<Campus> Campuses => Set<Campus>();
@@ -27,6 +20,7 @@ public sealed class UafDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<AcademicSession> AcademicSessions => Set<AcademicSession>();
     public DbSet<Student> Students => Set<Student>();
     public DbSet<AdmissionApplication> AdmissionApplications => Set<AdmissionApplication>();
+    public DbSet<AdmissionDocument> AdmissionDocuments => Set<AdmissionDocument>();
     public DbSet<Course> Courses => Set<Course>();
     public DbSet<CourseOffering> CourseOfferings => Set<CourseOffering>();
     public DbSet<CourseEnrollment> CourseEnrollments => Set<CourseEnrollment>();
@@ -35,7 +29,6 @@ public sealed class UafDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(UafDbContext).Assembly);
-
         modelBuilder.Entity<ApplicationUser>(entity =>
         {
             entity.Property(user => user.FullName).HasMaxLength(150).IsRequired();
@@ -58,12 +51,10 @@ public sealed class UafDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     private void ApplyAuditInformation()
     {
         var now = DateTimeOffset.UtcNow;
-
         foreach (var entry in ChangeTracker.Entries<AuditableEntity>())
         {
             if (entry.State == EntityState.Added)
                 entry.Property(entity => entity.CreatedAtUtc).CurrentValue = now;
-
             if (entry.State == EntityState.Modified)
             {
                 entry.Property(entity => entity.CreatedAtUtc).IsModified = false;
