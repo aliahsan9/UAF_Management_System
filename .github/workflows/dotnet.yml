@@ -71,7 +71,25 @@ jobs:
             echo "::warning::No committed EF Core migrations found. Generate, review, and commit the InitialCreate migration before deployment."
           fi
 
-      - name: Test
+      - name: Test with line and branch coverage
         env:
           UAF_TEST_SQLSERVER_CONNECTION_STRING: "Server=localhost,1433;User Id=sa;Password=Uaf_CI_StrongPassword_2026!;Encrypt=False;TrustServerCertificate=True;MultipleActiveResultSets=true"
-        run: dotnet test backend/UAF/UAF.sln --configuration Release --no-build --logger "trx;LogFileName=test-results.trx"
+        run: |
+          mkdir -p backend/UAF/UAF.Tests/TestResults/Coverage
+          dotnet test backend/UAF/UAF.sln \
+            --configuration Release \
+            --logger "trx;LogFileName=test-results.trx" \
+            -p:CollectCoverage=true \
+            -p:CoverletOutputFormat=cobertura \
+            -p:CoverletOutput=./TestResults/Coverage/
+
+      - name: Upload test and coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: uaf-test-and-coverage-reports
+          path: |
+            backend/UAF/UAF.Tests/TestResults/**/*.trx
+            backend/UAF/UAF.Tests/TestResults/Coverage/coverage.cobertura.xml
+          if-no-files-found: warn
+          retention-days: 14
