@@ -2,7 +2,7 @@
 
 A university-focused management platform being developed as a Final Year Project (FYP), with the goal of bringing important academic and administrative workflows into one structured digital system.
 
-The project is in its **foundation and early implementation stage**. The repository contains .NET Domain, Application, Infrastructure, API, and Tests projects. Initial university, student, admission, and course-registration concepts are modelled, and the first admission HTTP endpoints are in place. The broader university workflows remain under development and must be refined against confirmed requirements.
+The project is in its **foundation and early implementation stage**. The repository contains .NET Domain, Application, Infrastructure, API, and Tests projects. Initial academic hierarchy management (universities, campuses, faculties, departments, and programs), admission workflow endpoints, and an initial Identity/JWT foundation are implemented in source. Student self-service, fees, LMS, examinations, and other broader workflows remain under development and must be refined against confirmed requirements.
 
 > **Project status:** In development  
 > **Project context:** Independent academic / FYP project  
@@ -79,7 +79,7 @@ UAF_Management_System/
         │   ├── Common/
         │   │   └── Abstractions/
         │   └── Features/
-        │       └── Admissions/
+        │       ├── Admissions/\n        │       └── AcademicStructure/
         │
         ├── UAF.Infrastructure/
         │   ├── Persistence/
@@ -99,7 +99,7 @@ UAF_Management_System/
         └── UAF.sln
 ```
 
-The Domain, Application, Infrastructure, API, and Tests projects have been created. The API currently exposes the initial admission application workflow and an initial ASP.NET Core Identity/JWT authentication foundation. Email verification, refresh-token rotation, account recovery, and administrative user provisioning remain future security work.
+The Domain, Application, Infrastructure, API, and Tests projects have been created. The API exposes the initial admission workflow, administrative academic-structure endpoints, and an initial ASP.NET Core Identity/JWT authentication foundation. Academic-structure operations are restricted to DepartmentAdmin and SuperAdmin roles. Email verification, refresh-token rotation, account recovery, and controlled administrative user provisioning remain future security work.
 
 ### Layer responsibilities
 
@@ -186,7 +186,7 @@ dotnet user-secrets set "Jwt:SigningKey" "<generate-a-cryptographically-random-s
 
 The API refuses to start if issuer, audience, or a signing key of at least 32 bytes is missing. Access tokens currently expire after 15 minutes. After applying migrations, role creation can be enabled for a one-time development startup using the environment variable `Identity__SeedRolesOnStartup=true`; disable it again after roles are seeded. Production role provisioning should be performed through a controlled administrative process.
 
-Authentication routes:
+Academic structure routes (all require DepartmentAdmin or SuperAdmin):\n\n| Method | Route | Purpose |\n|---|---|---|\n| GET / POST | `/api/v1/academic-structure/universities` | List / create university records |\n| PUT | `/api/v1/academic-structure/universities/{id}` | Update university details |\n| GET / POST | `/api/v1/academic-structure/campuses` | List / create campuses (`universityId` query filter supported) |\n| PUT / DELETE | `/api/v1/academic-structure/campuses/{id}` | Update / deactivate a campus |\n| GET / POST | `/api/v1/academic-structure/faculties` | List / create faculties (`universityId` query filter supported) |\n| PUT / DELETE | `/api/v1/academic-structure/faculties/{id}` | Update / deactivate a faculty |\n| GET / POST | `/api/v1/academic-structure/departments` | List / create departments (`facultyId` query filter supported) |\n| PUT / DELETE | `/api/v1/academic-structure/departments/{id}` | Update / deactivate a department |\n| GET / POST | `/api/v1/academic-structure/programs` | List / create academic programs (`departmentId` query filter supported) |\n| PUT / DELETE | `/api/v1/academic-structure/programs/{id}` | Update / deactivate an academic program |\n\nCodes are normalized to uppercase and checked for duplicates within their parent. Database unique indexes remain the final integrity safeguard. Parent records must exist; inactive faculties and departments cannot be used to create children. Deactivation is a soft state change and does not delete historical records.\n\nAuthentication routes:
 
 | Method | Route | Access |
 |---|---|---|
@@ -241,8 +241,8 @@ These are engineering objectives; their implementation and verification will be 
 - [x] Add development-only OpenAPI and Scalar documentation.
 - [x] Set up the initial ASP.NET Core Identity and JWT authentication foundation.
 - [ ] Add email verification, refresh-token rotation/revocation, password reset, and MFA.
-- [ ] Implement roles and authorization policies.
-- [ ] Establish the university structure (faculties, departments, programs, and academic sessions).
+- [x] Add admissions and academic-structure authorization policies (role seeding still requires migration and runtime verification).
+- [x] Implement university, campus, faculty, department, and academic-program management endpoints with parent validation and unique-code checks.\n- [ ] Add academic-session management endpoints and lifecycle tests.
 - [ ] Develop student and admissions workflows.
 - [ ] Develop fee and identity-card workflows.
 - [ ] Expand academic, LMS, examination, and employee modules.
