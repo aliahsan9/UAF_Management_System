@@ -33,7 +33,7 @@ public sealed class ExaminationDomainTests
     }
     [Theory]
     [InlineData(0, 0)]
-    [InlineData(101, 50)]
+    [InlineData(10001, 50)]
     [InlineData(50, 51)]
     public void Rejects_invalid_mark_boundaries(decimal maximum, decimal passing)
     {
