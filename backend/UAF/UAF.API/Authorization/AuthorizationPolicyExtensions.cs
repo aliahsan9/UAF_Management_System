@@ -36,6 +36,12 @@ public static class AuthorizationPolicyExtensions
                 policy.RequireAuthenticatedUser().RequireRole("Teacher", "Registrar", "DepartmentAdmin", "SuperAdmin"));
             options.AddPolicy(AuthorizationPolicies.ExaminationApproval, policy =>
                 policy.RequireAuthenticatedUser().RequireRole("Registrar", "DepartmentAdmin", "SuperAdmin"));
+            options.AddPolicy(AuthorizationPolicies.GradingScaleManagement, policy =>
+                policy.RequireAuthenticatedUser().RequireRole("Registrar", "SuperAdmin"));
+            options.AddPolicy(AuthorizationPolicies.CourseGradeManagement, policy =>
+                policy.RequireAuthenticatedUser().RequireRole("Registrar", "DepartmentAdmin", "SuperAdmin"));
+            options.AddPolicy(AuthorizationPolicies.StudentAcademicRecord, policy =>
+                policy.RequireAuthenticatedUser().RequireRole("Student"));
         });
         return services;
     }
