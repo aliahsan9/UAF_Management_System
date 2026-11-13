@@ -50,6 +50,10 @@ public sealed class AdmissionApplication : AuditableEntity
     public AdmissionStatus Status { get; private set; }
     public string? DecisionRemarks { get; private set; }
     public Guid? OwnerUserId { get; private set; }
+    public Guid? ReviewStartedByUserId { get; private set; }
+    public DateTimeOffset? ReviewStartedAtUtc { get; private set; }
+    public Guid? DecisionByUserId { get; private set; }
+    public DateTimeOffset? DecisionAtUtc { get; private set; }
 
     public void UpdateApplicantDetails(string fullName, string email, string? phoneNumber)
     {
@@ -68,36 +72,44 @@ public sealed class AdmissionApplication : AuditableEntity
         MarkUpdated();
     }
 
-    public void StartReview()
+    public void StartReview(Guid reviewerUserId, DateTimeOffset occurredAtUtc)
     {
+        EnsureActorAndTimestamp(reviewerUserId, occurredAtUtc);
         if (Status != AdmissionStatus.Submitted)
             throw new InvalidOperationException("Only a submitted application can enter review.");
         Status = AdmissionStatus.UnderReview;
+        ReviewStartedByUserId = reviewerUserId;
+        ReviewStartedAtUtc = occurredAtUtc.ToUniversalTime();
         MarkUpdated();
     }
 
-    public void Accept(string? remarks = null)
+    public void Accept(Guid actorUserId, DateTimeOffset occurredAtUtc, string? remarks = null) =>
+        RecordDecision(AdmissionStatus.Accepted, actorUserId, occurredAtUtc, remarks);
+
+    public void Reject(Guid actorUserId, DateTimeOffset occurredAtUtc, string? remarks = null) =>
+        RecordDecision(AdmissionStatus.Rejected, actorUserId, occurredAtUtc, remarks);
+
+    public void Waitlist(Guid actorUserId, DateTimeOffset occurredAtUtc, string? remarks = null) =>
+        RecordDecision(AdmissionStatus.Waitlisted, actorUserId, occurredAtUtc, remarks);
+
+    private void RecordDecision(AdmissionStatus decision, Guid actorUserId, DateTimeOffset occurredAtUtc, string? remarks)
     {
+        EnsureActorAndTimestamp(actorUserId, occurredAtUtc);
         EnsureUnderReview();
-        Status = AdmissionStatus.Accepted;
-        DecisionRemarks = NormalizeOptional(remarks);
+        var normalizedRemarks = NormalizeOptional(remarks);
+        if (normalizedRemarks?.Length > 2000)
+            throw new ArgumentException("Decision remarks cannot exceed 2000 characters.", nameof(remarks));
+        Status = decision;
+        DecisionRemarks = normalizedRemarks;
+        DecisionByUserId = actorUserId;
+        DecisionAtUtc = occurredAtUtc.ToUniversalTime();
         MarkUpdated();
     }
 
-    public void Reject(string? remarks = null)
+    private static void EnsureActorAndTimestamp(Guid actorUserId, DateTimeOffset occurredAtUtc)
     {
-        EnsureUnderReview();
-        Status = AdmissionStatus.Rejected;
-        DecisionRemarks = NormalizeOptional(remarks);
-        MarkUpdated();
-    }
-
-    public void Waitlist(string? remarks = null)
-    {
-        EnsureUnderReview();
-        Status = AdmissionStatus.Waitlisted;
-        DecisionRemarks = NormalizeOptional(remarks);
-        MarkUpdated();
+        if (actorUserId == Guid.Empty) throw new ArgumentException("An authenticated staff actor is required.", nameof(actorUserId));
+        if (occurredAtUtc == default) throw new ArgumentException("A UTC timestamp is required.", nameof(occurredAtUtc));
     }
 
     public void Withdraw()
