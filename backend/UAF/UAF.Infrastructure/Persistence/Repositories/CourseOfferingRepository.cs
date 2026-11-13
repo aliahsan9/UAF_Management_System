@@ -48,10 +48,6 @@ internal sealed class CourseOfferingRepository : ICourseOfferingRepository
     public Task<CourseEnrollment?> GetEnrollmentAsync(Guid enrollmentId, CancellationToken ct = default) =>
         _dbContext.CourseEnrollments.FirstOrDefaultAsync(x => x.Id == enrollmentId, ct);
 
-    public Task<bool> StudentIsEligibleAsync(Guid studentId, CancellationToken ct = default) =>
-        _dbContext.Students.AnyAsync(x => x.Id == studentId && x.Status == StudentStatus.Active, ct);
-
-
 
     private Task<CourseOffering?> GetOfferingForUpdateAsync(Guid offeringId, CancellationToken ct) =>
         _dbContext.CourseOfferings
