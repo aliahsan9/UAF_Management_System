@@ -1,15 +1,28 @@
+using System.Text.Json;
 using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Scalar.AspNetCore;
 using UAF.API.Authorization;
 using UAF.API.Endpoints;
 using UAF.API.Extensions;
+using UAF.API.Health;
 using UAF.API.Middleware;
 using UAF.Application;
 using UAF.Infrastructure;
 using UAF.Infrastructure.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Logging.ClearProviders();
+builder.Logging.AddJsonConsole(options =>
+{
+    options.IncludeScopes = true;
+    options.UseUtcTimestamp = true;
+    options.TimestampFormat = "yyyy-MM-ddTHH:mm:ss.fffZ ";
+});
+
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddOpenApi();
@@ -39,12 +52,17 @@ builder.Services.AddRateLimiter(options =>
                 AutoReplenishment = true
             }));
 });
-builder.Services.AddHealthChecks();
+
+builder.Services.AddHealthChecks()
+    .AddCheck("self", () => HealthCheckResult.Healthy(), tags: ["live"])
+    .AddCheck<SqlServerHealthCheck>("sqlserver", tags: ["ready", "database"]);
 
 var app = builder.Build();
+
 if (app.Configuration.GetValue<bool>("Identity:SeedRolesOnStartup"))
     await IdentityRoleSeeder.SeedRolesAsync(app.Services);
 
+app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseExceptionHandler();
 app.UseHttpsRedirection();
 app.UseAuthentication();
@@ -61,7 +79,36 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.MapHealthChecks("/health");
+static Task WriteHealthResponse(HttpContext context, HealthReport report) =>
+    context.Response.WriteAsJsonAsync(new
+    {
+        status = report.Status.ToString(),
+        checks = report.Entries.Select(entry => new
+        {
+            name = entry.Key,
+            status = entry.Value.Status.ToString(),
+            durationMs = entry.Value.Duration.TotalMilliseconds
+        })
+    }, cancellationToken: context.RequestAborted);
+
+app.MapHealthChecks("/health/live", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("live"),
+    ResponseWriter = WriteHealthResponse
+});
+
+app.MapHealthChecks("/health/ready", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("ready"),
+    ResponseWriter = WriteHealthResponse
+});
+
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("ready"),
+    ResponseWriter = WriteHealthResponse
+});
+
 app.MapAdmissionEndpoints();
 app.MapApplicantAdmissionEndpoints();
 app.MapAdmissionDocumentReviewEndpoints();
@@ -79,6 +126,7 @@ app.MapGradeAppealEndpoints();
 app.MapGradeRevisionEndpoints();
 app.MapTranscriptEndpoints();
 app.MapAuthenticationEndpoints();
+
 app.Run();
 
 public partial class Program;
