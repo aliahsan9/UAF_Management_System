@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 using UAF.API.Authorization;
 using UAF.API.Endpoints;
 using Xunit;
@@ -23,7 +24,7 @@ public sealed class AdmissionEndpointAuthorizationTests
         await using var app = builder.Build();
         app.MapAdmissionEndpoints();
 
-        var endpoint = app.DataSources.SelectMany(x => x.Endpoints)
+        var endpoint = ((IEndpointRouteBuilder)app).DataSources.SelectMany(x => x.Endpoints)
             .OfType<RouteEndpoint>()
             .Single(x => x.RoutePattern.RawText == route);
 
