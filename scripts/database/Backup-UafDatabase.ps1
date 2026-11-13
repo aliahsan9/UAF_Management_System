@@ -22,7 +22,7 @@ $escapedDatabase = $Database.Replace("]", "]]")
 $sql = @"
 BACKUP DATABASE [$escapedDatabase]
 TO DISK = N'$escapedPath'
-WITH COPY_ONLY, INIT, CHECKSUM, COMPRESSION, STATS = 10;
+WITH COPY_ONLY, CHECKSUM, COMPRESSION, STATS = 10;
 RESTORE VERIFYONLY
 FROM DISK = N'$escapedPath'
 WITH CHECKSUM;
