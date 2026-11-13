@@ -8,6 +8,7 @@ namespace UAF.Application.Features.AcademicStructure.Abstractions;
 public interface IAcademicStructureRepository
 {
     Task<bool> UniversityExistsAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<bool> IsUniversityShortNameInUseAsync(string shortName, Guid? excludingId = null, CancellationToken cancellationToken = default);
     Task<bool> FacultyExistsAsync(Guid id, CancellationToken cancellationToken = default);
     Task<bool> DepartmentExistsAsync(Guid id, CancellationToken cancellationToken = default);
 
