@@ -845,6 +845,7 @@ A student may have only one pending appeal per finalized course grade. The datab
 ### Staff review endpoints
 
 - `GET /api/v1/grading/grade-appeals/pending`
+- `GET /api/v1/grading/grade-appeals/{appealId}/history`
 - `POST /api/v1/grading/grade-appeals/{appealId}/decision`
 
 Example decision:
