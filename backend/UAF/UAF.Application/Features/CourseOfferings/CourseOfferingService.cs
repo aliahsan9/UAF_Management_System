@@ -56,7 +56,7 @@ public sealed class CourseOfferingService
     public async Task UpdateOfferingAsync(Guid id, UpdateCourseOfferingRequest request, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        _ = await GetRequiredOfferingAsync(id, ct);
+        if (id == Guid.Empty) throw new ArgumentException("A valid course offering ID is required.", nameof(id));
         // Capacity changes share a serializable transaction with enrollment inserts.
         await _repository.UpdateOfferingAsync(id, request.Capacity, request.InstructorEmployeeId, ct);
     }
@@ -80,13 +80,10 @@ public sealed class CourseOfferingService
     public async Task<Guid> EnrollStudentAsync(Guid studentId, Guid offeringId, DateOnly enrolledOn, CancellationToken ct = default)
     {
         if (studentId == Guid.Empty) throw new ArgumentException("A valid student ID is required.", nameof(studentId));
-        var offering = await GetRequiredOfferingAsync(offeringId, ct);
-        if (offering.Status != CourseOfferingStatus.Published)
-            throw new InvalidOperationException("Students can only enroll in published course offerings.");
-        if (!await _repository.StudentIsEligibleAsync(studentId, ct))
-            throw new InvalidOperationException("The student is not active and eligible for enrollment.");
+        if (offeringId == Guid.Empty) throw new ArgumentException("A valid course offering ID is required.", nameof(offeringId));
 
-        // Repository performs the capacity check and insert in one serializable transaction.
+        // The repository validates offering status and student eligibility inside the same
+        // serializable transaction as the capacity check and insert.
         var enrollment = await _repository.EnrollAsync(studentId, offeringId, enrolledOn, ct);
         return enrollment.Id;
     }
