@@ -10,7 +10,7 @@ public sealed class PermissionAuthorizationHandler : AuthorizationHandler<Permis
         {
             ["Student"] = [UafPermissions.AdmissionsRead, UafPermissions.StudentsRead],
             ["Teacher"] = [UafPermissions.StudentsRead, UafPermissions.AttendanceManage, UafPermissions.GradesManage],
-            ["Registrar"] = UafPermissions.All,
+            ["Registrar"] = [UafPermissions.AdmissionsRead, UafPermissions.AdmissionsReview, UafPermissions.AdmissionsDecide, UafPermissions.StudentsRead, UafPermissions.StudentsManage, UafPermissions.GradesManage, UafPermissions.TranscriptsIssue],
             ["DepartmentAdmin"] = [UafPermissions.AdmissionsRead, UafPermissions.AdmissionsReview,
                 UafPermissions.StudentsRead, UafPermissions.StudentsManage, UafPermissions.AttendanceManage, UafPermissions.GradesManage],
             ["FinanceOfficer"] = [UafPermissions.FinanceRead, UafPermissions.FinanceManage],
