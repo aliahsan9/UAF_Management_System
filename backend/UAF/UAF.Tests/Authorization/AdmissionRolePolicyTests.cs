@@ -22,10 +22,11 @@ public sealed class AdmissionRolePolicyTests
         using var provider = services.BuildServiceProvider();
         var authorization = provider.GetRequiredService<IAuthorizationService>();
         var principal = new ClaimsPrincipal(new ClaimsIdentity(
-        [
-            new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
-            new Claim(ClaimTypes.Role, role)
-        ], "test"));
+            new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
+                new Claim(ClaimTypes.Role, role)
+            }, "test"));
 
         var staff = await authorization.AuthorizeAsync(principal, null, AuthorizationPolicies.AdmissionsStaff);
         var decision = await authorization.AuthorizeAsync(principal, null, AuthorizationPolicies.AdmissionsDecision);
