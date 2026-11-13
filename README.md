@@ -692,3 +692,70 @@ The initial examination workflow is built around a course offering and its curre
 The `MaximumMarks` and `PassingMarks` values are configured per examination, and published results include a pass/fail outcome calculated from that examination's passing threshold. This milestone does **not** assume UAF letter-grade boundaries, GPA/CGPA formulae, repeat-course rules, or transcript rules. Those must be supplied by the university before implementing the grading-scale and transcript modules. Student self-service result access and grade-point calculations are also not part of this initial milestone.
 
 Domain and authorization tests have been authored but have **not** been executed. The new entities and EF Core mappings have not been migrated or validated against SQL Server. Build, run tests, review the generated migration, and execute SQL Server integration tests before operational use.
+
+
+## Configurable Grading, GPA/CGPA and Student Academic Records
+
+This milestone adds a session-specific grading scale, immutable finalized course-grade snapshots, weighted GPA calculations and student self-service academic records.
+
+### Workflow
+
+1. Registrar or SuperAdmin creates one grading scale for an academic session.
+2. Grade bands define a letter grade, minimum percentage threshold, grade-point value and pass/fail outcome. Thresholds are inclusive lower bounds; the highest threshold not exceeding the student's percentage is selected. A band beginning at 0% is mandatory.
+3. Registrar or SuperAdmin publishes the scale. Published scales and their bands are immutable.
+4. Registrar, SuperAdmin or a DepartmentAdmin scoped to the course department finalizes a student's course grade for an eligible enrollment.
+5. The finalization request supplies the compiled course marks and total marks. Percentage is rounded to two decimal places (midpoint away from zero), then mapped through the published session scale.
+6. The student can retrieve their own academic record through the authenticated `/me` endpoint. Student identity is resolved from the JWT-linked `Student.IdentityUserId`; a caller cannot supply another student ID.
+
+### API endpoints
+
+| Method | Route | Purpose |
+|---|---|---|
+| POST | `/api/v1/grading/scales/` | Create a session grading scale |
+| GET | `/api/v1/grading/scales/sessions/{academicSessionId}` | Retrieve a session scale |
+| POST | `/api/v1/grading/scales/{scaleId}/publish` | Publish and lock the scale |
+| POST | `/api/v1/grading/offerings/{offeringId}/students/{studentId}/finalize` | Finalize a student's course grade |
+| GET | `/api/v1/academic-records/me` | Retrieve the authenticated student's academic record |
+
+### Example grading scale request
+
+```json
+{
+  "academicSessionId": "00000000-0000-0000-0000-000000000001",
+  "name": "Approved undergraduate grading scale",
+  "includeFailedCoursesInGpa": true,
+  "repeatCoursePolicy": 1,
+  "bands": [
+    { "letterGrade": "F", "minimumPercentage": 0, "gradePoints": 0, "isPassing": false },
+    { "letterGrade": "C", "minimumPercentage": 50, "gradePoints": 2, "isPassing": true },
+    { "letterGrade": "B", "minimumPercentage": 70, "gradePoints": 3, "isPassing": true },
+    { "letterGrade": "A", "minimumPercentage": 85, "gradePoints": 4, "isPassing": true }
+  ]
+}
+```
+
+The values above are illustrative only, not UAF's approved grading policy. `repeatCoursePolicy` values are `1 = AllAttempts`, `2 = LatestAttempt`, and `3 = HighestGrade`. Failed attempts can be included or excluded through `includeFailedCoursesInGpa`.
+
+### GPA calculation
+
+- Course quality points = `grade points × course credit hours`.
+- GPA = `sum(course quality points) ÷ sum(included course credit hours)`.
+- Semester GPA uses that session's published policy.
+- CGPA uses the repeat-course and failed-course settings from the most recent session represented in the student's finalized academic record.
+- GPA is rounded to two decimal places. If no eligible credit hours exist, GPA is returned as `null`, not zero.
+- Repeated attempts are grouped by course for `LatestAttempt` or `HighestGrade`; `AllAttempts` counts every attempt.
+
+### Security and data integrity
+
+- Grade-scale administration is restricted to Registrar/SuperAdmin.
+- Grade finalization is restricted to Registrar, SuperAdmin and DepartmentAdmin scoped to the course department.
+- Finalization revalidates enrollment and offering state inside a SQL Server serializable transaction.
+- A unique index prevents more than one finalized grade for the same student and course offering.
+- Course grades are immutable after finalization. There is no grade correction/revision workflow in this milestone; do not edit records directly in production.
+- Student self-service resolves the student's record from the authenticated Identity account and exposes only finalized course grades.
+
+### Important policy boundary
+
+The system does not hardcode UAF grade thresholds, grade-point mappings, failed-course rules or repeat-course policy. The JSON example is sample configuration only. The finalization API currently accepts the compiled course total from an authorized academic administrator; it does not yet aggregate exam components or attendance into a course total. Assessment weights, grade revision/appeals, effective-dated grading-scale replacement, transcript PDF generation, and officially approved UAF policy validation remain future work.
+
+Domain, GPA calculator and role-authorization tests have been authored but have **not** been executed. EF Core migrations and SQL Server integration tests have not been generated or run. Review and validate the model before applying a migration or using real student records.
