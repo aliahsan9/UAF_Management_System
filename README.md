@@ -283,7 +283,8 @@ Authenticated accounts assigned the default `Student` role can use the applicant
 | GET | `/api/v1/applicant/admissions/{id}` | Read an owned application |
 | POST | `/api/v1/applicant/admissions` | Create a draft for an active academic program |
 | PUT | `/api/v1/applicant/admissions/{id}` | Update applicant details while the application is Draft |
-| POST | `/api/v1/applicant/admissions/{id}/submit` | Submit an owned draft |
+| GET | `/api/v1/applicant/admissions/{id}/submission-readiness` | Check required and missing verified documents |
+| POST | `/api/v1/applicant/admissions/{id}/submit` | Submit only when every configured required document is verified |
 | POST | `/api/v1/applicant/admissions/{id}/withdraw` | Withdraw an eligible owned application |
 
 Applicant-created application numbers are generated server-side. An application is editable only in Draft status. Ownership-scoped repository queries return not-found for an application that belongs to another account, avoiding IDOR disclosure. Legacy staff-created records can have a null owner and are not visible through applicant self-service until linked through a controlled process.
@@ -304,6 +305,7 @@ Staff document review routes require the admissions staff policy (Registrar, Dep
 
 | Method | Route | Purpose |
 |---|---|---|
+| PUT | `/api/v1/admissions/documents/requirements/program/{academicProgramId}` | Replace the required document-type checklist for a program |
 | GET | `/api/v1/admissions/documents/application/{applicationId}` | List documents for staff review |
 | GET | `/api/v1/admissions/documents/{documentId}/download` | Download a document for verification |
 | POST | `/api/v1/admissions/documents/{documentId}/verify` | Verify a pending document |
@@ -311,11 +313,21 @@ Staff document review routes require the admissions staff policy (Registrar, Dep
 
 Verification stores reviewer Identity ID, UTC review timestamp, status, and remarks. A document can only be reviewed once; a new upload is required after rejection.
 
+Admissions staff configure the program checklist with a request such as:
+
+```json
+{
+  "requiredDocumentTypes": ["IdentityDocument", "AcademicTranscript", "Photograph"]
+}
+```
+
+The request replaces the complete checklist for that academic program; duplicate or unknown enum values and an empty checklist are rejected. The configured-by staff account is recorded on each requirement, and a unique database index prevents duplicate document-type rules for one program. Applicants can inspect readiness before submitting. A submission is blocked when no checklist has been configured or when any required type lacks at least one Verified upload. Pending and Rejected uploads do not satisfy a requirement. Both applicant self-service and staff-created application submission use this same gate. The example above is illustrative only and is **not** asserted to be UAF's official checklist.
+
 The Infrastructure layer currently provides a local development storage adapter. Files are stored outside `wwwroot`, with opaque generated names and no static-file route. Configure `AdmissionDocumentStorage:RootPath` to a private directory with restricted filesystem permissions. For production, replace this adapter with private object storage, add malware scanning/quarantine, backup/retention policies, and monitoring. The local provider is not a shared-storage solution for multiple API instances.
 
-**Admission policy note:** this implementation intentionally does not invent UAF's official document checklist. Required document types and the rule that gates final application submission must be confirmed against authorized university requirements before enabling complete application submission. Upload and verification are implemented, but the existing submit endpoint is not yet blocked on a configurable verified-document checklist.
+**Admission policy note:** the checklist is configurable and intentionally has no assumed UAF defaults. The university's actual required documents, per-program differences, file rules, and deadlines must be confirmed against authorized requirements before production configuration. Submission gating is implemented for both applicant and staff submission routes. Policy changes should be coordinated with the admissions office because they affect every draft application in that program.
 
-**Scope still outstanding:** configurable official document requirements and submission gating, decision actor/time audit records, atomic acceptance-to-student conversion with registrar-issued registration numbers, malware scanning, and SQL Server-backed API authorization/integration tests. These must be implemented and verified before treating admissions as complete or production-ready.
+**Scope still outstanding:** decision actor/time audit records, atomic acceptance-to-student conversion with registrar-issued registration numbers, malware scanning, SQL Server-backed API authorization/integration tests, and concurrency hardening for checklist changes versus simultaneous submission. These must be implemented and verified before treating admissions as complete or production-ready.
 
 ### Admission API access control
 
@@ -366,7 +378,8 @@ These are engineering objectives; their implementation and verification will be 
 - [x] Implement university, campus, faculty, department, and academic-program management endpoints with parent validation and unique-code checks.\n- [x] Add academic-session management endpoints and lifecycle tests. (Execution pending.)
 - [x] Implement initial administrative student-management workflows.
 - [x] Implement academic-session lifecycle and course catalogue management (build/test execution pending).
-- [x] Implement course offering scheduling and student enrollment workflows (build/test execution pending).\n- [ ] Extend admissions and undergraduate application workflows with applicant ownership, document handling, and integration tests.
+- [x] Implement course offering scheduling and student enrollment workflows (build/test execution pending).\n- [x] Implement applicant ownership, private document upload/review, configurable program requirements, and verified-document submission gating (automated test execution and database migration pending).
+- [ ] Add admission decision actor/time audit records and atomic acceptance-to-student conversion.
 - [ ] Develop fee and identity-card workflows.
 - [ ] Expand academic, LMS, examination, and employee modules.
 - [x] Add initial unit tests for admission application workflows (execution still pending).\n- [x] Implement administrative student registration, profile maintenance, program assignment, paginated search, and status lifecycle endpoints.\n- [x] Add student-management application unit tests (execution still pending).
