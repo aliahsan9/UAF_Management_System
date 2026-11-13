@@ -330,7 +330,7 @@ The Infrastructure layer currently provides a local development storage adapter.
 
 ### Admission review, decision audit, and student conversion
 
-The staff workflow records the authenticated reviewer and UTC timestamp when a submitted application enters review. Accept, reject, and waitlist decisions are recorded with the authenticated decision-maker, UTC timestamp, previous/new status, and remarks in an append-only application audit table. Rejection and waitlisting require a reason. Decision transitions use a serializable SQL Server transaction and an update lock on the application row so concurrent decisions cannot both succeed.
+The staff workflow records the authenticated reviewer and UTC timestamp when a submitted application enters review. Accept, reject, and waitlist decisions are recorded with the authenticated decision-maker, UTC timestamp, previous/new status, and remarks in an append-only application audit table. All final decisions require remarks; rejection and waitlisting should include the specific eligibility or documentation reason. Decision transitions use a serializable SQL Server transaction and an update lock on the application row so concurrent decisions cannot both succeed.
 
 | Method | Endpoint | Access |
 |---|---|---|
