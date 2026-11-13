@@ -39,7 +39,7 @@ public static class DependencyInjection
             .Bind(configuration.GetSection(JwtOptions.SectionName))
             .Validate(options => !string.IsNullOrWhiteSpace(options.Issuer), "Jwt:Issuer is required.")
             .Validate(options => !string.IsNullOrWhiteSpace(options.Audience), "Jwt:Audience is required.")
-            .Validate(options => System.Text.Encoding.UTF8.GetByteCount(options.SigningKey) >= 32, "Jwt:SigningKey must contain at least 32 UTF-8 bytes.")
+            .Validate(options => !string.IsNullOrWhiteSpace(options.SigningKey) && System.Text.Encoding.UTF8.GetByteCount(options.SigningKey) >= 32, "Jwt:SigningKey must contain at least 32 UTF-8 bytes.")
             .Validate(options => options.AccessTokenMinutes is >= 1 and <= 1440, "Jwt:AccessTokenMinutes must be between 1 and 1440.")
             .ValidateOnStart();
 
