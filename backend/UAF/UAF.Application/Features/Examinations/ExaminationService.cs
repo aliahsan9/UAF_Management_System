@@ -12,7 +12,7 @@ public sealed class ExaminationService
     {
         ArgumentNullException.ThrowIfNull(request);
         if (actorId == Guid.Empty) throw new ArgumentException("Authenticated actor is required.");
-        if (!await _repository.CanAdministerOfferingAsync(request.CourseOfferingId, actorId, departmentAdmin, ct))
+        if (!await _repository.CanAdministerOfferingAsync(request.CourseOfferingId, actorId, privileged, departmentAdmin, ct))
             throw new UnauthorizedAccessException("You cannot schedule examinations for this course offering.");
         if (await _repository.ExistsAsync(request.CourseOfferingId, request.Title, ct))
             throw new InvalidOperationException("An examination with this title already exists for this course offering.");
@@ -45,13 +45,13 @@ public sealed class ExaminationService
         await GetAuthorizedAsync(id, actorId, privileged, departmentAdmin, ct);
         await _repository.SubmitAsync(id, actorId, ct);
     }
-    public async Task ApproveAsync(Guid id, Guid actorId, bool departmentAdmin, CancellationToken ct)
+    public async Task ApproveAsync(Guid id, Guid actorId, bool privileged, bool departmentAdmin, CancellationToken ct)
     {
-        var exam = await GetAuthorizedAsync(id, actorId, privileged: false, departmentAdmin, ct);
+        var exam = await GetAuthorizedAsync(id, actorId, privileged, departmentAdmin, ct);
         exam.Approve(actorId, DateTimeOffset.UtcNow);
         await _unitOfWork.SaveChangesAsync(ct);
     }
-    public async Task PublishAsync(Guid id, Guid actorId, bool departmentAdmin, CancellationToken ct)
+    public async Task PublishAsync(Guid id, Guid actorId, bool privileged, bool departmentAdmin, CancellationToken ct)
     {
         var exam = await GetAuthorizedAsync(id, actorId, privileged: false, departmentAdmin, ct);
         exam.Publish(actorId, DateTimeOffset.UtcNow);
