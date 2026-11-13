@@ -58,7 +58,7 @@ public sealed class IdentityAuthenticationService : IAuthenticationService
             return AuthenticationResult.Failure("The account could not be assigned its default role.");
         }
 
-        return await CreateAuthenticationResultAsync(user, null, cancellationToken, remoteIpAddress: remoteIpAddress);
+        return await CreateAuthenticationResultAsync(user, cancellationToken, remoteIpAddress);
     }
 
     public async Task<AuthenticationResult> LoginAsync(LoginRequest request, string? remoteIpAddress = null, CancellationToken cancellationToken = default)
@@ -152,31 +152,16 @@ public sealed class IdentityAuthenticationService : IAuthenticationService
     }
 
     private async Task<AuthenticationResult> CreateAuthenticationResultAsync(
-        ApplicationUser user, string? alreadyCreatedRefreshToken, CancellationToken ct, bool persistRefreshToken = true, string? remoteIpAddress = null)
+        ApplicationUser user, CancellationToken ct, string? remoteIpAddress)
     {
         var roles = await _userManager.GetRolesAsync(user);
         var (accessToken, accessExpires) = _tokenGenerator.Generate(user, roles);
-        string? rawRefreshToken = alreadyCreatedRefreshToken;
-        DateTimeOffset? refreshExpires = null;
-
-        if (persistRefreshToken)
-        {
-            var created = CreateRefreshToken(user.Id, remoteIpAddress, _refreshTokenLifetime);
-            rawRefreshToken = created.RawToken;
-            refreshExpires = created.Entity.ExpiresAtUtc;
-            _dbContext.RefreshTokens.Add(created.Entity);
-            await _dbContext.SaveChangesAsync(ct);
-        }
-        else
-        {
-            refreshExpires = await _dbContext.RefreshTokens
-                .Where(x => x.TokenHash == HashToken(rawRefreshToken!))
-                .Select(x => (DateTimeOffset?)x.ExpiresAtUtc)
-                .SingleAsync(ct);
-        }
+        var created = CreateRefreshToken(user.Id, remoteIpAddress, _refreshTokenLifetime);
+        _dbContext.RefreshTokens.Add(created.Entity);
+        await _dbContext.SaveChangesAsync(ct);
 
         return new AuthenticationResult(true, null, accessToken, accessExpires,
-            user.Id.ToString(), user.Email, roles.ToArray(), rawRefreshToken, refreshExpires);
+            user.Id.ToString(), user.Email, roles.ToArray(), created.RawToken, created.Entity.ExpiresAtUtc);
     }
 
     private static (string RawToken, RefreshToken Entity) CreateRefreshToken(Guid userId, string? ipAddress, TimeSpan lifetime)
