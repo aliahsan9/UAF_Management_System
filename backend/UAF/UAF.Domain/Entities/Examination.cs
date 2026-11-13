@@ -18,6 +18,7 @@ public sealed class Examination : AuditableEntity
         ScheduledDate = scheduledDate;
         MaximumMarks = maximumMarks;
         PassingMarks = passingMarks;
+        WeightPercentage = weightPercentage;
         Status = ExaminationStatus.Draft;
     }
     public byte[] RowVersion { get; private set; } = Array.Empty<byte>();
