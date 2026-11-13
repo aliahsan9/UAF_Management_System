@@ -124,7 +124,7 @@ The Domain project remains independent. Infrastructure implements contracts defi
 
 ## Getting Started
 
-The backend currently contains the Domain project and an initial Application project. The full solution, Infrastructure, API, database configuration, and automated test projects have not yet been added. Setup and run instructions will be expanded as those pieces are implemented.
+The backend currently contains the Domain and Application projects, an initial admissions workflow, a solution file, and an xUnit test project. Infrastructure, API, database configuration, and production authentication have not yet been implemented. The test suite has been authored but still requires execution in a .NET 10 environment.
 
 ### Prerequisites
 
@@ -142,9 +142,21 @@ git clone https://github.com/aliahsan9/UAF_Management_System.git
 cd UAF_Management_System
 ```
 
+### Backend build and tests
+
+Open `backend/UAF/UAF.sln` in Visual Studio, or run these commands from the repository root:
+
+```bash
+dotnet restore backend/UAF/UAF.sln
+dotnet build backend/UAF/UAF.sln --no-restore
+dotnet test backend/UAF/UAF.sln --no-build
+```
+
+The current test project covers the initial admission application workflow using in-memory fakes. Database integration tests will be added after the Infrastructure layer is implemented.
+
 ### Backend setup
 
-Backend-specific commands, database configuration, migrations, and run instructions will be documented after the initial solution is committed.
+SQL Server configuration, migrations, API launch settings, and deployment instructions will be documented after the Infrastructure and API projects are implemented.
 
 Do not place real database passwords, JWT signing keys, API keys, or other secrets in source control. Use .NET user secrets or environment variables for local development and secure secret storage for deployed environments.
 
@@ -168,7 +180,8 @@ These are engineering objectives; their implementation and verification will be 
 - [x] Create the initial .NET Domain and Application projects.
 - [x] Model the initial university structure, students, admissions, academic sessions, courses, offerings, and course enrollments.
 - [x] Establish the first Application-layer admission use cases and persistence contracts.
-- [ ] Create the .NET solution file and remaining Clean Architecture projects.
+- [x] Create the .NET solution file and initial Domain, Application, and Tests projects.
+- [ ] Create the Infrastructure and API projects.
 - [ ] Configure SQL Server and Entity Framework Core.
 - [ ] Set up ASP.NET Core Identity and JWT authentication.
 - [ ] Implement roles and authorization policies.
@@ -176,7 +189,8 @@ These are engineering objectives; their implementation and verification will be 
 - [ ] Develop student and admissions workflows.
 - [ ] Develop fee and identity-card workflows.
 - [ ] Expand academic, LMS, examination, and employee modules.
-- [ ] Add unit and integration tests.
+- [x] Add initial unit tests for admission application workflows (execution still pending).
+- [ ] Add broader domain, integration, and authorization tests.
 - [ ] Document deployment, operations, and backup procedures.
 
 Roadmap items will be checked off only when the corresponding work is implemented and verified.
