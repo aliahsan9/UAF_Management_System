@@ -83,6 +83,15 @@ public sealed class UafDbContext : IdentityDbContext<ApplicationUser, IdentityRo
         if (ChangeTracker.Entries<ExaminationResultAudit>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
             throw new InvalidOperationException("Examination result audit records are append-only.");
 
+        if (ChangeTracker.Entries<StudentCourseGrade>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
+            throw new InvalidOperationException("Finalized student course grades are immutable; use an authorized grade-revision workflow.");
+
+        if (ChangeTracker.Entries<GradeScaleBand>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
+            throw new InvalidOperationException("Grade scale bands are immutable; create a new scale version instead.");
+
+        if (ChangeTracker.Entries<GradeScale>().Any(entry => entry.State == EntityState.Deleted || (entry.State == EntityState.Modified && entry.OriginalValues.GetValue<bool>(nameof(GradeScale.IsPublished)))))
+            throw new InvalidOperationException("Published grading scales cannot be modified or deleted.");
+
         var now = DateTimeOffset.UtcNow;
         foreach (var entry in ChangeTracker.Entries<AuditableEntity>())
         {
