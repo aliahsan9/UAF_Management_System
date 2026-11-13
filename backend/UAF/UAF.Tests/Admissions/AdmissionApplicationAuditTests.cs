@@ -22,9 +22,9 @@ public sealed class AdmissionApplicationAuditTests
 
         Assert.Equal(AdmissionStatus.Accepted, application.Status);
         Assert.Equal(reviewerId, application.ReviewStartedByUserId);
-        Assert.Equal(reviewAt.ToUniversalTime(), application.ReviewStartedAtUtc);
+        Assert.Equal<DateTimeOffset?>(reviewAt.ToUniversalTime(), application.ReviewStartedAtUtc);
         Assert.Equal(decisionMakerId, application.DecisionByUserId);
-        Assert.Equal(decisionAt.ToUniversalTime(), application.DecisionAtUtc);
+        Assert.Equal<DateTimeOffset?>(decisionAt.ToUniversalTime(), application.DecisionAtUtc);
         Assert.Equal("Eligibility confirmed.", application.DecisionRemarks);
     }
 
