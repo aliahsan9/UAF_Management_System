@@ -44,7 +44,9 @@ public sealed class AdmissionDocumentService
         var existing = await _repository.GetRequirementsForProgramAsync(academicProgramId, ct);
         foreach (var requirement in existing)
         {
-            if (!requested.Remove(requirement.DocumentType))
+            if (requested.Remove(requirement.DocumentType))
+                requirement.Reconfigure(configuredByUserId);
+            else
                 _repository.RemoveRequirement(requirement);
         }
         foreach (var type in requested)
@@ -81,6 +83,27 @@ public sealed class AdmissionDocumentService
             throw new InvalidOperationException("Submission is disabled because admissions staff have not configured required documents for this academic program.");
         if (!readiness.CanSubmit)
             throw new InvalidOperationException($"Application cannot be submitted. Verified documents are missing for: {string.Join(", ", readiness.MissingVerifiedDocumentTypes)}.");
+
+        application.Submit();
+        await _unitOfWork.SaveChangesAsync(ct);
+    }
+
+    public async Task SubmitStaffApplicationAsync(Guid applicationId, CancellationToken ct = default)
+    {
+        if (applicationId == Guid.Empty) throw new ArgumentException("A valid application ID is required.", nameof(applicationId));
+        var application = await _repository.GetApplicationByIdAsync(applicationId, ct)
+            ?? throw new KeyNotFoundException("Admission application was not found.");
+        if (application.Status != AdmissionStatus.Draft)
+            throw new InvalidOperationException("Only a draft application can be submitted.");
+
+        var requirements = await _repository.GetRequirementsForProgramAsync(application.AcademicProgramId, ct);
+        var requiredTypes = requirements.Select(x => x.DocumentType).Distinct().ToArray();
+        if (requiredTypes.Length == 0)
+            throw new InvalidOperationException("Submission is disabled because admissions staff have not configured required documents for this academic program.");
+        var verifiedTypes = (await _repository.GetVerifiedDocumentTypesAsync(applicationId, ct)).ToHashSet();
+        var missing = requiredTypes.Where(x => !verifiedTypes.Contains(x)).ToArray();
+        if (missing.Length > 0)
+            throw new InvalidOperationException($"Application cannot be submitted. Verified documents are missing for: {string.Join(", ", missing)}.");
 
         application.Submit();
         await _unitOfWork.SaveChangesAsync(ct);
