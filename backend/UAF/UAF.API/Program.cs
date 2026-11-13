@@ -21,6 +21,8 @@ builder.Services.AddAuthorization(options =>
         policy.RequireRole("Registrar", "DepartmentAdmin", "SuperAdmin"));
     options.AddPolicy(AuthorizationPolicies.AdmissionsDecision, policy =>
         policy.RequireRole("Registrar", "SuperAdmin"));
+    options.AddPolicy(AuthorizationPolicies.ApplicantSelfService, policy =>
+        policy.RequireAuthenticatedUser().RequireRole("Student"));
     options.AddPolicy(AuthorizationPolicies.AcademicStructureAdmin, policy =>
         policy.RequireRole("DepartmentAdmin", "SuperAdmin"));
     options.AddPolicy(AuthorizationPolicies.StudentManagement, policy =>
@@ -66,6 +68,7 @@ if (app.Environment.IsDevelopment())
 
 app.MapHealthChecks("/health");
 app.MapAdmissionEndpoints();
+app.MapApplicantAdmissionEndpoints();
 app.MapAcademicStructureEndpoints();
 app.MapAcademicCatalogEndpoints();
 app.MapStudentEndpoints();
