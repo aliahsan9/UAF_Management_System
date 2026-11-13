@@ -588,7 +588,7 @@ Attendance policy is configured once per academic session and can be changed onl
 
 ### Calculation
 
-Only **Finalized** attendance sessions are counted. Open and Cancelled sessions are excluded.
+Only **Finalized** attendance sessions are counted. Open and Cancelled sessions are excluded. Each student's denominator starts from their course enrollment date, so sessions held before that student's enrollment are not counted.
 
 ```text
 earned = PresentCount + (LateCount * LateCreditPercentage / 100)
@@ -619,7 +619,7 @@ Example policy request:
 }
 ```
 
-Policy configuration is restricted to Registrar and SuperAdmin. Teachers can report only on their own assigned offerings. DepartmentAdmin access is checked against an active Employee record linked to the caller and the course's department. Registrar and SuperAdmin can view all published/closed offerings.
+Policy configuration is restricted to Registrar and SuperAdmin. Teachers can report only on their own assigned offerings. DepartmentAdmin access is checked against an active Employee record linked to the caller and the course's department. Registrar and SuperAdmin can view all published/closed offerings. Closed offerings are available for historical reads/reports only; new attendance sessions, marks, and finalization require a published offering.
 
 **Important policy caveat:** changing the single policy configured for an academic session changes how that session's reports are calculated, including previously finalized attendance. This initial version does not preserve historical policy versions or freeze calculations at a reporting date. Obtain the approved university policy before configuration, and add effective-dated policy versions before relying on historical reports for formal decisions.
 
