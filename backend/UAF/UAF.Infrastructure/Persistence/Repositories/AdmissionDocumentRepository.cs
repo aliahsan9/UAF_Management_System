@@ -15,7 +15,7 @@ internal sealed class AdmissionDocumentRepository : IAdmissionDocumentRepository
     public Task<AdmissionDocument?> GetOwnedDocumentAsync(Guid applicationId, Guid documentId, Guid ownerUserId, CancellationToken ct = default) =>
         _db.AdmissionDocuments.FirstOrDefaultAsync(x =>
             x.Id == documentId && x.ApplicationId == applicationId &&
-            x.Application.OwnerUserId == ownerUserId, ct);
+            _db.AdmissionApplications.Any(a => a.Id == x.ApplicationId && a.OwnerUserId == ownerUserId), ct);
 
     public Task<AdmissionDocument?> GetByIdAsync(Guid documentId, CancellationToken ct = default) =>
         _db.AdmissionDocuments.FirstOrDefaultAsync(x => x.Id == documentId, ct);
