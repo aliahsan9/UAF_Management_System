@@ -29,7 +29,7 @@ public sealed class IdentityAuthenticationService : IAuthenticationService
         _dbContext = dbContext;
     }
 
-    public async Task<AuthenticationResult> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken = default)
+    public async Task<AuthenticationResult> RegisterAsync(RegisterRequest request, string? remoteIpAddress = null, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
         var email = request.Email.Trim().ToLowerInvariant();
@@ -55,10 +55,10 @@ public sealed class IdentityAuthenticationService : IAuthenticationService
             return AuthenticationResult.Failure("The account could not be assigned its default role.");
         }
 
-        return await CreateAuthenticationResultAsync(user, null, cancellationToken);
+        return await CreateAuthenticationResultAsync(user, null, cancellationToken, remoteIpAddress: remoteIpAddress);
     }
 
-    public async Task<AuthenticationResult> LoginAsync(LoginRequest request, CancellationToken cancellationToken = default)
+    public async Task<AuthenticationResult> LoginAsync(LoginRequest request, string? remoteIpAddress = null, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
         var email = request.Email.Trim().ToLowerInvariant();
@@ -72,7 +72,7 @@ public sealed class IdentityAuthenticationService : IAuthenticationService
         if (!signInResult.Succeeded)
             return AuthenticationResult.Failure("Invalid email or password.");
 
-        return await CreateAuthenticationResultAsync(user, null, cancellationToken);
+        return await CreateAuthenticationResultAsync(user, null, cancellationToken, remoteIpAddress: remoteIpAddress);
     }
 
     public async Task<AuthenticationResult> RefreshAsync(
@@ -144,7 +144,7 @@ public sealed class IdentityAuthenticationService : IAuthenticationService
     }
 
     private async Task<AuthenticationResult> CreateAuthenticationResultAsync(
-        ApplicationUser user, string? alreadyCreatedRefreshToken, CancellationToken ct, bool persistRefreshToken = true)
+        ApplicationUser user, string? alreadyCreatedRefreshToken, CancellationToken ct, bool persistRefreshToken = true, string? remoteIpAddress = null)
     {
         var roles = await _userManager.GetRolesAsync(user);
         var (accessToken, accessExpires) = _tokenGenerator.Generate(user, roles);
@@ -153,7 +153,7 @@ public sealed class IdentityAuthenticationService : IAuthenticationService
 
         if (persistRefreshToken)
         {
-            var created = CreateRefreshToken(user.Id, null);
+            var created = CreateRefreshToken(user.Id, remoteIpAddress);
             rawRefreshToken = created.RawToken;
             refreshExpires = created.Entity.ExpiresAtUtc;
             _dbContext.RefreshTokens.Add(created.Entity);
