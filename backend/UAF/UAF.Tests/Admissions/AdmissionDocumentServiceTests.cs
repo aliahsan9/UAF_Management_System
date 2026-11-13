@@ -202,6 +202,8 @@ public sealed class AdmissionDocumentServiceTests
     {
         private readonly Dictionary<Guid, AdmissionDocument> _documents = new();
         private readonly List<AdmissionDocumentRequirement> _requirements = new();
+        public Task<AdmissionApplication?> GetApplicationByIdAsync(Guid applicationId, CancellationToken ct = default) =>
+            Task.FromResult(application.Id == applicationId ? application : null);
         public Task<AdmissionApplication?> GetOwnedApplicationAsync(Guid applicationId, Guid ownerUserId, CancellationToken ct = default) =>
             Task.FromResult(application.Id == applicationId && application.OwnerUserId == ownerUserId ? application : null);
         public Task<AdmissionDocument?> GetOwnedDocumentAsync(Guid applicationId, Guid documentId, Guid ownerUserId, CancellationToken ct = default)
