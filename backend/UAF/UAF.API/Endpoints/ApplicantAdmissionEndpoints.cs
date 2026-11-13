@@ -35,10 +35,14 @@ public static class ApplicantAdmissionEndpoints
             return Results.NoContent();
         });
 
+        group.MapGet("/{id:guid}/submission-readiness", async (Guid id, ClaimsPrincipal user,
+            AdmissionDocumentService documents, CancellationToken ct) =>
+            Results.Ok(await documents.GetSubmissionReadinessAsync(GetUserId(user), id, ct)));
+
         group.MapPost("/{id:guid}/submit", async (Guid id, ClaimsPrincipal user,
-            AdmissionApplicationService service, CancellationToken ct) =>
+            AdmissionDocumentService documents, CancellationToken ct) =>
         {
-            await service.SubmitMyApplicationAsync(GetUserId(user), id, ct);
+            await documents.SubmitMyApplicationAsync(GetUserId(user), id, ct);
             return Results.NoContent();
         });
 
