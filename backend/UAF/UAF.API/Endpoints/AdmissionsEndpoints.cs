@@ -1,3 +1,4 @@
+using UAF.API.Authorization;
 using UAF.Application.Features.Admissions;
 using UAF.Application.Features.Admissions.Models;
 
@@ -12,7 +13,8 @@ public static class AdmissionsEndpoints
     public static IEndpointRouteBuilder MapAdmissionEndpoints(this IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup("/api/v1/admissions")
-            .WithTags("Admissions");
+            .WithTags("Admissions")
+            .RequireAuthorization(AuthorizationPolicies.AdmissionsStaff);
 
         group.MapPost("/", CreateDraft)
             .WithName("CreateAdmissionDraft")
@@ -40,21 +42,24 @@ public static class AdmissionsEndpoints
             .WithSummary("Accept an admission application")
             .Produces(StatusCodes.Status204NoContent)
             .ProducesProblem(StatusCodes.Status404NotFound)
-            .ProducesProblem(StatusCodes.Status409Conflict);
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .RequireAuthorization(AuthorizationPolicies.AdmissionsDecision);
 
         group.MapPost("/{id:guid}/reject", Reject)
             .WithName("RejectAdmissionApplication")
             .WithSummary("Reject an admission application")
             .Produces(StatusCodes.Status204NoContent)
             .ProducesProblem(StatusCodes.Status404NotFound)
-            .ProducesProblem(StatusCodes.Status409Conflict);
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .RequireAuthorization(AuthorizationPolicies.AdmissionsDecision);
 
         group.MapPost("/{id:guid}/waitlist", Waitlist)
             .WithName("WaitlistAdmissionApplication")
             .WithSummary("Place an admission application on the waitlist")
             .Produces(StatusCodes.Status204NoContent)
             .ProducesProblem(StatusCodes.Status404NotFound)
-            .ProducesProblem(StatusCodes.Status409Conflict);
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .RequireAuthorization(AuthorizationPolicies.AdmissionsDecision);
 
         group.MapPost("/{id:guid}/withdraw", Withdraw)
             .WithName("WithdrawAdmissionApplication")
