@@ -95,6 +95,18 @@ public sealed class CourseOfferingServiceTests
     }
 
     [Fact]
+    public async Task CompletedEnrollmentCannotBeDuplicated()
+    {
+        var id = await _service.CreateOfferingAsync(Request(capacity: 2));
+        await _service.PublishAsync(id);
+        var enrollmentId = await _service.EnrollStudentAsync(_repository.StudentId, id, new(2026, 11, 13));
+        await _service.CompleteEnrollmentAsync(enrollmentId);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            _service.EnrollStudentAsync(_repository.StudentId, id, new(2026, 11, 13)));
+    }
+
+    [Fact]
     public async Task ConcurrentEnrollmentRequests_NeverExceedOfferingCapacity()
     {
         var id = await _service.CreateOfferingAsync(Request(capacity: 2));
