@@ -25,6 +25,10 @@ public static class GradeAppealEndpoints
         staff.MapGet("/pending", async (HttpContext http, GradeAppealService service, CancellationToken ct) =>
             Results.Ok(await service.GetPendingAsync(GetActorId(http.User), IsPrivileged(http.User), http.User.IsInRole("DepartmentAdmin"), ct)))
             .WithName("GetPendingGradeAppeals");
+        staff.MapGet("/{appealId:guid}/history", async (Guid appealId, HttpContext http, GradeAppealService service, CancellationToken ct) =>
+            Results.Ok(await service.GetHistoryAsync(appealId, GetActorId(http.User), IsPrivileged(http.User),
+                http.User.IsInRole("DepartmentAdmin"), ct)))
+            .WithName("GetGradeAppealHistory");
         staff.MapPost("/{appealId:guid}/decision", async (Guid appealId, DecideGradeAppealRequest request, HttpContext http, GradeAppealService service, CancellationToken ct) =>
             Results.Ok(await service.DecideAsync(appealId, GetActorId(http.User), IsPrivileged(http.User),
                 http.User.IsInRole("DepartmentAdmin"), request, ct)))
