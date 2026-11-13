@@ -12,4 +12,5 @@ public interface IGradeAppealRepository
     Task<bool> CanReviewAppealAsync(Guid appealId, Guid actorId, bool privileged, bool departmentAdmin, CancellationToken ct);
     Task<IReadOnlyList<GradeAppealResponse>> GetPendingAppealsAsync(Guid actorId, bool privileged, bool departmentAdmin, CancellationToken ct);
     Task DecideAppealAsync(GradeAppeal appeal, GradeAppealAudit audit, CancellationToken ct);
+    Task<IReadOnlyList<GradeAppealAuditResponse>> GetAppealHistoryAsync(Guid appealId, CancellationToken ct);
 }
