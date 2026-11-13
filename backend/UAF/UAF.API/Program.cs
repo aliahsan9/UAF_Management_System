@@ -2,6 +2,7 @@ using System.IO.Compression;
 using System.Threading.RateLimiting;
 using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -34,11 +35,8 @@ builder.Host.UseSerilog((context, services, loggerConfiguration) =>
         .Enrich.WithProperty("Application", "UAF.ManagementSystem")
         .Enrich.WithProperty("Environment", context.HostingEnvironment.EnvironmentName)
         .WriteTo.Console()
-        .WriteTo.File(
-            path: "logs/uaf-.log",
-            rollingInterval: RollingInterval.Day,
-            retainedFileCountLimit: 14,
-            shared: true);
+        .WriteTo.File("logs/uaf-.log", rollingInterval: RollingInterval.Day,
+            retainedFileCountLimit: 14, shared: true);
 });
 
 builder.Services.AddResponseCompression(options =>
@@ -52,6 +50,33 @@ builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
 builder.Services.Configure<GzipCompressionProviderOptions>(options =>
     options.Level = CompressionLevel.Fastest);
 
+// Limit multipart buffering and total request size for document-upload endpoints.
+const long maximumUploadRequestBytes = 11 * 1024 * 1024;
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = maximumUploadRequestBytes;
+    options.ValueLengthLimit = 16 * 1024;
+    options.MultipartHeadersLengthLimit = 16 * 1024;
+    options.MemoryBufferThreshold = 64 * 1024;
+});
+builder.WebHost.ConfigureKestrel(options =>
+    options.Limits.MaxRequestBodySize = maximumUploadRequestBytes);
+
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+builder.Services.AddCors(options => options.AddPolicy("UafFrontend", policy =>
+{
+    if (allowedOrigins.Length == 0)
+        policy.SetIsOriginAllowed(_ => false);
+    else
+        policy.WithOrigins(allowedOrigins);
+
+    policy.AllowAnyMethod()
+        .WithHeaders("Authorization", "Content-Type", "X-Correlation-ID", "X-Refresh-Request")
+        .WithExposedHeaders("X-Correlation-ID")
+        .AllowCredentials()
+        .SetPreflightMaxAge(TimeSpan.FromMinutes(10));
+}));
+
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddOpenApi();
@@ -64,13 +89,16 @@ builder.Services.AddUafAuthorization();
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-    options.AddFixedWindowLimiter("auth", limiter =>
-    {
-        limiter.PermitLimit = 10;
-        limiter.Window = TimeSpan.FromMinutes(1);
-        limiter.QueueLimit = 0;
-        limiter.AutoReplenishment = true;
-    });
+    options.AddPolicy("auth", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+                AutoReplenishment = true
+            }));
     options.AddPolicy("transcript-verification", context =>
         RateLimitPartition.GetFixedWindowLimiter(
             context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
@@ -101,11 +129,18 @@ app.UseSerilogRequestLogging(options =>
         diagnosticContext.Set("RequestHost", httpContext.Request.Host.Value);
     };
 });
+app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseExceptionHandler();
 app.UseResponseCompression();
 app.UseMiddleware<ReferenceDataCacheInvalidationMiddleware>();
+
+if (!app.Environment.IsDevelopment())
+    app.UseHsts();
+
 app.UseHttpsRedirection();
+app.UseCors("UafFrontend");
 app.UseAuthentication();
+app.UseMiddleware<SecurityAuditMiddleware>();
 app.UseAuthorization();
 app.UseRateLimiter();
 
@@ -136,13 +171,11 @@ app.MapHealthChecks("/health/live", new HealthCheckOptions
     Predicate = check => check.Tags.Contains("live"),
     ResponseWriter = WriteHealthResponse
 });
-
 app.MapHealthChecks("/health/ready", new HealthCheckOptions
 {
     Predicate = check => check.Tags.Contains("ready"),
     ResponseWriter = WriteHealthResponse
 });
-
 app.MapHealthChecks("/health", new HealthCheckOptions
 {
     Predicate = check => check.Tags.Contains("ready"),
