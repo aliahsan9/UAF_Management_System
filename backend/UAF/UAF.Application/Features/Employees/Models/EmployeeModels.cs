@@ -1,0 +1,11 @@
+using UAF.Domain.Enums;
+namespace UAF.Application.Features.Employees.Models;
+public sealed record CreateEmployeeRequest(string EmployeeNumber,string FullName,string Email,string Designation,Guid DepartmentId,EmployeeCategory Category,DateOnly JoiningDate,string? PhoneNumber,Guid? IdentityUserId);
+public sealed record UpdateEmployeeProfileRequest(string FullName,string Email,string Designation,string? PhoneNumber);
+public sealed record TransferEmployeeRequest(Guid DepartmentId);
+public sealed record ChangeEmployeeStatusRequest(EmployeeStatus Status,DateOnly? EffectiveDate);
+public sealed record CreateTeacherProfileRequest(string HighestQualification,string Specialization,string AcademicRank);
+public sealed record UpdateTeacherProfileRequest(string HighestQualification,string Specialization,string AcademicRank);
+public sealed record EmployeeResponse(Guid Id,string EmployeeNumber,string FullName,string Email,string Designation,string? PhoneNumber,Guid DepartmentId,EmployeeCategory Category,DateOnly JoiningDate,EmployeeStatus Status,Guid? IdentityUserId,DateOnly? TerminationDate,DateTimeOffset CreatedAtUtc,DateTimeOffset? UpdatedAtUtc);
+public sealed record TeacherProfileResponse(Guid Id,Guid EmployeeId,string HighestQualification,string Specialization,string AcademicRank);
+public sealed record PagedEmployeesResponse(IReadOnlyList<EmployeeResponse> Items,int Page,int PageSize,int TotalCount,int TotalPages);
