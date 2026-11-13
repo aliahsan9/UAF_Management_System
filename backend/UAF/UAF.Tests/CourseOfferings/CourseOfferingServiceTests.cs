@@ -83,6 +83,20 @@ public sealed class CourseOfferingServiceTests
     }
 
     [Fact]
+    public async Task StudentCanReEnrollAfterDroppingPreviousRegistration()
+    {
+        var id = await _service.CreateOfferingAsync(Request(capacity: 1));
+        await _service.PublishAsync(id);
+        var firstEnrollmentId = await _service.EnrollStudentAsync(_repository.StudentId, id, new(2026, 11, 13));
+        await _service.DropEnrollmentAsync(firstEnrollmentId);
+
+        var secondEnrollmentId = await _service.EnrollStudentAsync(_repository.StudentId, id, new(2026, 11, 13));
+
+        Assert.NotEqual(firstEnrollmentId, secondEnrollmentId);
+        Assert.Equal(1, await _repository.GetActiveEnrollmentCountAsync(id));
+    }
+
+    [Fact]
     public async Task DroppingEnrollmentReleasesSeat()
     {
         var id = await _service.CreateOfferingAsync(Request(capacity: 1));
@@ -142,7 +156,7 @@ public sealed class CourseOfferingServiceTests
         {
             var offering = _offerings[offeringId];
             if (offering.Status != CourseOfferingStatus.Published) throw new InvalidOperationException();
-            if (_enrollments.Values.Any(x => x.StudentId == studentId && x.CourseOfferingId == offeringId)) throw new InvalidOperationException();
+            if (_enrollments.Values.Any(x => x.StudentId == studentId && x.CourseOfferingId == offeringId && x.Status == EnrollmentStatus.Enrolled)) throw new InvalidOperationException();
             if (_enrollments.Values.Count(x => x.CourseOfferingId == offeringId && x.Status == EnrollmentStatus.Enrolled) >= offering.Capacity)
                 throw new InvalidOperationException();
             var enrollment = new CourseEnrollment(studentId, offeringId, enrolledOn);
