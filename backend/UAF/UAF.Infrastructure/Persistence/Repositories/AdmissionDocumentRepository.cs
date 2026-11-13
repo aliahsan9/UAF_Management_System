@@ -10,6 +10,9 @@ internal sealed class AdmissionDocumentRepository : IAdmissionDocumentRepository
     private readonly UafDbContext _db;
     public AdmissionDocumentRepository(UafDbContext db) => _db = db;
 
+    public Task<AdmissionApplication?> GetApplicationByIdAsync(Guid applicationId, CancellationToken ct = default) =>
+        _db.AdmissionApplications.FirstOrDefaultAsync(x => x.Id == applicationId, ct);
+
     public Task<AdmissionApplication?> GetOwnedApplicationAsync(Guid applicationId, Guid ownerUserId, CancellationToken ct = default) =>
         _db.AdmissionApplications.FirstOrDefaultAsync(x => x.Id == applicationId && x.OwnerUserId == ownerUserId, ct);
 
