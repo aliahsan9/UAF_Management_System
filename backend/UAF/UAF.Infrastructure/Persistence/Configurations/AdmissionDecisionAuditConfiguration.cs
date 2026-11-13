@@ -9,7 +9,8 @@ public sealed class AdmissionDecisionAuditConfiguration : IEntityTypeConfigurati
 {
     public void Configure(EntityTypeBuilder<AdmissionDecisionAudit> builder)
     {
-        builder.ToTable("AdmissionDecisionAudits");
+        builder.ToTable("AdmissionDecisionAudits", table =>
+            table.HasCheckConstraint("CK_AdmissionDecisionAudits_StatusTransition", "[FromStatus] <> [ToStatus]"));
         builder.HasKey(x => x.Id);
         builder.Property(x => x.FromStatus).HasConversion<int>().IsRequired();
         builder.Property(x => x.ToStatus).HasConversion<int>().IsRequired();
