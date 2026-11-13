@@ -14,5 +14,6 @@ public interface IGradeRevisionRepository
     Task<GradeRevisionRequest?> GetRequestAsync(Guid requestId, CancellationToken ct);
     Task DecideRequestAsync(Guid requestId, Guid actorId, bool approve, string remarks, GradeRevision? revision, GradeRevisionAudit audit, int expectedRevisionNumber, CancellationToken ct);
     Task<bool> StudentOwnsGradeAsync(Guid gradeId, Guid studentId, CancellationToken ct);
+    Task<IReadOnlyList<GradeRevisionRequestResponse>> GetStudentRequestsAsync(Guid gradeId, Guid studentId, CancellationToken ct);
     Task<IReadOnlyList<GradeRevisionResponse>> GetRevisionHistoryAsync(Guid gradeId, CancellationToken ct);
 }
