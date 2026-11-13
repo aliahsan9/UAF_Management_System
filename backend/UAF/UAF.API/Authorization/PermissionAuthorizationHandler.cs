@@ -19,7 +19,7 @@ public sealed class PermissionAuthorizationHandler : AuthorizationHandler<Permis
                 UafPermissions.AdmissionsRead, UafPermissions.AdmissionsReview,
                 UafPermissions.StudentsRead, UafPermissions.StudentsManage,
                 UafPermissions.AcademicStructureManage, UafPermissions.AcademicCatalogManage,
-                UafPermissions.CourseOfferingsManage, UafPermissions.AttendanceManage,
+                UafPermissions.CourseOfferingsManage, UafPermissions.CourseGradesManage, UafPermissions.AttendanceManage,
                 UafPermissions.ExaminationsManage, UafPermissions.ExaminationsApprove,
                 UafPermissions.GradesManage, UafPermissions.GradeAppealsReview,
                 UafPermissions.GradeRevisionsManage
