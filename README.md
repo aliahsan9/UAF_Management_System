@@ -273,6 +273,23 @@ Authentication routes:
 
 Send access tokens using the `Authorization: Bearer <token>` header.
 
+### Applicant undergraduate application self-service
+
+Authenticated accounts assigned the default `Student` role can use the applicant routes below. The API derives the owner from the authenticated JWT subject; callers cannot submit or override `OwnerUserId`.
+
+| Method | Route | Purpose |
+|---|---|---|
+| GET | `/api/v1/applicant/admissions` | List only the authenticated applicant's applications |
+| GET | `/api/v1/applicant/admissions/{id}` | Read an owned application |
+| POST | `/api/v1/applicant/admissions` | Create a draft for an active academic program |
+| PUT | `/api/v1/applicant/admissions/{id}` | Update applicant details while the application is Draft |
+| POST | `/api/v1/applicant/admissions/{id}/submit` | Submit an owned draft |
+| POST | `/api/v1/applicant/admissions/{id}/withdraw` | Withdraw an eligible owned application |
+
+Applicant-created application numbers are generated server-side. An application is editable only in Draft status. Ownership-scoped repository queries return not-found for an application that belongs to another account, avoiding IDOR disclosure. Legacy staff-created records can have a null owner and are not visible through applicant self-service until linked through a controlled process.
+
+**Scope still outstanding:** document upload/storage and staff verification, decision actor/time audit records, atomic acceptance-to-student conversion with registrar-issued registration numbers, and SQL Server-backed API authorization/integration tests. These must be implemented and verified before treating admissions as complete or production-ready.
+
 ### Admission API access control
 
 The initial admission API is restricted to authenticated university staff because the current admission domain model does not yet associate an applicant record with the authenticated account. This avoids allowing one student account to submit, review, or withdraw another person's application by guessing or obtaining an application ID.
