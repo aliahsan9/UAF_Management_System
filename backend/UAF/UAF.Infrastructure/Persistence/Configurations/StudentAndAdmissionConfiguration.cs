@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using UAF.Domain.Entities;
+using UAF.Infrastructure.Identity;
 
 namespace UAF.Infrastructure.Persistence.Configurations;
 
@@ -36,7 +37,10 @@ public sealed class AdmissionApplicationConfiguration : IEntityTypeConfiguration
         builder.Property(x => x.DecisionRemarks).HasMaxLength(2000);
         builder.HasIndex(x => x.ApplicationNumber).IsUnique();
         builder.HasIndex(x => x.ApplicantEmail);
+        builder.HasIndex(x => x.OwnerUserId);
         builder.HasOne<AcademicProgram>().WithMany().HasForeignKey(x => x.AcademicProgramId)
+            .OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.OwnerUserId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }
