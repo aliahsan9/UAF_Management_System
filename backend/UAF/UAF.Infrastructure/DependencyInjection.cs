@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using UAF.Application.Common.Abstractions;
 using UAF.Application.Features.Admissions.Abstractions;
 using UAF.Application.Features.AcademicStructure.Abstractions;
+using UAF.Application.Features.Students.Abstractions;
 using UAF.Application.Features.Authentication.Abstractions;
 using UAF.Infrastructure.Identity;
 using UAF.Infrastructure.Persistence;
@@ -56,6 +57,7 @@ public static class DependencyInjection
 
         services.AddScoped<IAdmissionApplicationRepository, AdmissionApplicationRepository>();
         services.AddScoped<IAcademicStructureRepository, AcademicStructureRepository>();
+        services.AddScoped<IStudentRepository, StudentRepository>();
 
         return services;
     }
