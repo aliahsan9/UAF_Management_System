@@ -114,6 +114,10 @@ public sealed class IdentityAuthenticationService : IAuthenticationService
             return AuthenticationResult.Failure("The account is unavailable.");
         }
 
+        // Prepare the new access token before committing rotation so a signing failure cannot
+        // revoke the caller's only usable refresh credential.
+        var roles = await _userManager.GetRolesAsync(user);
+        var (accessToken, accessExpiresAtUtc) = _tokenGenerator.Generate(user, roles);
         var (newRawToken, newToken) = CreateRefreshToken(user.Id, remoteIpAddress, _refreshTokenLifetime);
         stored.Revoke(DateTimeOffset.UtcNow, remoteIpAddress, newToken.TokenHash);
         _dbContext.RefreshTokens.Add(newToken);
@@ -126,7 +130,8 @@ public sealed class IdentityAuthenticationService : IAuthenticationService
             return AuthenticationResult.Failure("Refresh token was already used. Please sign in again.");
         }
 
-        return await CreateAuthenticationResultAsync(user, newRawToken, cancellationToken, persistRefreshToken: false);
+        return new AuthenticationResult(true, null, accessToken, accessExpiresAtUtc,
+            user.Id.ToString(), user.Email, roles.ToArray(), newRawToken, newToken.ExpiresAtUtc);
     }
 
     public async Task<bool> RevokeAsync(
