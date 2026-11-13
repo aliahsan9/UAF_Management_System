@@ -83,8 +83,8 @@ internal sealed class ExaminationRepository : IExaminationRepository
             }
             else
             {
-                var result = new ExaminationResult(examinationId, item.StudentId, item.MarksObtained, item.IsAbsent, item.Remarks, actorId);
-                _db.ExaminationResults.Add(result);
+                var newResult = new ExaminationResult(examinationId, item.StudentId, item.MarksObtained, item.IsAbsent, item.Remarks, actorId);
+                _db.ExaminationResults.Add(newResult);
                 _db.ExaminationResultAudits.Add(new ExaminationResultAudit(examinationId, item.StudentId, null, item.MarksObtained,
                     false, item.IsAbsent, item.Reason, actorId, now));
             }
