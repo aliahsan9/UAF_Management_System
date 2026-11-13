@@ -39,6 +39,7 @@ public sealed class UafDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<AttendanceSession> AttendanceSessions => Set<AttendanceSession>();
     public DbSet<StudentAttendance> StudentAttendances => Set<StudentAttendance>();
     public DbSet<AttendanceChangeAudit> AttendanceChangeAudits => Set<AttendanceChangeAudit>();
+    public DbSet<AttendancePolicy> AttendancePolicies => Set<AttendancePolicy>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
