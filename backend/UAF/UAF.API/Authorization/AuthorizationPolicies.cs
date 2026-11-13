@@ -12,4 +12,5 @@ public static class AuthorizationPolicies
     public const string FinanceManagement = "Finance.Management";
     public const string EmployeeManagement = "Employees.Management";
     public const string AttendanceManagement = "Attendance.Management";
+    public const string AttendancePolicyManagement = "Attendance.PolicyManagement";
 }
