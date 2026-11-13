@@ -25,7 +25,7 @@ public sealed class AttendanceService
         return session.Id;
     }
 
-    public async Task MarkAsync(Guid sessionId, Guid actorId, bool privileged, MarkAttendanceRequest request, CancellationToken ct)
+    public async Task MarkAsync(Guid sessionId, Guid actorId, bool privileged, MarkAttendanceRequest request, CancellationToken ct, bool departmentAdmin = false)
     {
         ArgumentNullException.ThrowIfNull(request);
         if (sessionId == Guid.Empty || actorId == Guid.Empty) throw new ArgumentException("Session and authenticated actor are required.");
