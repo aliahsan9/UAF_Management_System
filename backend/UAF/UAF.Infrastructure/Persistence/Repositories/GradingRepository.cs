@@ -42,6 +42,16 @@ internal sealed class GradingRepository : IGradingRepository
             course.Id, offering.AcademicSessionId, course.Code, course.Title, course.CreditHours)).FirstOrDefaultAsync(ct);
     public Task<bool> CourseGradeExistsAsync(Guid offeringId, Guid studentId, CancellationToken ct) =>
         _db.StudentCourseGrades.AnyAsync(x => x.CourseOfferingId == offeringId && x.StudentId == studentId, ct);
+    public async Task<IReadOnlyList<AssessmentGradeItem>> GetAssessmentGradeItemsAsync(Guid offeringId, Guid studentId, CancellationToken ct) =>
+        await (from exam in _db.Examinations.AsNoTracking()
+               where exam.CourseOfferingId == offeringId && exam.Status != ExaminationStatus.Cancelled
+               join result in _db.ExaminationResults.AsNoTracking().Where(x => x.StudentId == studentId)
+                   on exam.Id equals result.ExaminationId into resultGroup
+               from result in resultGroup.DefaultIfEmpty()
+               orderby exam.ScheduledDate, exam.Id
+               select new AssessmentGradeItem(exam.Id, exam.Title, exam.WeightPercentage, exam.MaximumMarks,
+                   result == null ? null : (decimal?)result.MarksObtained,
+                   result == null ? null : (bool?)result.IsAbsent, exam.Status)).ToListAsync(ct);
     public async Task FinalizeCourseGradeAsync(StudentCourseGrade grade, CancellationToken ct)
     {
         await using var tx = await _db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
