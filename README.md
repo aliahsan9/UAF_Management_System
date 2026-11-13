@@ -684,10 +684,10 @@ The initial examination workflow is built around a course offering and its curre
 - DepartmentAdmin access is scoped to their active employee department. Registrar and SuperAdmin can manage all published offerings.
 - Marks are restricted to students currently enrolled in the course offering.
 - A unique database index prevents duplicate result rows for the same examination and student.
-- Marks updates and result submission use SQL Server serializable transactions. Submission verifies that all currently enrolled students have marks, including explicit zero-mark absences.
+- Marks updates and result submission use SQL Server serializable transactions. Submission verifies that all currently enrolled students have marks, including explicit zero-mark absences. Examination and result rows use SQL Server rowversion concurrency tokens; stale concurrent updates return HTTP 409.
 - Every initial marks entry and correction creates an append-only audit record containing old/new marks, absence state, actor, reason, and timestamp.
 - A result submitter cannot approve their own results. Result data is unavailable through the results endpoint until publication.
 
-The `MaximumMarks` and `PassingMarks` values are configured per examination. This milestone does **not** assume UAF letter-grade boundaries, GPA/CGPA formulae, repeat-course rules, or transcript rules. Those must be supplied by the university before implementing the grading-scale and transcript modules. Student self-service result access and grade-point calculations are also not part of this initial milestone.
+The `MaximumMarks` and `PassingMarks` values are configured per examination, and published results include a pass/fail outcome calculated from that examination's passing threshold. This milestone does **not** assume UAF letter-grade boundaries, GPA/CGPA formulae, repeat-course rules, or transcript rules. Those must be supplied by the university before implementing the grading-scale and transcript modules. Student self-service result access and grade-point calculations are also not part of this initial milestone.
 
 Domain and authorization tests have been authored but have **not** been executed. The new entities and EF Core mappings have not been migrated or validated against SQL Server. Build, run tests, review the generated migration, and execute SQL Server integration tests before operational use.
