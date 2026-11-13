@@ -19,6 +19,7 @@ public static class UafPermissions
     public const string ExaminationsApprove = "examinations.approve";
     public const string GradingScalesManage = "grading-scales.manage";
     public const string GradesManage = "grades.manage";
+    public const string CourseGradesManage = "course-grades.manage";
     public const string GradeAppealsReview = "grade-appeals.review";
     public const string GradeRevisionsManage = "grade-revisions.manage";
     public const string GradeRevisionsApprove = "grade-revisions.approve";
@@ -29,7 +30,7 @@ public static class UafPermissions
         AdmissionsRead, AdmissionsReview, AdmissionsDecide, StudentsRead, StudentsManage,
         AcademicStructureManage, AcademicCatalogManage, CourseOfferingsManage,
         FinanceRead, FinanceManage, EmployeesManage, AttendanceManage, AttendancePolicyManage,
-        ExaminationsManage, ExaminationsApprove, GradingScalesManage, GradesManage,
+        ExaminationsManage, ExaminationsApprove, GradingScalesManage, GradesManage, CourseGradesManage,
         GradeAppealsReview, GradeRevisionsManage, GradeRevisionsApprove, TranscriptsIssue
     ];
 }
