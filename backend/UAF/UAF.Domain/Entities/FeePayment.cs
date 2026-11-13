@@ -12,6 +12,7 @@ public sealed class FeePayment : AuditableEntity
         RecordedByUserId = recordedByUserId; Status = FeePaymentStatus.PendingVerification;
     }
     public Guid ChallanId { get; private set; }
+    public FeeChallan Challan { get; private set; } = null!;
     public decimal Amount { get; private set; }
     public string Method { get; private set; }
     public string ReferenceNumber { get; private set; }
