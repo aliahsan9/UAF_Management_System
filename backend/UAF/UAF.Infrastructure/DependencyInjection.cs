@@ -7,6 +7,7 @@ using UAF.Application.Features.Admissions.Abstractions;
 using UAF.Application.Features.AcademicStructure.Abstractions;
 using UAF.Application.Features.AcademicCatalog.Abstractions;
 using UAF.Application.Features.Students.Abstractions;
+using UAF.Application.Features.CourseOfferings.Abstractions;
 using UAF.Application.Features.Authentication.Abstractions;
 using UAF.Infrastructure.Identity;
 using UAF.Infrastructure.Persistence;
@@ -49,6 +50,7 @@ public static class DependencyInjection
         services.AddScoped<IAcademicStructureRepository, AcademicStructureRepository>();
         services.AddScoped<IAcademicCatalogRepository, AcademicCatalogRepository>();
         services.AddScoped<IStudentRepository, StudentRepository>();
+        services.AddScoped<ICourseOfferingRepository, CourseOfferingRepository>();
         return services;
     }
 }
