@@ -28,6 +28,7 @@ public sealed class Examination : AuditableEntity
     public DateOnly ScheduledDate { get; private set; }
     public decimal MaximumMarks { get; private set; }
     public decimal PassingMarks { get; private set; }
+    public decimal WeightPercentage { get; private set; }
     public ExaminationStatus Status { get; private set; }
     public Guid? SubmittedByUserId { get; private set; }
     public DateTimeOffset? SubmittedAtUtc { get; private set; }
