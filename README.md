@@ -96,7 +96,7 @@ UAF_Management_System/
         └── UAF.Tests/
 ```
 
-This is the proposed logical structure; the actual repository layout may differ as the solution is created.
+The Domain, Application, Infrastructure, and Tests projects have been created. The API project and additional module folders will be added in later stages.
 
 ### Layer responsibilities
 
@@ -124,7 +124,7 @@ The Domain project remains independent. Infrastructure implements contracts defi
 
 ## Getting Started
 
-The backend currently contains the Domain and Application projects, an initial admissions workflow, a solution file, and an xUnit test project. Infrastructure, API, database configuration, and production authentication have not yet been implemented. The test suite has been authored but still requires execution in a .NET 10 environment.
+The backend currently contains the Domain, Application, Infrastructure, and Tests projects. Infrastructure includes the EF Core SQL Server context, entity configurations, admission repository, dependency registration, and a design-time context factory. The API, database migrations, and production authentication have not yet been implemented. The test suite has been authored but still requires execution in a .NET 10 environment.
 
 ### Prerequisites
 
@@ -152,11 +152,19 @@ dotnet build backend/UAF/UAF.sln --no-restore
 dotnet test backend/UAF/UAF.sln --no-build
 ```
 
-The current test project covers the initial admission application workflow using in-memory fakes. Database integration tests will be added after the Infrastructure layer is implemented.
+The current test project covers the initial admission application workflow using in-memory fakes. The Infrastructure project uses EF Core 10 with SQL Server. Its design-time factory defaults to Windows LocalDB; set the `UAF_DB_CONNECTION_STRING` environment variable to target another development database.
 
-### Backend setup
+### EF Core migrations
 
-SQL Server configuration, migrations, API launch settings, and deployment instructions will be documented after the Infrastructure and API projects are implemented.
+After restoring the solution and ensuring SQL Server LocalDB is installed, install the EF Core CLI tool and create the initial migration:
+
+```bash
+dotnet tool install --global dotnet-ef --version 10.0.0
+dotnet ef migrations add InitialCreate --project backend/UAF/UAF.Infrastructure/UAF.Infrastructure.csproj --startup-project backend/UAF/UAF.Infrastructure/UAF.Infrastructure.csproj --output-dir Persistence/Migrations
+dotnet ef database update --project backend/UAF/UAF.Infrastructure/UAF.Infrastructure.csproj --startup-project backend/UAF/UAF.Infrastructure/UAF.Infrastructure.csproj
+```
+
+The design-time factory uses `UAF_DB_CONNECTION_STRING` when set; otherwise it targets `(localdb)\\MSSQLLocalDB` and a local database named `UafManagementDb`. These commands are documented but have not yet been executed against a database.
 
 Do not place real database passwords, JWT signing keys, API keys, or other secrets in source control. Use .NET user secrets or environment variables for local development and secure secret storage for deployed environments.
 
@@ -181,8 +189,11 @@ These are engineering objectives; their implementation and verification will be 
 - [x] Model the initial university structure, students, admissions, academic sessions, courses, offerings, and course enrollments.
 - [x] Establish the first Application-layer admission use cases and persistence contracts.
 - [x] Create the .NET solution file and initial Domain, Application, and Tests projects.
-- [ ] Create the Infrastructure and API projects.
-- [ ] Configure SQL Server and Entity Framework Core.
+- [x] Create the Infrastructure project with EF Core SQL Server integration.
+- [x] Configure entity mappings, keys, indexes, relationships, and database constraints.
+- [x] Implement the admission application repository and infrastructure dependency registration.
+- [ ] Generate and apply the initial EF Core migration against a real development database.
+- [ ] Create the API project and HTTP endpoints.
 - [ ] Set up ASP.NET Core Identity and JWT authentication.
 - [ ] Implement roles and authorization policies.
 - [ ] Establish the university structure (faculties, departments, programs, and academic sessions).
