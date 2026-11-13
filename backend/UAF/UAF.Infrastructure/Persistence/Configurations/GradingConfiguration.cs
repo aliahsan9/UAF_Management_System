@@ -51,6 +51,8 @@ public sealed class StudentCourseGradeConfiguration : IEntityTypeConfiguration<S
             t.HasCheckConstraint("CK_StudentCourseGrades_Marks", "[TotalMarks] > 0 AND [MarksObtained] >= 0 AND [MarksObtained] <= [TotalMarks]");
             t.HasCheckConstraint("CK_StudentCourseGrades_Percentage", "[Percentage] >= 0 AND [Percentage] <= 100");
             t.HasCheckConstraint("CK_StudentCourseGrades_CreditHours", "[CreditHours] > 0");
+            t.HasCheckConstraint("CK_StudentCourseGrades_GradePoints", "[GradePoints] >= 0 AND [GradePoints] <= 10");
+            t.HasCheckConstraint("CK_StudentCourseGrades_RepeatPolicy", "[RepeatCoursePolicy] IN (1, 2, 3)");
         });
         b.HasKey(x => x.Id);
         b.Property(x => x.CourseCode).HasMaxLength(30).IsRequired();
