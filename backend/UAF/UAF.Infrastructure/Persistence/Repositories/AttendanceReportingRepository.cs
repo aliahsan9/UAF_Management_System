@@ -20,9 +20,10 @@ internal sealed class AttendanceReportingRepository : IAttendanceReportingReposi
             .Where(x => x.Id == offeringId)
             .Select(x => new { x.Id, x.AcademicSessionId }).SingleOrDefaultAsync(ct);
         if (offering is null) return null;
-        var finalizedSessionIds = await _db.AttendanceSessions.AsNoTracking()
+        var finalizedSessions = await _db.AttendanceSessions.AsNoTracking()
             .Where(x => x.CourseOfferingId == offeringId && x.Status == AttendanceSessionStatus.Finalized)
-            .Select(x => x.Id).ToArrayAsync(ct);
+            .Select(x => new { x.Id, x.AttendanceDate }).ToListAsync(ct);
+        var finalizedSessionIds = finalizedSessions.Select(x => x.Id).ToArray();
         var roster = await (
             from enrollment in _db.CourseEnrollments.AsNoTracking()
             join student in _db.Students.AsNoTracking() on enrollment.StudentId equals student.Id
@@ -30,23 +31,32 @@ internal sealed class AttendanceReportingRepository : IAttendanceReportingReposi
                 && enrollment.Status != EnrollmentStatus.Dropped
                 && enrollment.Status != EnrollmentStatus.Withdrawn
             orderby student.RegistrationNumber
-            select new { enrollment.StudentId, enrollment.Status, student.RegistrationNumber, student.FullName }
+            select new { enrollment.StudentId, enrollment.Status, enrollment.EnrolledOn, student.RegistrationNumber, student.FullName }
         ).ToListAsync(ct);
-        List<(Guid StudentId, AttendanceStatus Status)> marks;
+        List<(Guid StudentId, AttendanceStatus Status, DateOnly AttendanceDate)> marks;
         if (finalizedSessionIds.Length == 0)
         {
-            marks = new List<(Guid StudentId, AttendanceStatus Status)>();
+            marks = new List<(Guid StudentId, AttendanceStatus Status, DateOnly AttendanceDate)>();
         }
         else
         {
-            var markRows = await _db.StudentAttendances.AsNoTracking()
-                .Where(x => finalizedSessionIds.Contains(x.AttendanceSessionId))
-                .Select(x => new { x.StudentId, x.Status }).ToListAsync(ct);
-            marks = markRows.Select(x => (x.StudentId, x.Status)).ToList();
+            var markRows = await (
+                from mark in _db.StudentAttendances.AsNoTracking()
+                join attendanceSession in _db.AttendanceSessions.AsNoTracking()
+                    on mark.AttendanceSessionId equals attendanceSession.Id
+                where finalizedSessionIds.Contains(mark.AttendanceSessionId)
+                select new { mark.StudentId, mark.Status, attendanceSession.AttendanceDate }
+            ).ToListAsync(ct);
+            marks = markRows.Select(x => (x.StudentId, x.Status, x.AttendanceDate)).ToList();
         }
-        var byStudent = marks.GroupBy(x => x.StudentId).ToDictionary(g => g.Key, g => (IReadOnlyList<AttendanceStatus>)g.Select(x => x.Status).ToArray());
-        var students = roster.Select(x => new AttendanceReportStudentSource(x.StudentId, x.RegistrationNumber, x.FullName, x.Status,
-            byStudent.TryGetValue(x.StudentId, out var values) ? values : Array.Empty<AttendanceStatus>())).ToArray();
+                var students = roster.Select(x =>
+        {
+            var eligibleSessionCount = finalizedSessions.Count(session => session.AttendanceDate >= x.EnrolledOn);
+            var studentMarks = marks.Where(mark => mark.StudentId == x.StudentId && mark.AttendanceDate >= x.EnrolledOn)
+                .Select(mark => mark.Status).ToArray();
+            return new AttendanceReportStudentSource(x.StudentId, x.RegistrationNumber, x.FullName, x.Status,
+                eligibleSessionCount, studentMarks);
+        }).ToArray();
         return new AttendanceReportSource(offeringId, offering.AcademicSessionId, finalizedSessionIds.Length, students);
     }
 }
