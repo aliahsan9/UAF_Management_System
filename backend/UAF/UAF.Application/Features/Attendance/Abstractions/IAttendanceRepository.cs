@@ -9,6 +9,6 @@ public interface IAttendanceRepository
     Task AddSessionAsync(AttendanceSession session, CancellationToken ct);
     Task<AttendanceSession?> GetSessionAsync(Guid sessionId, CancellationToken ct);
     Task<IReadOnlyList<StudentAttendance>> GetMarksAsync(Guid sessionId, CancellationToken ct);
-    Task MarkAsync(Guid sessionId, Guid actorUserId, bool privilegedActor, IReadOnlyCollection<AttendanceMarkItem> marks, CancellationToken ct);
-    Task FinalizeAsync(Guid sessionId, Guid actorUserId, bool privilegedActor, CancellationToken ct);
+    Task MarkAsync(Guid sessionId, Guid actorUserId, bool privilegedActor, IReadOnlyCollection<AttendanceMarkItem> marks, CancellationToken ct, bool departmentAdmin = false);
+    Task FinalizeAsync(Guid sessionId, Guid actorUserId, bool privilegedActor, CancellationToken ct, bool departmentAdmin = false);
 }
