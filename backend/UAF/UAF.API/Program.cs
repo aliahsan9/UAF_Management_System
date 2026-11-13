@@ -63,6 +63,7 @@ app.MapFeeEndpoints();
 app.MapEmployeeEndpoints();
 app.MapAttendanceEndpoints();
 app.MapExaminationEndpoints();
+app.MapGradingEndpoints();
 app.MapAuthenticationEndpoints();
 app.Run();
 
