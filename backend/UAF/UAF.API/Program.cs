@@ -1,29 +1,28 @@
 using Scalar.AspNetCore;
 using UAF.API.Endpoints;
+using UAF.API.Extensions;
 using UAF.API.Middleware;
 using UAF.Application;
 using UAF.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Consistent machine-readable API errors.
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
-
-// API documentation.
 builder.Services.AddOpenApi();
 
-// Application and persistence registrations.
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddJwtAuthentication(builder.Configuration);
 
-// Basic liveness endpoint. Database readiness will be added with deployment configuration.
 builder.Services.AddHealthChecks();
 
 var app = builder.Build();
 
 app.UseExceptionHandler();
 app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
 
 if (app.Environment.IsDevelopment())
 {
@@ -37,8 +36,8 @@ if (app.Environment.IsDevelopment())
 
 app.MapHealthChecks("/health");
 app.MapAdmissionEndpoints();
+app.MapAuthenticationEndpoints();
 
 app.Run();
 
-// Exposes the entry point to WebApplicationFactory in integration tests.
 public partial class Program;
