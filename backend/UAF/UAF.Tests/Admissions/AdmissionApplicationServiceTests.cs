@@ -126,6 +126,35 @@ public sealed class AdmissionApplicationServiceTests
                 null));
     }
 
+    [Fact]
+    public async Task ApplicantCanOnlyReadTheirOwnApplication()
+    {
+        var ownerId = Guid.NewGuid();
+        var otherUserId = Guid.NewGuid();
+        var created = await _service.CreateApplicantDraftAsync(ownerId,
+            new CreateApplicantDraftRequest("Applicant One", "one@example.com", Guid.NewGuid(), null));
+
+        var own = await _service.GetMyApplicationAsync(ownerId, created.Id);
+        Assert.Equal(created.Id, own.Id);
+
+        await Assert.ThrowsAsync<KeyNotFoundException>(
+            () => _service.GetMyApplicationAsync(otherUserId, created.Id));
+    }
+
+    [Fact]
+    public async Task ApplicantCanSubmitOwnDraftButCannotEditAfterSubmission()
+    {
+        var ownerId = Guid.NewGuid();
+        var created = await _service.CreateApplicantDraftAsync(ownerId,
+            new CreateApplicantDraftRequest("Applicant One", "one@example.com", Guid.NewGuid(), null));
+
+        await _service.SubmitMyApplicationAsync(ownerId, created.Id);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            _service.UpdateMyDraftAsync(ownerId, created.Id,
+                new UpdateApplicantDraftRequest("Changed Name", "changed@example.com", null)));
+    }
+
     private static CreateAdmissionApplicationRequest CreateRequest() =>
         new(
             "UAF-2026-001",
