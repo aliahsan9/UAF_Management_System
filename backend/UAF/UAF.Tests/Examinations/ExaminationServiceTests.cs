@@ -152,7 +152,7 @@ public sealed class ExaminationServiceTests
     [Fact]
     public async Task OfferingList_RequiresManagementAuthorization()
     {
-        var offering = Guid.NewGuid();
+        var offering = _repository.OfferingId;
         _repository.CanManage = false;
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
             _service.GetOfferingExaminationsAsync(offering, _actorId, false, false, default));
