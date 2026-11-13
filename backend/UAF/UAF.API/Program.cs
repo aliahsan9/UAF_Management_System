@@ -66,6 +66,7 @@ app.MapAttendanceEndpoints();
 app.MapExaminationEndpoints();
 app.MapGradingEndpoints();
 app.MapGradeAppealEndpoints();
+app.MapGradeRevisionEndpoints();
 app.MapAuthenticationEndpoints();
 app.Run();
 
