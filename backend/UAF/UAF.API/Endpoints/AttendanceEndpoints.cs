@@ -14,17 +14,17 @@ public static class AttendanceEndpoints
         group.MapPost("/sessions", async (CreateAttendanceSessionRequest request, HttpContext http, AttendanceService service, CancellationToken ct) =>
         {
             var actor = GetActorId(http.User);
-            var id = await service.CreateSessionAsync(request, actor, IsPrivileged(http.User), ct);
+            var id = await service.CreateSessionAsync(request, actor, IsPrivileged(http.User), ct, IsDepartmentAdmin(http.User));
             return Results.Created($"/api/v1/attendance/sessions/{id}", new { id });
         }).WithName("CreateAttendanceSession");
 
         group.MapGet("/sessions/{id:guid}", async (Guid id, HttpContext http, AttendanceService service, CancellationToken ct) =>
-            Results.Ok(await service.GetAsync(id, GetActorId(http.User), IsPrivileged(http.User), ct)))
+            Results.Ok(await service.GetAsync(id, GetActorId(http.User), IsPrivileged(http.User), ct, IsDepartmentAdmin(http.User))))
             .WithName("GetAttendanceSession");
 
         group.MapPut("/sessions/{id:guid}/marks", async (Guid id, MarkAttendanceRequest request, HttpContext http, AttendanceService service, CancellationToken ct) =>
         {
-            await service.MarkAsync(id, GetActorId(http.User), IsPrivileged(http.User), request, ct);
+            await service.MarkAsync(id, GetActorId(http.User), IsPrivileged(http.User), request, ct, IsDepartmentAdmin(http.User));
             return Results.NoContent();
         }).WithName("MarkStudentAttendance");
 
@@ -62,5 +62,8 @@ public static class AttendanceEndpoints
     }
 
     private static bool IsPrivileged(ClaimsPrincipal principal) =>
-        principal.IsInRole("Registrar") || principal.IsInRole("DepartmentAdmin") || principal.IsInRole("SuperAdmin");
+        principal.IsInRole("Registrar") || principal.IsInRole("SuperAdmin");
+
+    private static bool IsDepartmentAdmin(ClaimsPrincipal principal) =>
+        principal.IsInRole("DepartmentAdmin");
 }
