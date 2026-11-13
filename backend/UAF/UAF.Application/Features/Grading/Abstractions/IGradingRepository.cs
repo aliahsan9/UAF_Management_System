@@ -11,6 +11,7 @@ public interface IGradingRepository
     Task AddScaleAsync(GradeScale scale, CancellationToken ct);
     Task<bool> CanFinalizeGradeAsync(Guid offeringId, Guid actorId, bool privileged, bool departmentAdmin, CancellationToken ct);
     Task<CourseGradeSource?> GetCourseGradeSourceAsync(Guid offeringId, Guid studentId, CancellationToken ct);
+    Task<IReadOnlyList<AssessmentGradeItem>> GetAssessmentGradeItemsAsync(Guid offeringId, Guid studentId, CancellationToken ct);
     Task<bool> CourseGradeExistsAsync(Guid offeringId, Guid studentId, CancellationToken ct);
     Task FinalizeCourseGradeAsync(StudentCourseGrade grade, CancellationToken ct);
     Task<Guid?> GetStudentIdForIdentityUserAsync(Guid identityUserId, CancellationToken ct);
