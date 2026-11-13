@@ -1,0 +1,38 @@
+name: .NET CI
+
+on:
+  push:
+    branches: [ "master" ]
+    paths:
+      - "backend/**"
+      - ".github/workflows/dotnet.yml"
+  pull_request:
+    branches: [ "master" ]
+    paths:
+      - "backend/**"
+      - ".github/workflows/dotnet.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        run: dotnet restore backend/UAF/UAF.sln
+
+      - name: Build
+        run: dotnet build backend/UAF/UAF.sln --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test backend/UAF/UAF.sln --configuration Release --no-build --logger "trx;LogFileName=test-results.trx"
