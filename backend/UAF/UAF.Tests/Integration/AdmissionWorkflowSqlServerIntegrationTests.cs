@@ -89,11 +89,29 @@ public sealed class AdmissionWorkflowSqlServerIntegrationTests
             {
                 var workflow = scope.ServiceProvider.GetRequiredService<IAdmissionWorkflowRepository>();
                 await workflow.StartReviewAsync(applicationId, reviewerId, DateTimeOffset.UtcNow);
-                await workflow.RecordDecisionAsync(applicationId, decisionMakerId,
-                    AdmissionStatus.Accepted, "Integration test acceptance.", DateTimeOffset.UtcNow);
                 await workflow.ConfigureRegistrationSeriesAsync(programId, 2026, "TEST-CS", 1,
                     registrarId);
             }
+
+            async Task<bool> TryAcceptAsync()
+            {
+                using var scope = provider.CreateScope();
+                var workflow = scope.ServiceProvider.GetRequiredService<IAdmissionWorkflowRepository>();
+                try
+                {
+                    await workflow.RecordDecisionAsync(applicationId, decisionMakerId,
+                        AdmissionStatus.Accepted, "Integration test acceptance.", DateTimeOffset.UtcNow);
+                    return true;
+                }
+                catch (InvalidOperationException)
+                {
+                    return false;
+                }
+            }
+
+            var decisionResults = await Task.WhenAll(TryAcceptAsync(), TryAcceptAsync());
+            Assert.Single(decisionResults.Where(x => x));
+            Assert.Single(decisionResults.Where(x => !x));
 
             async Task<Student> ConvertAsync()
             {
