@@ -82,7 +82,7 @@ public sealed class GradingService
             {
                 var policy = group.OrderByDescending(x => x.FinalizedAtUtc).First();
                 var result = GpaCalculator.Calculate(group, policy.RepeatCoursePolicy, policy.IncludeFailedCoursesInGpa);
-                return new SemesterGpaResponse(group.Key.AcademicSessionId, group.Key.AcademicSessionName, result.Gpa ?? 0m, result.CreditHours, group.OrderBy(x => x.CourseCode).ToArray());
+                return new SemesterGpaResponse(group.Key.AcademicSessionId, group.Key.AcademicSessionName, result.Gpa, result.CreditHours, group.OrderBy(x => x.CourseCode).ToArray());
             }).ToArray();
         decimal? cgpa = null;
         decimal totalCredits = 0;
