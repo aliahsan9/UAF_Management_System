@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using UAF.Application.Common.Caching;
 using UAF.Application.Features.Admissions;
 using UAF.Application.Features.AcademicStructure;
 using UAF.Application.Features.AcademicCatalog;
@@ -18,6 +19,8 @@ public static class DependencyInjection
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
+        services.AddHybridCache();
+        services.AddScoped<IApplicationCache, HybridApplicationCache>();
         services.AddScoped<AdmissionApplicationService>();
         services.AddScoped<AdmissionWorkflowService>();
         services.AddScoped<AdmissionDocumentService>();
