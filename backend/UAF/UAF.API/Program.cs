@@ -65,6 +65,7 @@ app.MapEmployeeEndpoints();
 app.MapAttendanceEndpoints();
 app.MapExaminationEndpoints();
 app.MapGradingEndpoints();
+app.MapGradeAppealEndpoints();
 app.MapAuthenticationEndpoints();
 app.Run();
 
