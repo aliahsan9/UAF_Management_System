@@ -458,3 +458,33 @@ GitHub: [@aliahsan9](https://github.com/aliahsan9)
 <p align="center">
   Built as an academic project with a focus on maintainable architecture, secure workflows, and practical university management.
 </p>
+
+
+## Fee and Challan Management
+
+The backend now includes an initial Finance module:
+
+- Configurable fee heads and fee structures by academic program, academic session, and semester.
+- Finance Officer / SuperAdmin-only fee configuration, challan issuance, payment recording, verification, and account inquiry.
+- Student fee accounts created on first challan issuance.
+- Challan line snapshots preserve fee-head code, name, and amount at issuance time.
+- PKR amounts use SQL Server `decimal(18,2)`; fee amounts are configurable and are not represented as an official UAF fee schedule.
+- Payments are recorded as pending verification. A different Finance Officer account must verify or reject the payment; rejection requires remarks.
+- SQL Server serializable transactions and row locks protect payment verification from concurrent overpayment.
+- Outstanding balances include only verified payments; pending and rejected payments do not reduce the balance.
+
+### Finance API
+
+| Method | Route | Purpose |
+|---|---|---|
+| POST | `/api/v1/finance/fee-heads` | Create a configurable fee head |
+| POST | `/api/v1/finance/fee-structures` | Configure fee items for program/session/semester |
+| POST | `/api/v1/finance/fee-structures/{id}/publish` | Publish a fee structure |
+| POST | `/api/v1/finance/challans` | Issue a student challan |
+| POST | `/api/v1/finance/challans/{id}/payments` | Record a payment for verification |
+| POST | `/api/v1/finance/payments/{id}/verification` | Verify or reject a payment |
+| GET | `/api/v1/finance/students/{studentId}/account` | View balances, challans, and payment history |
+
+All routes currently require FinanceOfficer or SuperAdmin. Student self-service fee-account access, payment gateway reconciliation, bank integration, scheduled late-fee calculation, reversal/refund workflows, and immutable payment audit events remain future hardening work. Late fees are currently supplied explicitly by an authorized Finance Officer; do not assume an official UAF late-fee policy.
+
+The module has domain tests authored. No .NET build, test run, migration generation, or database update has been performed in this environment. Create and apply an EF Core migration after reviewing the model and running the full test suite locally.
