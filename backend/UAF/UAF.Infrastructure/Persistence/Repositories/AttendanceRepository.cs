@@ -4,7 +4,6 @@ using UAF.Application.Features.Attendance.Abstractions;
 using UAF.Application.Features.Attendance.Models;
 using UAF.Domain.Entities;
 using UAF.Domain.Enums;
-using UAF.Infrastructure.Identity;
 namespace UAF.Infrastructure.Persistence.Repositories;
 internal sealed class AttendanceRepository : IAttendanceRepository
 {
@@ -70,10 +69,10 @@ internal sealed class AttendanceRepository : IAttendanceRepository
             if (byStudent.TryGetValue(mark.StudentId, out var current))
             {
                 if (current.Status == mark.Status) continue;
+                var previousStatus = current.Status;
                 current.Correct(mark.Status, actorId, now, mark.Reason ?? string.Empty);
                 _db.AttendanceChangeAudits.Add(new AttendanceChangeAudit(sessionId, mark.StudentId, actorId,
-                    current.Status == mark.Status ? mark.Status : existing.First(x => x.StudentId == mark.StudentId).Status,
-                    mark.Status, mark.Reason, now));
+                    previousStatus, mark.Status, mark.Reason, now));
             }
             else
             {
