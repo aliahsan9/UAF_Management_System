@@ -1,4 +1,5 @@
 using UAF.Application.Common.Abstractions;
+using UAF.Application.Common.Models;
 using UAF.Application.Features.Students.Abstractions;
 using UAF.Application.Features.Students.Models;
 using UAF.Domain.Entities;
@@ -46,10 +47,11 @@ public sealed class StudentService
             throw new ArgumentException("SortDirection must be asc or desc.", nameof(sortDirection));
         var (students, totalCount) = await _repository.GetPageAsync(
             page, pageSize, academicProgramId, status, search, normalizedSort, normalizedDirection, ct);
-        var totalPages = totalCount == 0 ? 0 : (int)Math.Ceiling(totalCount / (double)pageSize);
+        var pagination = PaginationMetadata.Create(page, pageSize, totalCount);
 
         return new PagedStudentsResponse(
-            students.Select(Map).ToArray(), page, pageSize, totalCount, totalPages);
+            students.Select(Map).ToArray(), pagination.Page, pagination.PageSize,
+            pagination.TotalCount, pagination.TotalPages);
     }
 
     public async Task<StudentResponse> GetByIdAsync(Guid id, CancellationToken ct = default) =>
