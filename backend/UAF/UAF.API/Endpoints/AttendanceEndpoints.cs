@@ -30,7 +30,7 @@ public static class AttendanceEndpoints
 
         group.MapPost("/sessions/{id:guid}/finalize", async (Guid id, HttpContext http, AttendanceService service, CancellationToken ct) =>
         {
-            await service.FinalizeAsync(id, GetActorId(http.User), IsPrivileged(http.User), ct);
+            await service.FinalizeAsync(id, GetActorId(http.User), IsPrivileged(http.User), ct, IsDepartmentAdmin(http.User));
             return Results.NoContent();
         }).WithName("FinalizeAttendanceSession");
 
@@ -47,7 +47,7 @@ public static class AttendanceEndpoints
             .WithName("GetAttendancePolicy");
 
         group.MapGet("/offerings/{offeringId:guid}/report", async (Guid offeringId, HttpContext http, AttendanceReportingService service, CancellationToken ct) =>
-            Results.Ok(await service.GetOfferingReportAsync(offeringId, GetActorId(http.User), IsPrivileged(http.User), ct)))
+            Results.Ok(await service.GetOfferingReportAsync(offeringId, GetActorId(http.User), IsPrivileged(http.User), ct, IsDepartmentAdmin(http.User))))
             .WithName("GetCourseAttendanceReport");
 
         return endpoints;
