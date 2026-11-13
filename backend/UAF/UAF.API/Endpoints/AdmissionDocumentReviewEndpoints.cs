@@ -12,7 +12,7 @@ public static class AdmissionDocumentReviewEndpoints
     {
         var group = endpoints.MapGroup("/api/v1/admissions/documents")
             .WithTags("Admission Document Review")
-            .RequireAuthorization(AuthorizationPolicies.AdmissionsDecision);
+            .RequireAuthorization(AuthorizationPolicies.AdmissionsStaff);
 
         group.MapGet("/application/{applicationId:guid}", async (Guid applicationId,
             AdmissionDocumentService service, CancellationToken ct) =>
