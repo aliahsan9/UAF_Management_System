@@ -52,6 +52,16 @@ internal sealed class GradingRepository : IGradingRepository
         var offeringIsActiveOrClosed = await _db.CourseOfferings.AnyAsync(x => x.Id == grade.CourseOfferingId
             && (x.Status == CourseOfferingStatus.Published || x.Status == CourseOfferingStatus.Closed), ct);
         if (!offeringIsActiveOrClosed) throw new InvalidOperationException("Grades can only be finalized for a published or closed course offering.");
+        var currentCourse = await (from offering in _db.CourseOfferings
+            join course in _db.Courses on offering.CourseId equals course.Id
+            where offering.Id == grade.CourseOfferingId && course.Id == grade.CourseId
+                && offering.AcademicSessionId == grade.AcademicSessionId
+            select new { course.CreditHours }).SingleOrDefaultAsync(ct);
+        if (currentCourse is null || currentCourse.CreditHours != grade.CreditHours)
+            throw new InvalidOperationException("Course details changed during grade finalization. Reload the course record and retry.");
+        var publishedScaleExists = await _db.GradeScales.AnyAsync(x => x.Id == grade.GradeScaleId
+            && x.AcademicSessionId == grade.AcademicSessionId && x.IsPublished, ct);
+        if (!publishedScaleExists) throw new InvalidOperationException("The grading scale is no longer published for this academic session.");
         if (await _db.StudentCourseGrades.AnyAsync(x => x.StudentId == grade.StudentId && x.CourseOfferingId == grade.CourseOfferingId, ct))
             throw new InvalidOperationException("A finalized course grade already exists for this student and offering.");
         _db.StudentCourseGrades.Add(grade);
