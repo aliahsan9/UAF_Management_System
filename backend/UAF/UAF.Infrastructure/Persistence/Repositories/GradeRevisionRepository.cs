@@ -56,7 +56,10 @@ internal sealed class GradeRevisionRepository : IGradeRevisionRepository
             join grade in _db.StudentCourseGrades.AsNoTracking() on request.StudentCourseGradeId equals grade.Id
             join student in _db.Students.AsNoTracking() on grade.StudentId equals student.Id
             where request.Status == GradeRevisionStatus.PendingApproval
-            select new { request, grade, student };
+            let latestMarks = _db.GradeRevisions.Where(revision => revision.StudentCourseGradeId == grade.Id)
+                .OrderByDescending(revision => revision.RevisionNumber)
+                .Select(revision => (decimal?)revision.NewMarks).FirstOrDefault()
+            select new { request, grade, student, currentMarks = latestMarks ?? grade.MarksObtained };
         if (!privileged)
         {
             var departmentId = await _db.Employees.Where(e => e.IdentityUserId == actorId && e.Status == EmployeeStatus.Active)
@@ -68,7 +71,7 @@ internal sealed class GradeRevisionRepository : IGradeRevisionRepository
         return await query.OrderBy(x => x.request.RequestedAtUtc)
             .Select(x => new GradeRevisionRequestResponse(x.request.Id, x.grade.Id, x.request.AppealId,
                 x.student.Id, x.student.RegistrationNumber, x.grade.CourseCode, x.grade.CourseTitle,
-                x.grade.MarksObtained, x.request.ProposedMarksObtained, x.request.Reason, x.request.Status,
+                x.currentMarks, x.request.ProposedMarksObtained, x.request.Reason, x.request.Status,
                 x.request.RequestedByUserId, x.request.RequestedAtUtc, x.request.ReviewedByUserId,
                 x.request.ReviewedAtUtc, x.request.ReviewRemarks)).ToListAsync(ct);
     }
