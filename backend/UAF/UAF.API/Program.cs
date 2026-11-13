@@ -1,4 +1,5 @@
 using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 using Scalar.AspNetCore;
 using UAF.API.Authorization;
 using UAF.API.Endpoints;
