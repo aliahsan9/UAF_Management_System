@@ -26,6 +26,7 @@ public sealed class AdmissionEndpointAuthorizationTests
         builder.Services.AddAuthorization();
         builder.Services.AddApplication();
         builder.Services.AddValidatorsFromAssemblyContaining<CreateAdmissionDraftRequestValidator>();
+        builder.Services.AddValidatorsFromAssemblyContaining<CreateAdmissionDraftRequestValidator>();
         await using var app = builder.Build();
         app.MapAdmissionEndpoints();
 
@@ -45,6 +46,7 @@ public sealed class AdmissionEndpointAuthorizationTests
         var builder = WebApplication.CreateBuilder();
         builder.Services.AddAuthorization();
         builder.Services.AddApplication();
+        builder.Services.AddValidatorsFromAssemblyContaining<CreateAdmissionDraftRequestValidator>();
         await using var app = builder.Build();
         app.MapAdmissionEndpoints();
 
