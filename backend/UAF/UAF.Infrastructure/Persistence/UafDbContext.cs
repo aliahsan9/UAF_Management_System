@@ -92,6 +92,9 @@ public sealed class UafDbContext : IdentityDbContext<ApplicationUser, IdentityRo
         if (ChangeTracker.Entries<GradeAppealAudit>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
             throw new InvalidOperationException("Grade appeal audit records are append-only.");
 
+        if (ChangeTracker.Entries<GradeRevisionRequest>().Any(entry => entry.State == EntityState.Deleted))
+            throw new InvalidOperationException("Grade revision requests cannot be deleted.");
+
         if (ChangeTracker.Entries<GradeRevisionAudit>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
             throw new InvalidOperationException("Grade revision audit records are append-only.");
 
