@@ -69,6 +69,7 @@ if (app.Environment.IsDevelopment())
 app.MapHealthChecks("/health");
 app.MapAdmissionEndpoints();
 app.MapApplicantAdmissionEndpoints();
+app.MapAdmissionDocumentReviewEndpoints();
 app.MapAcademicStructureEndpoints();
 app.MapAcademicCatalogEndpoints();
 app.MapStudentEndpoints();
