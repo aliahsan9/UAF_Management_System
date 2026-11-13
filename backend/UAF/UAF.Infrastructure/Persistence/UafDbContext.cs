@@ -52,6 +52,7 @@ public sealed class UafDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<GradeRevision> GradeRevisions => Set<GradeRevision>();
     public DbSet<GradeRevisionAudit> GradeRevisionAudits => Set<GradeRevisionAudit>();
     public DbSet<AcademicTranscript> AcademicTranscripts => Set<AcademicTranscript>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -78,38 +79,26 @@ public sealed class UafDbContext : IdentityDbContext<ApplicationUser, IdentityRo
 
     private void ApplyAuditInformation()
     {
-        if (ChangeTracker.Entries<AdmissionDecisionAudit>()
-            .Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
+        if (ChangeTracker.Entries<AdmissionDecisionAudit>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
             throw new InvalidOperationException("Admission decision audit records are append-only.");
-
-        if (ChangeTracker.Entries<AttendanceChangeAudit>()
-            .Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
+        if (ChangeTracker.Entries<AttendanceChangeAudit>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
             throw new InvalidOperationException("Attendance change audit records are append-only.");
-
         if (ChangeTracker.Entries<ExaminationResultAudit>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
             throw new InvalidOperationException("Examination result audit records are append-only.");
-
         if (ChangeTracker.Entries<GradeAppealAudit>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
             throw new InvalidOperationException("Grade appeal audit records are append-only.");
-
         if (ChangeTracker.Entries<GradeRevisionRequest>().Any(entry => entry.State == EntityState.Deleted))
             throw new InvalidOperationException("Grade revision requests cannot be deleted.");
-
         if (ChangeTracker.Entries<GradeRevisionAudit>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
             throw new InvalidOperationException("Grade revision audit records are append-only.");
-
         if (ChangeTracker.Entries<GradeRevision>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
             throw new InvalidOperationException("Grade revision snapshots are immutable.");
-
         if (ChangeTracker.Entries<AcademicTranscript>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
             throw new InvalidOperationException("Issued academic transcripts are immutable; issue a new transcript for updated records.");
-
         if (ChangeTracker.Entries<StudentCourseGrade>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
             throw new InvalidOperationException("Finalized student course grades are immutable; use an authorized grade-revision workflow.");
-
         if (ChangeTracker.Entries<GradeScaleBand>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
             throw new InvalidOperationException("Grade scale bands are immutable after creation.");
-
         if (ChangeTracker.Entries<GradeScale>().Any(entry => entry.State == EntityState.Deleted || (entry.State == EntityState.Modified && entry.OriginalValues.GetValue<bool>(nameof(GradeScale.IsPublished)))))
             throw new InvalidOperationException("Published grading scales cannot be modified or deleted.");
 
