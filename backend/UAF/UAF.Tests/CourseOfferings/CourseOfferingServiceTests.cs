@@ -44,6 +44,18 @@ public sealed class CourseOfferingServiceTests
     }
 
     [Fact]
+    public async Task Publish_RejectsInactiveCourseOrUnavailableAcademicSession()
+    {
+        var id = await _service.CreateOfferingAsync(Request());
+        _repository.CourseActive = false;
+        await Assert.ThrowsAsync<InvalidOperationException>(() => _service.PublishAsync(id));
+
+        _repository.CourseActive = true;
+        _repository.SessionSchedulable = false;
+        await Assert.ThrowsAsync<InvalidOperationException>(() => _service.PublishAsync(id));
+    }
+
+    [Fact]
     public async Task CreateOffering_RejectsDuplicateSection()
     {
         await _service.CreateOfferingAsync(Request());
