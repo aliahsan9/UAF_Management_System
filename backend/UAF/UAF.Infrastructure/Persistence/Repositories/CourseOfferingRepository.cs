@@ -52,6 +52,12 @@ internal sealed class CourseOfferingRepository : ICourseOfferingRepository
         _dbContext.Students.AnyAsync(x => x.Id == studentId && x.Status == StudentStatus.Active, ct);
 
 
+
+    private Task<CourseOffering?> GetOfferingForUpdateAsync(Guid offeringId, CancellationToken ct) =>
+        _dbContext.CourseOfferings
+            .FromSqlInterpolated($"SELECT * FROM [CourseOfferings] WITH (UPDLOCK, HOLDLOCK) WHERE [Id] = {offeringId}")
+            .FirstOrDefaultAsync(ct);
+
     public async Task UpdateOfferingAsync(Guid offeringId, int capacity, Guid? instructorEmployeeId, CancellationToken ct = default)
     {
         if (instructorEmployeeId == Guid.Empty)
@@ -59,7 +65,7 @@ internal sealed class CourseOfferingRepository : ICourseOfferingRepository
 
         // Serialize capacity changes with enrollment transactions so seats cannot be over-allocated.
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
-        var offering = await _dbContext.CourseOfferings.FirstOrDefaultAsync(x => x.Id == offeringId, ct)
+        var offering = await GetOfferingForUpdateAsync(offeringId, ct)
             ?? throw new KeyNotFoundException($"Course offering '{offeringId}' was not found.");
         var enrolledCount = await _dbContext.CourseEnrollments.CountAsync(
             x => x.CourseOfferingId == offeringId && x.Status == EnrollmentStatus.Enrolled, ct);
