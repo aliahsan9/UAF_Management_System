@@ -45,7 +45,9 @@ public sealed class AcademicStructureService
     public async Task<Guid> CreateUniversityAsync(CreateUniversityRequest request, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var entity = new University(request.Name, request.ShortName);
+        var shortName = NormalizeCode(request.ShortName);
+        await EnsureUniqueAsync(_repository.IsUniversityShortNameInUseAsync(shortName, cancellationToken: ct), "University short name", shortName);
+        var entity = new University(request.Name, shortName);
         await _repository.AddAsync(entity, ct);
         await _unitOfWork.SaveChangesAsync(ct);
         return entity.Id;
@@ -55,7 +57,9 @@ public sealed class AcademicStructureService
     {
         ArgumentNullException.ThrowIfNull(request);
         var entity = await GetRequiredAsync(_repository.GetUniversityByIdAsync(id, ct), id, "University");
-        entity.UpdateDetails(request.Name, request.ShortName);
+        var shortName = NormalizeCode(request.ShortName);
+        await EnsureUniqueAsync(_repository.IsUniversityShortNameInUseAsync(shortName, id, ct), "University short name", shortName);
+        entity.UpdateDetails(request.Name, shortName);
         await _unitOfWork.SaveChangesAsync(ct);
     }
 
