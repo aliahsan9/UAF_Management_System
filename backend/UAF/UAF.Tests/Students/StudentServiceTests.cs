@@ -66,6 +66,24 @@ public sealed class StudentServiceTests
     }
 
     [Fact]
+    public async Task GetPageAsync_AppliesSearchAndAllowListedSort()
+    {
+        await _service.CreateAsync(CreateRequest() with { FullName = "Zara Student" });
+        await _service.CreateAsync(CreateRequest() with
+        {
+            RegistrationNumber = "UAF-2026-CS-002",
+            FullName = "Ayesha Student"
+        });
+
+        var result = await _service.GetPageAsync(1, 10, search: "student",
+            sortBy: "fullName", sortDirection: "asc");
+
+        Assert.Equal(2, result.TotalCount);
+        Assert.Equal("Ayesha Student", result.Items[0].FullName);
+        Assert.Equal("Zara Student", result.Items[1].FullName);
+    }
+
+    [Fact]
     public async Task SuspendAndReactivate_ApplyValidLifecycleTransitions()
     {
         var id = await _service.CreateAsync(CreateRequest());
