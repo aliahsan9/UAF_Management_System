@@ -8,7 +8,7 @@ namespace UAF.API.Middleware;
 /// Converts known application exceptions into consistent Problem Details responses.
 /// Unexpected exceptions remain generic and are logged without exposing internals.
 /// </summary>
-public sealed class GlobalExceptionHandler
+public sealed class GlobalExceptionHandler : IExceptionHandler
 {
     private readonly ILogger<GlobalExceptionHandler> _logger;
 
