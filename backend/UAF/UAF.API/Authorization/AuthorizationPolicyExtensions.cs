@@ -30,6 +30,8 @@ public static class AuthorizationPolicyExtensions
                 policy.RequireAuthenticatedUser().RequireRole("HRManager", "SuperAdmin"));
             options.AddPolicy(AuthorizationPolicies.AttendanceManagement, policy =>
                 policy.RequireAuthenticatedUser().RequireRole("Teacher", "Registrar", "DepartmentAdmin", "SuperAdmin"));
+            options.AddPolicy(AuthorizationPolicies.AttendancePolicyManagement, policy =>
+                policy.RequireAuthenticatedUser().RequireRole("Registrar", "SuperAdmin"));
         });
         return services;
     }
