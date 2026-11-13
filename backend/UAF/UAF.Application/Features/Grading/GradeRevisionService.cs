@@ -71,6 +71,15 @@ public sealed class GradeRevisionService
         return new GradeRevisionDecisionResponse(request.Id, nextStatus, revision is null ? null : ToResponse(revision));
     }
 
+    public async Task<IReadOnlyList<GradeRevisionRequestResponse>> GetMyRequestsAsync(Guid gradeId, Guid actorId, CancellationToken ct)
+    {
+        var studentId = await _repository.GetStudentIdForIdentityUserAsync(actorId, ct)
+            ?? throw new KeyNotFoundException("No student record is linked to this account.");
+        if (!await _repository.StudentOwnsGradeAsync(gradeId, studentId, ct))
+            throw new KeyNotFoundException("Course grade not found for this student.");
+        return await _repository.GetStudentRequestsAsync(gradeId, studentId, ct);
+    }
+
     public async Task<IReadOnlyList<GradeRevisionResponse>> GetMyHistoryAsync(Guid gradeId, Guid actorId, CancellationToken ct)
     {
         var studentId = await _repository.GetStudentIdForIdentityUserAsync(actorId, ct)
