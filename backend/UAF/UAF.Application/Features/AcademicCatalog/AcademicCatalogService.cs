@@ -32,7 +32,7 @@ public sealed class AcademicCatalogService
     {
         ArgumentNullException.ThrowIfNull(request);
         var code = NormalizeCode(request.Code, nameof(request.Code));
-        if (await _repository.SessionCodeExistsAsync(code, cancellationToken: ct))
+        if (await _repository.SessionCodeExistsAsync(code, ct: ct))
             throw new InvalidOperationException($"Academic session code '{code}' is already in use.");
 
         var session = new AcademicSession(request.Name, code, request.StartDate, request.EndDate);
