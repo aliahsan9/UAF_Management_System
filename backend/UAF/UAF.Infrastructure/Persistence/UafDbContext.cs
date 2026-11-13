@@ -46,6 +46,8 @@ public sealed class UafDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<GradeScale> GradeScales => Set<GradeScale>();
     public DbSet<GradeScaleBand> GradeScaleBands => Set<GradeScaleBand>();
     public DbSet<StudentCourseGrade> StudentCourseGrades => Set<StudentCourseGrade>();
+    public DbSet<GradeAppeal> GradeAppeals => Set<GradeAppeal>();
+    public DbSet<GradeAppealAudit> GradeAppealAudits => Set<GradeAppealAudit>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -82,6 +84,9 @@ public sealed class UafDbContext : IdentityDbContext<ApplicationUser, IdentityRo
 
         if (ChangeTracker.Entries<ExaminationResultAudit>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
             throw new InvalidOperationException("Examination result audit records are append-only.");
+
+        if (ChangeTracker.Entries<GradeAppealAudit>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
+            throw new InvalidOperationException("Grade appeal audit records are append-only.");
 
         if (ChangeTracker.Entries<StudentCourseGrade>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
             throw new InvalidOperationException("Finalized student course grades are immutable; use an authorized grade-revision workflow.");
