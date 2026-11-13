@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using UAF.API.Authorization;
 using UAF.API.Endpoints;
+using UAF.Application;
 using Xunit;
 
 namespace UAF.Tests.Authorization;
@@ -21,6 +22,7 @@ public sealed class AdmissionEndpointAuthorizationTests
     {
         var builder = WebApplication.CreateBuilder();
         builder.Services.AddAuthorization();
+        builder.Services.AddApplication();
         await using var app = builder.Build();
         app.MapAdmissionEndpoints();
 
