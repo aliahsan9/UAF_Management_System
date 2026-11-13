@@ -23,10 +23,15 @@ internal sealed class AttendanceReportingRepository : IAttendanceReportingReposi
         var finalizedSessionIds = await _db.AttendanceSessions.AsNoTracking()
             .Where(x => x.CourseOfferingId == offeringId && x.Status == AttendanceSessionStatus.Finalized)
             .Select(x => x.Id).ToArrayAsync(ct);
-        var roster = await _db.CourseEnrollments.AsNoTracking()
-            .Where(x => x.CourseOfferingId == offeringId && x.Status != EnrollmentStatus.Dropped && x.Status != EnrollmentStatus.Withdrawn)
-            .Select(x => new { x.StudentId, x.Status, x.Student.RegistrationNumber, x.Student.FullName })
-            .OrderBy(x => x.RegistrationNumber).ToListAsync(ct);
+        var roster = await (
+            from enrollment in _db.CourseEnrollments.AsNoTracking()
+            join student in _db.Students.AsNoTracking() on enrollment.StudentId equals student.Id
+            where enrollment.CourseOfferingId == offeringId
+                && enrollment.Status != EnrollmentStatus.Dropped
+                && enrollment.Status != EnrollmentStatus.Withdrawn
+            orderby student.RegistrationNumber
+            select new { enrollment.StudentId, enrollment.Status, student.RegistrationNumber, student.FullName }
+        ).ToListAsync(ct);
         List<(Guid StudentId, AttendanceStatus Status)> marks;
         if (finalizedSessionIds.Length == 0)
         {
