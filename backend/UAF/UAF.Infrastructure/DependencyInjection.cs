@@ -68,6 +68,7 @@ public static class DependencyInjection
         services.AddScoped<IExaminationRepository, ExaminationRepository>();
         services.AddScoped<IGradingRepository, GradingRepository>();
         services.AddScoped<IGradeAppealRepository, GradeAppealRepository>();
+        services.AddScoped<IGradeRevisionRepository, GradeRevisionRepository>();
         return services;
     }
 }
