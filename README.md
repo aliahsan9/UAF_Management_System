@@ -288,7 +288,34 @@ Authenticated accounts assigned the default `Student` role can use the applicant
 
 Applicant-created application numbers are generated server-side. An application is editable only in Draft status. Ownership-scoped repository queries return not-found for an application that belongs to another account, avoiding IDOR disclosure. Legacy staff-created records can have a null owner and are not visible through applicant self-service until linked through a controlled process.
 
-**Scope still outstanding:** document upload/storage and staff verification, decision actor/time audit records, atomic acceptance-to-student conversion with registrar-issued registration numbers, and SQL Server-backed API authorization/integration tests. These must be implemented and verified before treating admissions as complete or production-ready.
+### Admission document management and verification
+
+Applicant document routes require the authenticated `Student` role and are scoped to the application owner from the JWT.
+
+| Method | Route | Purpose |
+|---|---|---|
+| GET | `/api/v1/applicant/admissions/{applicationId}/documents` | List documents attached to an owned application |
+| POST | `/api/v1/applicant/admissions/{applicationId}/documents` | Upload a document to an owned Draft application |
+| GET | `/api/v1/applicant/admissions/{applicationId}/documents/{documentId}/download` | Download an owned document |
+
+Upload uses `multipart/form-data` with fields `file` and `documentType`. Supported document types are `IdentityDocument`, `AcademicTranscript`, `Photograph`, and `Other`. The current development policy accepts PDF, JPEG, and PNG files up to 10 MB. The server checks extension, declared content type, and file signature; records a SHA-256 digest; generates an opaque storage key; and never uses the client filename as a filesystem path.
+
+Staff document review routes require the admissions staff policy (Registrar, DepartmentAdmin, or SuperAdmin):
+
+| Method | Route | Purpose |
+|---|---|---|
+| GET | `/api/v1/admissions/documents/application/{applicationId}` | List documents for staff review |
+| GET | `/api/v1/admissions/documents/{documentId}/download` | Download a document for verification |
+| POST | `/api/v1/admissions/documents/{documentId}/verify` | Verify a pending document |
+| POST | `/api/v1/admissions/documents/{documentId}/reject` | Reject a pending document with a reason |
+
+Verification stores reviewer Identity ID, UTC review timestamp, status, and remarks. A document can only be reviewed once; a new upload is required after rejection.
+
+The Infrastructure layer currently provides a local development storage adapter. Files are stored outside `wwwroot`, with opaque generated names and no static-file route. Configure `AdmissionDocumentStorage:RootPath` to a private directory with restricted filesystem permissions. For production, replace this adapter with private object storage, add malware scanning/quarantine, backup/retention policies, and monitoring. The local provider is not a shared-storage solution for multiple API instances.
+
+**Admission policy note:** this implementation intentionally does not invent UAF's official document checklist. Required document types and the rule that gates final application submission must be confirmed against authorized university requirements before enabling complete application submission. Upload and verification are implemented, but the existing submit endpoint is not yet blocked on a configurable verified-document checklist.
+
+**Scope still outstanding:** configurable official document requirements and submission gating, decision actor/time audit records, atomic acceptance-to-student conversion with registrar-issued registration numbers, malware scanning, and SQL Server-backed API authorization/integration tests. These must be implemented and verified before treating admissions as complete or production-ready.
 
 ### Admission API access control
 
