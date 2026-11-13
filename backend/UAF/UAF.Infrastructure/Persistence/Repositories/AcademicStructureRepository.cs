@@ -18,10 +18,13 @@ internal sealed class AcademicStructureRepository : IAcademicStructureRepository
         _dbContext.Universities.AnyAsync(x => x.Id == id, ct);
 
     public Task<bool> FacultyExistsAsync(Guid id, CancellationToken ct = default) =>
-        _dbContext.Faculties.AnyAsync(x => x.Id == id, ct);
+        _dbContext.Faculties.AnyAsync(x => x.Id == id && x.IsActive, ct);
 
     public Task<bool> DepartmentExistsAsync(Guid id, CancellationToken ct = default) =>
-        _dbContext.Departments.AnyAsync(x => x.Id == id, ct);
+        _dbContext.Departments.AnyAsync(x => x.Id == id && x.IsActive, ct);
+
+    public Task<bool> IsUniversityShortNameInUseAsync(string shortName, Guid? excludingId = null, CancellationToken ct = default) =>
+        _dbContext.Universities.AnyAsync(x => x.ShortName == shortName && (!excludingId.HasValue || x.Id != excludingId.Value), ct);
 
     public Task<bool> IsCampusCodeInUseAsync(Guid universityId, string code, Guid? excludingId = null, CancellationToken ct = default) =>
         _dbContext.Campuses.AnyAsync(x => x.UniversityId == universityId && x.Code == code && (!excludingId.HasValue || x.Id != excludingId.Value), ct);
