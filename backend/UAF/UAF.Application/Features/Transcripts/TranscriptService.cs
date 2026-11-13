@@ -57,7 +57,7 @@ public sealed class TranscriptService
             var record = DeserializeAndVerify(transcript);
             return new TranscriptVerificationResponse(true, record.RegistrationNumber, transcript.IssuedAtUtc, transcript.SnapshotSha256);
         }
-        catch (InvalidOperationException)
+        catch (Exception exception) when (exception is InvalidOperationException or FormatException)
         {
             return new TranscriptVerificationResponse(false, null, null, null);
         }
