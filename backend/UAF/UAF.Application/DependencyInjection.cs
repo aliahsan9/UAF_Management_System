@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using UAF.Application.Features.Admissions;
 using UAF.Application.Features.AcademicStructure;
+using UAF.Application.Features.Students;
 
 namespace UAF.Application;
 
@@ -15,6 +16,7 @@ public static class DependencyInjection
 
         services.AddScoped<AdmissionApplicationService>();
         services.AddScoped<AcademicStructureService>();
+        services.AddScoped<StudentService>();
 
         return services;
     }
