@@ -12,7 +12,7 @@ internal sealed class FeeRepository : IFeeRepository
  public Task<bool> FeeHeadExistsAsync(Guid id,CancellationToken ct)=>db.FeeHeads.AnyAsync(x=>x.Id==id&&x.IsActive,ct);
  public async Task AddFeeHeadAsync(FeeHead head,CancellationToken ct){db.FeeHeads.Add(head);await db.SaveChangesAsync(ct);}
  public async Task AddStructureAsync(FeeStructure structure,IReadOnlyCollection<FeeStructureItem> items,CancellationToken ct)
- { await using var tx=await db.Database.BeginTransactionAsync(ct);db.FeeStructures.Add(structure);await db.SaveChangesAsync(ct);foreach(var x in items)db.FeeStructureItems.Add(new FeeStructureItem(structure.Id,x.FeeHeadId,x.Amount));await db.SaveChangesAsync(ct);await tx.CommitAsync(ct); }
+ { await using var tx=await db.Database.BeginTransactionAsync(ct);db.FeeStructures.Add(structure);await db.SaveChangesAsync(ct);foreach(var x in items)db.FeeStructureItems.Add(x);await db.SaveChangesAsync(ct);await tx.CommitAsync(ct); }
  public async Task PublishStructureAsync(Guid id,CancellationToken ct)
  { var x=await db.FeeStructures.Include(s=>s.Items).FirstOrDefaultAsync(s=>s.Id==id,ct)??throw new KeyNotFoundException("Fee structure not found.");if(x.Items.Count==0)throw new InvalidOperationException("A fee structure must contain at least one fee item.");x.Publish();await db.SaveChangesAsync(ct); }
  public async Task<Guid> GenerateChallanAsync(Guid studentId,Guid structureId,DateOnly issue,DateOnly due,decimal lateFee,Guid actor,CancellationToken ct)
@@ -26,7 +26,7 @@ internal sealed class FeeRepository : IFeeRepository
   if(lateFee<0||decimal.Round(lateFee,2)!=lateFee)throw new ArgumentOutOfRangeException(nameof(lateFee));
   var account=await db.StudentFeeAccounts.FirstOrDefaultAsync(x=>x.StudentId==studentId,ct);
   if(account is null){account=new StudentFeeAccount(studentId);db.StudentFeeAccounts.Add(account);await db.SaveChangesAsync(ct);}
-  var challanNumber=$"UAF-FEE-{issue:yyyyMMdd}-{Guid.NewGuid():N}"[..30];
+  var challanNumber=$"UAF-FEE-{issue:yyyyMMdd}-{Guid.NewGuid():N}";
   var lines=structure.Items.Where(x=>x.Amount>0).ToArray();var subtotal=lines.Sum(x=>x.Amount);if(subtotal<=0)throw new InvalidOperationException("Published fee structure has no chargeable items.");
   var challan=new FeeChallan(account.Id,challanNumber,issue,due,subtotal,lateFee,structure.CurrencyCode,actor);
   db.FeeChallans.Add(challan);
