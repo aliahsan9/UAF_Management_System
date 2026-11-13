@@ -187,7 +187,7 @@ public sealed class ExaminationServiceTests
         public IReadOnlyCollection<ExaminationMarkItem> SavedMarks { get; private set; } = Array.Empty<ExaminationMarkItem>();
 
         public Task<bool> CanManageOfferingAsync(Guid offeringId, Guid actorId, bool privileged, bool departmentAdmin, CancellationToken ct, bool allowClosed = false) =>
-            Task.FromResult(CanManage && offeringId == OfferingId);
+            Task.FromResult(offeringId == OfferingId && (privileged || departmentAdmin || CanManage));
         public Task<bool> CanAdministerOfferingAsync(Guid offeringId, Guid actorId, bool privileged, bool departmentAdmin, CancellationToken ct) =>
             Task.FromResult(CanAdminister && offeringId == OfferingId);
         public Task AddAsync(Examination examination, CancellationToken ct)
