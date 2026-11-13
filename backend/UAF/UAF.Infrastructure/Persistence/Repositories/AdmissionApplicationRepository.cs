@@ -29,3 +29,4 @@ internal sealed class AdmissionApplicationRepository : IAdmissionApplicationRepo
 
     public async Task AddAsync(AdmissionApplication application, CancellationToken ct = default) =>
         await _dbContext.AdmissionApplications.AddAsync(application, ct);
+}
