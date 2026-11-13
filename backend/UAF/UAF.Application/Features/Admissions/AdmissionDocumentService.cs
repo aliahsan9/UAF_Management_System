@@ -24,6 +24,16 @@ public sealed class AdmissionDocumentService
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
     }
 
+    public async Task<IReadOnlyCollection<AdmissionDocumentType>> GetConfiguredRequirementsAsync(
+        Guid academicProgramId, CancellationToken ct = default)
+    {
+        if (academicProgramId == Guid.Empty) throw new ArgumentException("A valid academic program is required.", nameof(academicProgramId));
+        if (!await _repository.AcademicProgramExistsAsync(academicProgramId, ct))
+            throw new KeyNotFoundException("Academic program was not found.");
+        var requirements = await _repository.GetRequirementsForProgramAsync(academicProgramId, ct);
+        return requirements.Select(x => x.DocumentType).Distinct().OrderBy(x => x).ToArray();
+    }
+
     public async Task ConfigureRequirementsAsync(
         Guid academicProgramId, Guid configuredByUserId,
         IReadOnlyCollection<AdmissionDocumentType> requiredDocumentTypes, CancellationToken ct = default)
