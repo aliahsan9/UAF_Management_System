@@ -23,6 +23,11 @@ public sealed class SecurityAuditMiddleware(RequestDelegate next, ILogger<Securi
         {
             await next(context);
         }
+        catch
+        {
+            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            throw;
+        }
         finally
         {
             var userId = context.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? context.User.FindFirstValue("sub");
