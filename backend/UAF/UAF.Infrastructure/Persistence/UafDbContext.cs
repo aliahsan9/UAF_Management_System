@@ -34,6 +34,8 @@ public sealed class UafDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<FeeChallan> FeeChallans => Set<FeeChallan>();
     public DbSet<FeeChallanLine> FeeChallanLines => Set<FeeChallanLine>();
     public DbSet<FeePayment> FeePayments => Set<FeePayment>();
+    public DbSet<Employee> Employees => Set<Employee>();
+    public DbSet<TeacherProfile> TeacherProfiles => Set<TeacherProfile>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
