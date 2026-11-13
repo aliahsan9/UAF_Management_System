@@ -22,7 +22,9 @@ public sealed class Student : AuditableEntity
         string email,
         Guid academicProgramId,
         DateOnly enrollmentDate,
-        string? phoneNumber = null)
+        string? phoneNumber = null,
+        Guid? admissionApplicationId = null,
+        Guid? identityUserId = null)
     {
         if (academicProgramId == Guid.Empty)
             throw new ArgumentException("An academic program must be specified.", nameof(academicProgramId));
@@ -31,7 +33,11 @@ public sealed class Student : AuditableEntity
         SetFullName(fullName);
         SetEmail(email);
 
+        if (admissionApplicationId == Guid.Empty || identityUserId == Guid.Empty)
+            throw new ArgumentException("Optional linked IDs cannot be empty.");
         AcademicProgramId = academicProgramId;
+        AdmissionApplicationId = admissionApplicationId;
+        IdentityUserId = identityUserId;
         EnrollmentDate = enrollmentDate;
         ValidatePhoneNumber(phoneNumber);
         PhoneNumber = NormalizeOptional(phoneNumber);
@@ -47,6 +53,10 @@ public sealed class Student : AuditableEntity
     public string? PhoneNumber { get; private set; }
 
     public Guid AcademicProgramId { get; private set; }
+
+    public Guid? AdmissionApplicationId { get; private set; }
+
+    public Guid? IdentityUserId { get; private set; }
 
     public DateOnly EnrollmentDate { get; private set; }
 
