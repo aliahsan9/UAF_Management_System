@@ -55,9 +55,9 @@ public static class CourseOfferingEndpoints
             service.GetEnrollmentsAsync(id, ct)).WithName("GetOfferingEnrollments");
 
         group.MapPost("/{id:guid}/enrollments/{studentId:guid}", async (Guid id, Guid studentId,
-            CourseOfferingService service, CancellationToken ct) =>
+            EnrollStudentRequest request, CourseOfferingService service, CancellationToken ct) =>
         {
-            var enrollmentId = await service.EnrollStudentAsync(studentId, id, DateOnly.FromDateTime(DateTime.UtcNow), ct);
+            var enrollmentId = await service.EnrollStudentAsync(studentId, id, request.EnrolledOn, ct);
             return Results.Created($"/api/v1/course-enrollments/{enrollmentId}", new { id = enrollmentId });
         }).WithName("EnrollStudentInCourseOffering").ProducesProblem(StatusCodes.Status409Conflict);
 
