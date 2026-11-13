@@ -44,13 +44,13 @@ public sealed class AttendanceReportingService
 
         var students = source.Students.Select(student =>
         {
-            var present = student.Marks.Count(x => x == Domain.Enums.AttendanceStatus.Present);
-            var absent = student.Marks.Count(x => x == Domain.Enums.AttendanceStatus.Absent);
-            var late = student.Marks.Count(x => x == Domain.Enums.AttendanceStatus.Late);
-            var excused = student.Marks.Count(x => x == Domain.Enums.AttendanceStatus.Excused);
+            var present = student.Marks.Count(x => x == UAF.Domain.Enums.AttendanceStatus.Present);
+            var absent = student.Marks.Count(x => x == UAF.Domain.Enums.AttendanceStatus.Absent);
+            var late = student.Marks.Count(x => x == UAF.Domain.Enums.AttendanceStatus.Late);
+            var excused = student.Marks.Count(x => x == UAF.Domain.Enums.AttendanceStatus.Excused);
             var counted = source.FinalizedSessionCount - (policy.ExcludeExcusedFromDenominator ? excused : 0);
-            var earned = present + (late * policy.LateCreditPercentage / 100m);
-            var percentage = counted <= 0 ? (decimal?)null : Math.Round(earned / counted * 100m, 2, MidpointRounding.AwayFromZero);
+            var percentage = AttendancePercentageCalculator.Calculate(source.FinalizedSessionCount, present, late, excused,
+                policy.LateCreditPercentage, policy.ExcludeExcusedFromDenominator);
             return new StudentAttendanceReport(student.StudentId, student.RegistrationNumber, student.FullName, student.EnrollmentStatus,
                 present, absent, late, excused, counted, percentage,
                 percentage.HasValue && percentage.Value < policy.RequiredPercentage);
