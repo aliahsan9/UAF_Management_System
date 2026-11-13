@@ -1,0 +1,11 @@
+using UAF.Domain.Enums;
+namespace UAF.Application.Features.Grading.Models;
+public sealed record GradeBandInput(string LetterGrade, decimal MinimumPercentage, decimal GradePoints, bool IsPassing);
+public sealed record CreateGradeScaleRequest(Guid AcademicSessionId, string Name, bool IncludeFailedCoursesInGpa, RepeatCoursePolicy RepeatCoursePolicy, IReadOnlyList<GradeBandInput> Bands);
+public sealed record GradeScaleBandResponse(string LetterGrade, decimal MinimumPercentage, decimal GradePoints, bool IsPassing);
+public sealed record GradeScaleResponse(Guid Id, Guid AcademicSessionId, string Name, bool IncludeFailedCoursesInGpa, RepeatCoursePolicy RepeatCoursePolicy, bool IsPublished, IReadOnlyList<GradeScaleBandResponse> Bands);
+public sealed record FinalizeCourseGradeRequest(Guid StudentId, decimal TotalMarks, decimal MarksObtained);
+public sealed record CourseGradeResponse(Guid Id, Guid StudentId, string RegistrationNumber, Guid CourseOfferingId, string CourseCode, string CourseTitle, decimal CreditHours, decimal TotalMarks, decimal MarksObtained, decimal Percentage, string LetterGrade, decimal GradePoints, bool IsPassed, DateTimeOffset FinalizedAtUtc);
+public sealed record AcademicRecordCourseItem(Guid CourseId, Guid CourseOfferingId, Guid AcademicSessionId, string AcademicSessionName, DateOnly AcademicSessionStartDate, string CourseCode, string CourseTitle, decimal CreditHours, decimal TotalMarks, decimal MarksObtained, decimal Percentage, string LetterGrade, decimal GradePoints, bool IsPassed, bool IncludeFailedCoursesInGpa, RepeatCoursePolicy RepeatCoursePolicy, DateTimeOffset FinalizedAtUtc);
+public sealed record SemesterGpaResponse(Guid AcademicSessionId, string AcademicSessionName, decimal Gpa, decimal AttemptedCreditHours, IReadOnlyList<AcademicRecordCourseItem> Courses);
+public sealed record StudentAcademicRecordResponse(Guid StudentId, string RegistrationNumber, string FullName, IReadOnlyList<SemesterGpaResponse> Semesters, decimal? CumulativeGpa, decimal CumulativeAttemptedCreditHours, IReadOnlyList<AcademicRecordCourseItem> CourseAttempts);
