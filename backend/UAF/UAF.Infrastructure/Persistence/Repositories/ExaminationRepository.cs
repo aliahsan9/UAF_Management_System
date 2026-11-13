@@ -10,12 +10,12 @@ internal sealed class ExaminationRepository : IExaminationRepository
     private readonly UafDbContext _db;
     public ExaminationRepository(UafDbContext db) => _db = db;
 
-    public async Task<bool> CanManageOfferingAsync(Guid offeringId, Guid actorId, bool privileged, bool departmentAdmin, CancellationToken ct)
+    public async Task<bool> CanManageOfferingAsync(Guid offeringId, Guid actorId, bool privileged, bool departmentAdmin, CancellationToken ct, bool allowClosed = false)
     {
         var offering = await (
             from co in _db.CourseOfferings.AsNoTracking()
             join course in _db.Courses.AsNoTracking() on co.CourseId equals course.Id
-            where co.Id == offeringId && co.Status == CourseOfferingStatus.Published
+            where co.Id == offeringId && (co.Status == CourseOfferingStatus.Published || (allowClosed && co.Status == CourseOfferingStatus.Closed))
             select new { co.InstructorEmployeeId, course.DepartmentId }
         ).SingleOrDefaultAsync(ct);
         if (offering is null) return false;
