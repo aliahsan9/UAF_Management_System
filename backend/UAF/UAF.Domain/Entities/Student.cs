@@ -61,6 +61,18 @@ public sealed class Student : AuditableEntity
         MarkUpdated();
     }
 
+    public void UpdateProfile(string fullName, string email, string? phoneNumber)
+    {
+        ValidateFullName(fullName);
+        ValidateEmail(email);
+        ValidatePhoneNumber(phoneNumber);
+
+        FullName = fullName.Trim();
+        Email = email.Trim().ToLowerInvariant();
+        PhoneNumber = NormalizeOptional(phoneNumber);
+        MarkUpdated();
+    }
+
     public void UpdateContactDetails(string email, string? phoneNumber)
     {
         SetEmail(email);
@@ -118,24 +130,44 @@ public sealed class Student : AuditableEntity
     {
         if (string.IsNullOrWhiteSpace(registrationNumber))
             throw new ArgumentException("Student registration number is required.", nameof(registrationNumber));
+        if (registrationNumber.Trim().Length > 50)
+            throw new ArgumentException("Student registration number cannot exceed 50 characters.", nameof(registrationNumber));
 
         RegistrationNumber = registrationNumber.Trim().ToUpperInvariant();
     }
 
     private void SetFullName(string fullName)
     {
-        if (string.IsNullOrWhiteSpace(fullName))
-            throw new ArgumentException("Student full name is required.", nameof(fullName));
-
+        ValidateFullName(fullName);
         FullName = fullName.Trim();
     }
 
     private void SetEmail(string email)
     {
+        ValidateEmail(email);
+        Email = email.Trim().ToLowerInvariant();
+    }
+
+    private static void ValidateFullName(string fullName)
+    {
+        if (string.IsNullOrWhiteSpace(fullName))
+            throw new ArgumentException("Student full name is required.", nameof(fullName));
+        if (fullName.Trim().Length > 180)
+            throw new ArgumentException("Student full name cannot exceed 180 characters.", nameof(fullName));
+    }
+
+    private static void ValidateEmail(string email)
+    {
         if (string.IsNullOrWhiteSpace(email) || !email.Contains('@', StringComparison.Ordinal))
             throw new ArgumentException("A valid student email address is required.", nameof(email));
+        if (email.Trim().Length > 254)
+            throw new ArgumentException("Student email address cannot exceed 254 characters.", nameof(email));
+    }
 
-        Email = email.Trim().ToLowerInvariant();
+    private static void ValidatePhoneNumber(string? phoneNumber)
+    {
+        if (!string.IsNullOrWhiteSpace(phoneNumber) && phoneNumber.Trim().Length > 30)
+            throw new ArgumentException("Student phone number cannot exceed 30 characters.", nameof(phoneNumber));
     }
 
     private static string? NormalizeOptional(string? value) =>
