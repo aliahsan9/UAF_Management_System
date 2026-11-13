@@ -624,3 +624,70 @@ Policy configuration is restricted to Registrar and SuperAdmin. Teachers can rep
 **Important policy caveat:** changing the single policy configured for an academic session changes how that session's reports are calculated, including previously finalized attendance. This initial version does not preserve historical policy versions or freeze calculations at a reporting date. Obtain the approved university policy before configuration, and add effective-dated policy versions before relying on historical reports for formal decisions.
 
 Domain, calculation, and authorization tests have been authored but have **not** been executed. The new entity mapping has not been migrated or validated against SQL Server. Run the complete solution build/test suite and SQL Server integration tests before using the reports operationally.
+
+
+## Examination and Results Management
+
+The initial examination workflow is built around a course offering and its currently enrolled students.
+
+### Workflow
+
+1. Registrar, SuperAdmin, or a DepartmentAdmin scoped to the offering's department creates an examination.
+2. The examination is explicitly scheduled.
+3. An assigned active academic employee with a TeacherProfile, or authorized academic administrator, opens marks entry.
+4. Marks are recorded in batches. Every entry includes an audit reason; absence is represented explicitly and must have zero marks.
+5. Submission is blocked until every currently enrolled student has a result record. Absences must be recorded as zero.
+6. A different authorized academic administrator approves the submitted results.
+7. Approved results are published. The results endpoint returns data only after publication.
+
+### API endpoints
+
+| Method | Route | Purpose |
+|---|---|---|
+| POST | `/api/v1/examinations/` | Create a draft examination |
+| POST | `/api/v1/examinations/{id}/schedule` | Schedule the examination |
+| POST | `/api/v1/examinations/{id}/open-marks-entry` | Open marks entry |
+| PUT | `/api/v1/examinations/{id}/marks` | Enter or correct marks |
+| POST | `/api/v1/examinations/{id}/submit` | Submit complete marks for approval |
+| POST | `/api/v1/examinations/{id}/approve` | Approve results (different actor from submitter) |
+| POST | `/api/v1/examinations/{id}/publish` | Publish approved results |
+| GET | `/api/v1/examinations/{id}` | Read examination workflow state |
+| GET | `/api/v1/examinations/offerings/{offeringId}` | List examinations for an offering |
+| GET | `/api/v1/examinations/{id}/results` | Read published results only |
+
+### Example marks request
+
+```json
+{
+  "marks": [
+    {
+      "studentId": "00000000-0000-0000-0000-000000000001",
+      "marksObtained": 42.5,
+      "isAbsent": false,
+      "remarks": "",
+      "reason": "Initial marks entry"
+    },
+    {
+      "studentId": "00000000-0000-0000-0000-000000000002",
+      "marksObtained": 0,
+      "isAbsent": true,
+      "remarks": "Absent on examination date",
+      "reason": "Initial marks entry"
+    }
+  ]
+}
+```
+
+### Integrity and authorization
+
+- Teachers can manage only their own published course offerings, and their employee record must be active, academic, linked to the authenticated account, and have a TeacherProfile.
+- DepartmentAdmin access is scoped to their active employee department. Registrar and SuperAdmin can manage all published offerings.
+- Marks are restricted to students currently enrolled in the course offering.
+- A unique database index prevents duplicate result rows for the same examination and student.
+- Marks updates and result submission use SQL Server serializable transactions. Submission verifies that all currently enrolled students have marks, including explicit zero-mark absences.
+- Every initial marks entry and correction creates an append-only audit record containing old/new marks, absence state, actor, reason, and timestamp.
+- A result submitter cannot approve their own results. Result data is unavailable through the results endpoint until publication.
+
+The `MaximumMarks` and `PassingMarks` values are configured per examination. This milestone does **not** assume UAF letter-grade boundaries, GPA/CGPA formulae, repeat-course rules, or transcript rules. Those must be supplied by the university before implementing the grading-scale and transcript modules. Student self-service result access and grade-point calculations are also not part of this initial milestone.
+
+Domain and authorization tests have been authored but have **not** been executed. The new entities and EF Core mappings have not been migrated or validated against SQL Server. Build, run tests, review the generated migration, and execute SQL Server integration tests before operational use.
