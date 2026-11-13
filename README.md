@@ -757,7 +757,7 @@ The values above are illustrative only, not UAF's approved grading policy. `repe
 
 ### Important policy boundary
 
-The system does not hardcode UAF grade thresholds, grade-point mappings, failed-course rules or repeat-course policy. The JSON example is sample configuration only. The finalization API currently accepts the compiled course total from an authorized academic administrator; it does not yet aggregate exam components or attendance into a course total. Assessment weights, grade revision/appeals, effective-dated grading-scale replacement, transcript PDF generation, and officially approved UAF policy validation remain future work.
+The system does not hardcode UAF grade thresholds, grade-point mappings, failed-course rules or repeat-course policy. The JSON example is sample configuration only. Course grade finalization now calculates the course total from all configured, published weighted examinations. It does not yet incorporate attendance into the course total. Assessment weights, grade revision/appeals, effective-dated grading-scale replacement, transcript PDF generation, and officially approved UAF policy validation remain future work.
 
 Domain, GPA calculator and role-authorization tests have been authored but have **not** been executed. EF Core migrations and SQL Server integration tests have not been generated or run. Review and validate the model before applying a migration or using real student records.
 
