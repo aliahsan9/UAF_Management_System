@@ -528,3 +528,45 @@ All routes require the `HRManager` or `SuperAdmin` role.
 The `HRManager` role is included in role seeding. Assigning that role to a real account must be performed through a trusted administrative provisioning process; public registration remains Student-only. This module does not yet implement payroll, leave requests/approval, attendance, contract/document management, staff self-service, or employee identity provisioning. Teacher qualification and rank fields are generic configurable profile data and do not assert official UAF HR classifications.
 
 Domain and authorization tests have been authored but not executed. A database migration is required because the module adds Employee and TeacherProfile tables and an instructor foreign key on CourseOfferings.
+
+
+## Attendance Management
+
+The initial attendance module is now implemented in the backend:
+
+- Teachers can create attendance sessions only for course offerings assigned to their linked, active Academic employee record with a TeacherProfile.
+- Registrar, DepartmentAdmin, and SuperAdmin can manage attendance through the protected staff policy.
+- Attendance sessions are unique per course offering and date.
+- Attendance statuses: Present, Absent, Late, and Excused.
+- Batch marking validates that every student is currently enrolled in the selected offering and rejects duplicate student IDs in one request.
+- Attendance updates are allowed only while the session is Open. Changing an existing mark requires a reason.
+- Every initial mark and correction creates an append-only audit record with previous/new status, actor Identity ID, reason, and UTC timestamp.
+- Session finalization requires every currently enrolled student to have a recorded status; finalized sessions cannot be edited.
+- SQL Server serializable transactions and an update lock protect batch marking and finalization; unique database indexes provide a second layer of duplicate protection.
+- Attendance actor IDs are derived from the authenticated principal, never accepted from request bodies.
+
+### Attendance API
+
+| Method | Route | Purpose |
+|---|---|---|
+| POST | `/api/v1/attendance/sessions` | Create an attendance session for an assigned published course offering |
+| GET | `/api/v1/attendance/sessions/{id}` | Read session and student marks, subject to assignment authorization |
+| PUT | `/api/v1/attendance/sessions/{id}/marks` | Create or correct student marks in a batch |
+| POST | `/api/v1/attendance/sessions/{id}/finalize` | Finalize after every active enrollee has a mark |
+
+The batch request shape is:
+
+```json
+{
+  "marks": [
+    { "studentId": "00000000-0000-0000-0000-000000000001", "status": "Present", "reason": null },
+    { "studentId": "00000000-0000-0000-0000-000000000002", "status": "Absent", "reason": null }
+  ]
+}
+```
+
+For a correction, provide a non-empty `reason` for the changed mark. A repeated request with the same status is treated as a no-op and does not create a redundant audit entry.
+
+**Policy and scope limitations:** no UAF-specific attendance percentage threshold, lateness weighting, excused-absence policy, or correction approval process is hardcoded. The current module stores raw statuses and audit history; percentage calculations, configurable attendance policy, correction approval workflow, student self-service attendance views, timetable validation, and notifications are future work. Teachers must have an active Employee record, an active course assignment, a linked Identity account, and a TeacherProfile. Closed offerings remain readable for attendance history, but cancelled/draft offerings do not allow attendance operations.
+
+Attendance domain and authorization tests have been authored. They have **not** been executed, and the new EF Core mappings have not been migrated or validated against SQL Server. Before applying a migration, inspect existing CourseOffering instructor references and ensure they satisfy the Employee foreign key introduced in the Employee milestone. Run the full build/test suite and a dedicated SQL Server integration test before treating this module as production-ready.
