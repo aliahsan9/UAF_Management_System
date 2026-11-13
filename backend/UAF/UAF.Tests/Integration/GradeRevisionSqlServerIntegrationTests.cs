@@ -81,7 +81,7 @@ public sealed class GradeRevisionSqlServerIntegrationTests
                 appeal.Decide(true, reviewerId, "Appeal accepted for re-evaluation.", now);
 
                 db.AddRange(university, faculty, department, program, session, course, offering, student,
-                    CreateUser(requesterId, "requester"), CreateUser(reviewerId, "reviewer"), scale,
+                    CreateUser(requesterId, "requester"), CreateUser(reviewerId, "reviewer"), CreateUser(studentId, "student"), scale,
                     bandF, bandB, bandA, grade, appeal);
                 await db.SaveChangesAsync();
             }
