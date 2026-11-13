@@ -15,4 +15,7 @@ public static class AuthorizationPolicies
     public const string AttendancePolicyManagement = "Attendance.PolicyManagement";
     public const string ExaminationManagement = "Examinations.Management";
     public const string ExaminationApproval = "Examinations.Approval";
+    public const string GradingScaleManagement = "Grading.ScaleManagement";
+    public const string CourseGradeManagement = "Grading.CourseGradeManagement";
+    public const string StudentAcademicRecord = "AcademicRecords.Student";
 }
