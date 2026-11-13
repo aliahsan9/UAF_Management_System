@@ -13,7 +13,7 @@ public static class GradeAppealEndpoints
         student.MapPost("/", async (CreateGradeAppealRequest request, HttpContext http, GradeAppealService service, CancellationToken ct) =>
         {
             var result = await service.CreateAsync(GetActorId(http.User), request, ct);
-            return Results.Created($"/api/v1/academic-records/me/grade-appeals/{result.Id}", result);
+            return Results.Created("/api/v1/academic-records/me/grade-appeals", result);
         }).WithName("CreateMyGradeAppeal");
         student.MapGet("/", async (HttpContext http, GradeAppealService service, CancellationToken ct) =>
             Results.Ok(await service.GetMineAsync(GetActorId(http.User), ct)))
