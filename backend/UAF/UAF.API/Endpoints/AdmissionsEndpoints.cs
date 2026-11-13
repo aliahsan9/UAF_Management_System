@@ -1,6 +1,9 @@
+using System.Security.Claims;
+using System.Security.Claims;
 using UAF.API.Authorization;
 using UAF.Application.Features.Admissions;
 using UAF.Application.Features.Admissions.Models;
+using UAF.Domain.Enums;
 
 namespace UAF.API.Endpoints;
 
@@ -29,6 +32,23 @@ public static class AdmissionsEndpoints
             .Produces(StatusCodes.Status204NoContent)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
+
+        group.MapGet("/{id:guid}/decision-history", async (Guid id, AdmissionWorkflowService workflow, CancellationToken ct) =>
+            Results.Ok(await workflow.GetDecisionHistoryAsync(id, ct)))
+            .RequireAuthorization(AuthorizationPolicies.AdmissionsDecision);
+
+        group.MapPost("/registration-series", async (ConfigureRegistrationSeriesRequest request,
+            ClaimsPrincipal user, AdmissionWorkflowService workflow, CancellationToken ct) =>
+        {
+            await workflow.ConfigureRegistrationSeriesAsync(request, GetUserId(user), ct);
+            return Results.NoContent();
+        })
+        .RequireAuthorization(AuthorizationPolicies.AdmissionsDecision);
+
+        group.MapPost("/{id:guid}/convert-to-student", async (Guid id, ClaimsPrincipal user,
+            AdmissionWorkflowService workflow, CancellationToken ct) =>
+            Results.Ok(await workflow.ConvertAcceptedApplicationAsync(id, GetUserId(user), ct)))
+        .RequireAuthorization(AuthorizationPolicies.AdmissionsDecision);
 
         group.MapPost("/{id:guid}/start-review", StartReview)
             .WithName("StartAdmissionReview")
@@ -106,41 +126,33 @@ public static class AdmissionsEndpoints
     }
 
     private static async Task<IResult> StartReview(
-        Guid id,
-        AdmissionApplicationService service,
-        CancellationToken cancellationToken)
+        Guid id, ClaimsPrincipal user, AdmissionWorkflowService workflow, CancellationToken cancellationToken)
     {
-        await service.StartReviewAsync(id, cancellationToken);
+        await workflow.StartReviewAsync(id, GetUserId(user), cancellationToken);
         return Results.NoContent();
     }
 
     private static async Task<IResult> Accept(
-        Guid id,
-        AdmissionDecisionRequest? request,
-        AdmissionApplicationService service,
-        CancellationToken cancellationToken)
+        Guid id, AdmissionDecisionRequest? request, ClaimsPrincipal user,
+        AdmissionWorkflowService workflow, CancellationToken cancellationToken)
     {
-        await service.AcceptAsync(id, request?.Remarks, cancellationToken);
+        await workflow.RecordDecisionAsync(id, GetUserId(user), AdmissionStatus.Accepted, request?.Remarks, cancellationToken);
         return Results.NoContent();
     }
 
     private static async Task<IResult> Reject(
-        Guid id,
-        AdmissionDecisionRequest? request,
-        AdmissionApplicationService service,
-        CancellationToken cancellationToken)
+        Guid id, AdmissionDecisionRequest? request, ClaimsPrincipal user,
+        AdmissionWorkflowService workflow, CancellationToken cancellationToken)
     {
-        await service.RejectAsync(id, request?.Remarks, cancellationToken);
+        await workflow.RecordDecisionAsync(id, GetUserId(user), AdmissionStatus.Rejected, request?.Remarks, cancellationToken);
         return Results.NoContent();
     }
 
     private static async Task<IResult> Waitlist(
-        Guid id,
-        AdmissionDecisionRequest? request,
-        AdmissionApplicationService service,
-        CancellationToken cancellationToken)
+        Guid id, AdmissionDecisionRequest? request, ClaimsPrincipal user,
+        AdmissionWorkflowService workflow, CancellationToken cancellationToken)
     {
-        await service.WaitlistAsync(id, request?.Remarks, cancellationToken);
+        await workflow.RecordDecisionAsync(id, GetUserId(user), AdmissionStatus.Waitlisted, request?.Remarks, cancellationToken);
         return Results.NoContent();
     }
 
@@ -151,6 +163,14 @@ public static class AdmissionsEndpoints
     {
         await service.WithdrawAsync(id, cancellationToken);
         return Results.NoContent();
+    }
+
+    private static Guid GetUserId(ClaimsPrincipal user)
+    {
+        var value = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? user.FindFirstValue("sub");
+        if (!Guid.TryParse(value, out var id) || id == Guid.Empty)
+            throw new UnauthorizedAccessException("The authenticated account identifier is invalid.");
+        return id;
     }
 
     private static Dictionary<string, string[]> Validate(CreateAdmissionDraftRequest request)
