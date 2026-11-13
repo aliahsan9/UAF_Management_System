@@ -760,3 +760,45 @@ The values above are illustrative only, not UAF's approved grading policy. `repe
 The system does not hardcode UAF grade thresholds, grade-point mappings, failed-course rules or repeat-course policy. The JSON example is sample configuration only. The finalization API currently accepts the compiled course total from an authorized academic administrator; it does not yet aggregate exam components or attendance into a course total. Assessment weights, grade revision/appeals, effective-dated grading-scale replacement, transcript PDF generation, and officially approved UAF policy validation remain future work.
 
 Domain, GPA calculator and role-authorization tests have been authored but have **not** been executed. EF Core migrations and SQL Server integration tests have not been generated or run. Review and validate the model before applying a migration or using real student records.
+
+
+## Weighted Assessment Results and Automatic Course Grade Finalization
+
+Examinations now carry an explicit WeightPercentage in addition to their maximum and passing marks. Weights are configured when each examination is created.
+
+### Assessment configuration rules
+
+- Every non-cancelled examination contributes to the course offering's configured assessment weight.
+- The total configured weight cannot exceed 100%.
+- Weight validation and examination insertion occur in a SQL Server serializable transaction to protect concurrent configuration changes.
+- Cancelled examinations are excluded from the configured total.
+- Course grade finalization requires every non-cancelled examination to be Published and to have a marks record for the student.
+- The weights of all non-cancelled examinations must total exactly 100%.
+
+### Weighted percentage
+
+For each published assessment:
+
+AssessmentPercentage = MarksObtained / MaximumMarks × 100
+
+WeightedContribution = AssessmentPercentage × WeightPercentage / 100
+
+The final course percentage is the sum of all weighted contributions. The result is rounded to two decimal places, then mapped through the published academic-session grading scale.
+
+### Example
+
+| Assessment | Maximum | Obtained | Weight | Contribution |
+|---|---:|---:|---:|---:|
+| Midterm | 100 | 80 | 40% | 32.00 |
+| Final | 100 | 90 | 60% | 54.00 |
+| **Total** | | | **100%** | **86.00%** |
+
+### Updated finalization endpoint
+
+POST /api/v1/grading/offerings/{offeringId}/students/{studentId}/finalize
+
+No marks or total are accepted in the request body. The backend reads the student's marks from published examinations, validates all assessment components and calculates the course total itself.
+
+### Policy boundary
+
+Weights are explicitly configured per examination; the application does not assume any UAF-specific midterm/final/assignment distribution. The current model supports one weighted examination per configured assessment item. Grade revision/appeal, a formal department-level assessment-plan approval process, and transcript PDF issuance remain separate milestones.
