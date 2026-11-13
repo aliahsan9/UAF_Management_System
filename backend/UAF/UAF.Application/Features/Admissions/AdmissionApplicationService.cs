@@ -67,14 +67,9 @@ public sealed class AdmissionApplicationService
         await _unitOfWork.SaveChangesAsync(ct);
     }
 
-    public Task SubmitMyApplicationAsync(Guid ownerUserId, Guid applicationId, CancellationToken ct = default) =>
-        UpdateOwnedAsync(ownerUserId, applicationId, application => application.Submit(), ct);
-
     public Task WithdrawMyApplicationAsync(Guid ownerUserId, Guid applicationId, CancellationToken ct = default) =>
         UpdateOwnedAsync(ownerUserId, applicationId, application => application.Withdraw(), ct);
 
-    public Task SubmitAsync(Guid id, CancellationToken ct = default) =>
-        UpdateApplicationAsync(id, application => application.Submit(), ct);
     public Task WithdrawAsync(Guid id, CancellationToken ct = default) =>
         UpdateApplicationAsync(id, application => application.Withdraw(), ct);
 
