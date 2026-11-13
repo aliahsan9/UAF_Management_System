@@ -12,6 +12,7 @@ using UAF.Application.Features.Authentication.Abstractions;
 using UAF.Infrastructure.Identity;
 using UAF.Infrastructure.Persistence;
 using UAF.Infrastructure.Persistence.Repositories;
+using UAF.Infrastructure.Files;
 
 namespace UAF.Infrastructure;
 
@@ -43,10 +44,13 @@ public static class DependencyInjection
         .AddSignInManager();
 
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
+        services.Configure<AdmissionDocumentStorageOptions>(configuration.GetSection(AdmissionDocumentStorageOptions.SectionName));
+        services.AddSingleton<IAdmissionDocumentStorage, LocalAdmissionDocumentStorage>();
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddScoped<IAuthenticationService, IdentityAuthenticationService>();
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<UafDbContext>());
         services.AddScoped<IAdmissionApplicationRepository, AdmissionApplicationRepository>();
+        services.AddScoped<IAdmissionDocumentRepository, AdmissionDocumentRepository>();
         services.AddScoped<IAcademicStructureRepository, AcademicStructureRepository>();
         services.AddScoped<IAcademicCatalogRepository, AcademicCatalogRepository>();
         services.AddScoped<IStudentRepository, StudentRepository>();
