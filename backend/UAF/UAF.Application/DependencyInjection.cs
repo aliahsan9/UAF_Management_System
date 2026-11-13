@@ -13,6 +13,7 @@ public static class DependencyInjection
     {
         ArgumentNullException.ThrowIfNull(services);
         services.AddScoped<AdmissionApplicationService>();
+        services.AddScoped<AdmissionWorkflowService>();
         services.AddScoped<AdmissionDocumentService>();
         services.AddScoped<AcademicStructureService>();
         services.AddScoped<AcademicCatalogService>();
