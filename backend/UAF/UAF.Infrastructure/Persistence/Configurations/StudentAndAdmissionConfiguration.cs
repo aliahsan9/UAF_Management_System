@@ -16,9 +16,17 @@ public sealed class StudentConfiguration : IEntityTypeConfiguration<Student>
         builder.Property(x => x.Email).HasMaxLength(254).IsRequired();
         builder.Property(x => x.PhoneNumber).HasMaxLength(30);
         builder.Property(x => x.Status).HasConversion<int>().IsRequired();
+        builder.Property(x => x.AdmissionApplicationId);
+        builder.Property(x => x.IdentityUserId);
         builder.HasIndex(x => x.RegistrationNumber).IsUnique();
+        builder.HasIndex(x => x.AdmissionApplicationId).IsUnique().HasFilter("[AdmissionApplicationId] IS NOT NULL");
+        builder.HasIndex(x => x.IdentityUserId).IsUnique().HasFilter("[IdentityUserId] IS NOT NULL");
         builder.HasIndex(x => x.Email);
         builder.HasOne<AcademicProgram>().WithMany().HasForeignKey(x => x.AcademicProgramId)
+            .OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<AdmissionApplication>().WithMany().HasForeignKey(x => x.AdmissionApplicationId)
+            .OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.IdentityUserId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }
@@ -35,12 +43,18 @@ public sealed class AdmissionApplicationConfiguration : IEntityTypeConfiguration
         builder.Property(x => x.PhoneNumber).HasMaxLength(30);
         builder.Property(x => x.Status).HasConversion<int>().IsRequired();
         builder.Property(x => x.DecisionRemarks).HasMaxLength(2000);
+        builder.HasIndex(x => x.DecisionByUserId);
+        builder.HasIndex(x => x.ReviewStartedByUserId);
         builder.HasIndex(x => x.ApplicationNumber).IsUnique();
         builder.HasIndex(x => x.ApplicantEmail);
         builder.HasIndex(x => x.OwnerUserId);
         builder.HasOne<AcademicProgram>().WithMany().HasForeignKey(x => x.AcademicProgramId)
             .OnDelete(DeleteBehavior.Restrict);
         builder.HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.OwnerUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.ReviewStartedByUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.DecisionByUserId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }
