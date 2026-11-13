@@ -41,7 +41,7 @@ public sealed class GlobalExceptionHandler : IExceptionHandler
             httpContext.Response.StatusCode = validationProblem.Status.Value;
             httpContext.Response.ContentType = "application/problem+json";
             await httpContext.Response.WriteAsJsonAsync(
-                validationProblem, "application/problem+json", cancellationToken);
+                validationProblem, cancellationToken: cancellationToken);
             return true;
         }
 
@@ -83,7 +83,7 @@ public sealed class GlobalExceptionHandler : IExceptionHandler
         httpContext.Response.StatusCode = statusCode;
         httpContext.Response.ContentType = "application/problem+json";
         await httpContext.Response.WriteAsJsonAsync(
-            problem, "application/problem+json", cancellationToken);
+            problem, cancellationToken: cancellationToken);
 
         return true;
     }

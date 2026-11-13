@@ -8,49 +8,42 @@ public static class AuthorizationPolicyExtensions
     public static IServiceCollection AddUafAuthorization(this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
+        services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
         services.AddAuthorization(options =>
         {
-            options.AddPolicy(AuthorizationPolicies.AdmissionsStaff, policy =>
-                policy.RequireRole("Registrar", "DepartmentAdmin", "SuperAdmin"));
-            options.AddPolicy(AuthorizationPolicies.AdmissionsDecision, policy =>
-                policy.RequireRole("Registrar", "SuperAdmin"));
+            foreach (var permission in UafPermissions.All)
+                AddPermissionPolicy(options, $"Permission:{permission}", permission);
+
+            AddPermissionPolicy(options, AuthorizationPolicies.AdmissionsStaff, UafPermissions.AdmissionsReview);
+            AddPermissionPolicy(options, AuthorizationPolicies.AdmissionsDecision, UafPermissions.AdmissionsDecide);
             options.AddPolicy(AuthorizationPolicies.ApplicantSelfService, policy =>
                 policy.RequireAuthenticatedUser().RequireRole("Student"));
-            options.AddPolicy(AuthorizationPolicies.AcademicStructureAdmin, policy =>
-                policy.RequireRole("DepartmentAdmin", "SuperAdmin"));
-            options.AddPolicy(AuthorizationPolicies.StudentManagement, policy =>
-                policy.RequireRole("Registrar", "DepartmentAdmin", "SuperAdmin"));
-            options.AddPolicy(AuthorizationPolicies.AcademicCatalogManagement, policy =>
-                policy.RequireRole("Registrar", "DepartmentAdmin", "SuperAdmin"));
-            options.AddPolicy(AuthorizationPolicies.CourseOfferingManagement, policy =>
-                policy.RequireRole("Registrar", "DepartmentAdmin", "SuperAdmin"));
-            options.AddPolicy(AuthorizationPolicies.FinanceManagement, policy =>
-                policy.RequireAuthenticatedUser().RequireRole("FinanceOfficer", "SuperAdmin"));
-            options.AddPolicy(AuthorizationPolicies.EmployeeManagement, policy =>
-                policy.RequireAuthenticatedUser().RequireRole("HRManager", "SuperAdmin"));
-            options.AddPolicy(AuthorizationPolicies.AttendanceManagement, policy =>
-                policy.RequireAuthenticatedUser().RequireRole("Teacher", "Registrar", "DepartmentAdmin", "SuperAdmin"));
-            options.AddPolicy(AuthorizationPolicies.AttendancePolicyManagement, policy =>
-                policy.RequireAuthenticatedUser().RequireRole("Registrar", "SuperAdmin"));
-            options.AddPolicy(AuthorizationPolicies.ExaminationManagement, policy =>
-                policy.RequireAuthenticatedUser().RequireRole("Teacher", "Registrar", "DepartmentAdmin", "SuperAdmin"));
-            options.AddPolicy(AuthorizationPolicies.ExaminationApproval, policy =>
-                policy.RequireAuthenticatedUser().RequireRole("Registrar", "DepartmentAdmin", "SuperAdmin"));
-            options.AddPolicy(AuthorizationPolicies.GradingScaleManagement, policy =>
-                policy.RequireAuthenticatedUser().RequireRole("Registrar", "SuperAdmin"));
-            options.AddPolicy(AuthorizationPolicies.CourseGradeManagement, policy =>
-                policy.RequireAuthenticatedUser().RequireRole("Registrar", "DepartmentAdmin", "SuperAdmin"));
+            AddPermissionPolicy(options, AuthorizationPolicies.AcademicStructureAdmin, UafPermissions.AcademicStructureManage);
+            AddPermissionPolicy(options, AuthorizationPolicies.StudentManagement, UafPermissions.StudentsManage);
+            AddPermissionPolicy(options, AuthorizationPolicies.AcademicCatalogManagement, UafPermissions.AcademicCatalogManage);
+            AddPermissionPolicy(options, AuthorizationPolicies.CourseOfferingManagement, UafPermissions.CourseOfferingsManage);
+            AddPermissionPolicy(options, AuthorizationPolicies.FinanceManagement, UafPermissions.FinanceManage);
+            AddPermissionPolicy(options, AuthorizationPolicies.EmployeeManagement, UafPermissions.EmployeesManage);
+            AddPermissionPolicy(options, AuthorizationPolicies.AttendanceManagement, UafPermissions.AttendanceManage);
+            AddPermissionPolicy(options, AuthorizationPolicies.AttendancePolicyManagement, UafPermissions.AttendancePolicyManage);
+            AddPermissionPolicy(options, AuthorizationPolicies.ExaminationManagement, UafPermissions.ExaminationsManage);
+            AddPermissionPolicy(options, AuthorizationPolicies.ExaminationApproval, UafPermissions.ExaminationsApprove);
+            AddPermissionPolicy(options, AuthorizationPolicies.GradingScaleManagement, UafPermissions.GradingScalesManage);
+            AddPermissionPolicy(options, AuthorizationPolicies.CourseGradeManagement, UafPermissions.CourseGradesManage);
             options.AddPolicy(AuthorizationPolicies.StudentAcademicRecord, policy =>
                 policy.RequireAuthenticatedUser().RequireRole("Student"));
-            options.AddPolicy(AuthorizationPolicies.GradeAppealReview, policy =>
-                policy.RequireAuthenticatedUser().RequireRole("Registrar", "DepartmentAdmin", "SuperAdmin"));
-            options.AddPolicy(AuthorizationPolicies.GradeRevisionRequestManagement, policy =>
-                policy.RequireAuthenticatedUser().RequireRole("Registrar", "DepartmentAdmin", "SuperAdmin"));
-            options.AddPolicy(AuthorizationPolicies.GradeRevisionApproval, policy =>
-                policy.RequireAuthenticatedUser().RequireRole("Registrar", "SuperAdmin"));
-            options.AddPolicy(AuthorizationPolicies.TranscriptIssuance, policy =>
-                policy.RequireAuthenticatedUser().RequireRole("Registrar", "SuperAdmin"));
+            AddPermissionPolicy(options, AuthorizationPolicies.GradeAppealReview, UafPermissions.GradeAppealsReview);
+            AddPermissionPolicy(options, AuthorizationPolicies.GradeRevisionRequestManagement, UafPermissions.GradeRevisionsManage);
+            AddPermissionPolicy(options, AuthorizationPolicies.GradeRevisionApproval, UafPermissions.GradeRevisionsApprove);
+            AddPermissionPolicy(options, AuthorizationPolicies.TranscriptIssuance, UafPermissions.TranscriptsIssue);
         });
         return services;
+    }
+
+    private static void AddPermissionPolicy(
+        AuthorizationOptions options, string policyName, string permission)
+    {
+        options.AddPolicy(policyName, policy =>
+            policy.RequireAuthenticatedUser().AddRequirements(new PermissionRequirement(permission)));
     }
 }

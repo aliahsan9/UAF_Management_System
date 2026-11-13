@@ -1,9 +1,11 @@
+using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using UAF.API.Authorization;
 using UAF.API.Endpoints;
+using UAF.API.Validation;
 using UAF.Application;
 using Xunit;
 
@@ -23,6 +25,8 @@ public sealed class AdmissionEndpointAuthorizationTests
         var builder = WebApplication.CreateBuilder();
         builder.Services.AddAuthorization();
         builder.Services.AddApplication();
+        builder.Services.AddValidatorsFromAssemblyContaining<CreateAdmissionDraftRequestValidator>();
+        builder.Services.AddValidatorsFromAssemblyContaining<CreateAdmissionDraftRequestValidator>();
         await using var app = builder.Build();
         app.MapAdmissionEndpoints();
 
@@ -42,6 +46,7 @@ public sealed class AdmissionEndpointAuthorizationTests
         var builder = WebApplication.CreateBuilder();
         builder.Services.AddAuthorization();
         builder.Services.AddApplication();
+        builder.Services.AddValidatorsFromAssemblyContaining<CreateAdmissionDraftRequestValidator>();
         await using var app = builder.Build();
         app.MapAdmissionEndpoints();
 

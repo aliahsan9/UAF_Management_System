@@ -65,6 +65,10 @@ public static class ApplicantAdmissionEndpoints
                 return Results.BadRequest(new { message = "A non-empty file is required." });
             if (file.Length > AdmissionDocumentService.MaximumFileSizeBytes)
                 return Results.BadRequest(new { message = "File size cannot exceed 10 MB." });
+            if (!Enum.IsDefined(form.DocumentType))
+                return Results.BadRequest(new { message = "Unsupported document type." });
+            if (string.IsNullOrWhiteSpace(file.FileName) || file.FileName.Length > 255)
+                return Results.BadRequest(new { message = "A valid file name is required." });
 
             await using var input = file.OpenReadStream();
             var result = await documents.UploadForApplicantAsync(
@@ -73,7 +77,13 @@ public static class ApplicantAdmissionEndpoints
         })
         .DisableAntiforgery()
         .Accepts<AdmissionDocumentUploadForm>("multipart/form-data")
-        .WithMetadata(new RequestSizeLimitAttribute(11 * 1024 * 1024));
+        .WithMetadata(new RequestSizeLimitAttribute(11 * 1024 * 1024))
+        .WithMetadata(new RequestFormLimitsAttribute
+        {
+            MultipartBodyLengthLimit = 11 * 1024 * 1024,
+            ValueLengthLimit = 16 * 1024,
+            MultipartHeadersLengthLimit = 16 * 1024
+        });
 
         group.MapGet("/{applicationId:guid}/documents/{documentId:guid}/download",
             async (Guid applicationId, Guid documentId, ClaimsPrincipal user,

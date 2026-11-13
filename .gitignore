@@ -363,3 +363,22 @@ MigrationBackup/
 FodyWeavers.xsd
 # Private applicant uploads and local document storage
 **/App_Data/PrivateAdmissionDocuments/
+
+# Local secrets and certificates
+.env
+.env.*
+!.env.example
+*.secrets.json
+secrets.json
+*.key
+*.pem
+*.pfx
+*.pubxml
+*.publishsettings
+
+# Private applicant uploads and local document storage
+**/App_Data/PrivateAdmissionDocuments/
+**/private-admission-documents/
+
+# Local Serilog output
+logs/

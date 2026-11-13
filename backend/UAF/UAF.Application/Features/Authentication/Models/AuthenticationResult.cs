@@ -7,7 +7,9 @@ public sealed record AuthenticationResult(
     DateTimeOffset? ExpiresAtUtc,
     string? UserId,
     string? Email,
-    IReadOnlyCollection<string> Roles)
+    IReadOnlyCollection<string> Roles,
+    string? RefreshToken = null,
+    DateTimeOffset? RefreshTokenExpiresAtUtc = null)
 {
     public static AuthenticationResult Failure(string error) =>
         new(false, error, null, null, null, null, Array.Empty<string>());
