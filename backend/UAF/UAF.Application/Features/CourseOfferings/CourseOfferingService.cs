@@ -61,8 +61,16 @@ public sealed class CourseOfferingService
         await _repository.UpdateOfferingAsync(id, request.Capacity, request.InstructorEmployeeId, ct);
     }
 
-    public Task PublishAsync(Guid id, CancellationToken ct = default) =>
-        ChangeOfferingAsync(id, x => x.Publish(), ct);
+    public async Task PublishAsync(Guid id, CancellationToken ct = default)
+    {
+        var offering = await GetRequiredOfferingAsync(id, ct);
+        if (!await _repository.CourseIsActiveAsync(offering.CourseId, ct))
+            throw new InvalidOperationException("An offering cannot be published for an inactive course.");
+        if (!await _repository.AcademicSessionAllowsSchedulingAsync(offering.AcademicSessionId, ct))
+            throw new InvalidOperationException("An offering cannot be published for a completed or cancelled academic session.");
+        offering.Publish();
+        await _unitOfWork.SaveChangesAsync(ct);
+    }
 
     public Task CloseAsync(Guid id, CancellationToken ct = default) =>
         ChangeOfferingAsync(id, x => x.Close(), ct);
