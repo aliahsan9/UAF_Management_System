@@ -41,7 +41,7 @@ public sealed class ExaminationService
             throw new ArgumentException("Student IDs must be valid and unique within the request.");
         if (request.Marks.Any(x => string.IsNullOrWhiteSpace(x.Reason))) throw new ArgumentException("Every marks entry requires an audit reason.");
         var exam = await GetAuthorizedAsync(id, actorId, privileged, departmentAdmin, ct);
-        if (exam.Status != Domain.Enums.ExaminationStatus.MarksEntryOpen) throw new InvalidOperationException("Marks can only be entered while marks entry is open.");
+        if (exam.Status != UAF.Domain.Enums.ExaminationStatus.MarksEntryOpen) throw new InvalidOperationException("Marks can only be entered while marks entry is open.");
         if (request.Marks.Any(x => x.MarksObtained < 0 || x.MarksObtained > exam.MaximumMarks || (x.IsAbsent && x.MarksObtained != 0)))
             throw new ArgumentException("Marks must be within the examination maximum; absent students must receive zero.");
         await _repository.SaveMarksAsync(id, actorId, request.Marks, ct);
@@ -77,7 +77,7 @@ public sealed class ExaminationService
     public async Task<IReadOnlyList<ExaminationResultView>> GetResultsAsync(Guid id, Guid actorId, bool privileged, bool departmentAdmin, CancellationToken ct)
     {
         var exam = await GetAuthorizedAsync(id, actorId, privileged, departmentAdmin, ct);
-        if (exam.Status != Domain.Enums.ExaminationStatus.Published)
+        if (exam.Status != UAF.Domain.Enums.ExaminationStatus.Published)
             throw new InvalidOperationException("Results are available only after publication.");
         return await _repository.GetResultsAsync(id, ct);
     }
