@@ -13,7 +13,7 @@ public sealed class PermissionAuthorizationHandler : AuthorizationHandler<Permis
                 UafPermissions.ExaminationsManage, UafPermissions.GradesManage],
             ["Registrar"] = UafPermissions.All.Where(permission =>
                 permission is not UafPermissions.FinanceRead and not UafPermissions.FinanceManage and
-                not UafPermissions.EmployeesManage).ToArray(),
+                not UafPermissions.EmployeesManage and not UafPermissions.AcademicStructureManage).ToArray(),
             ["DepartmentAdmin"] =
             [
                 UafPermissions.AdmissionsRead, UafPermissions.AdmissionsReview,
