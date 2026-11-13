@@ -28,6 +28,8 @@ public sealed class StudentService
     {
         if (page < 1)
             throw new ArgumentOutOfRangeException(nameof(page), "Page must be greater than zero.");
+        if (page > int.MaxValue / Math.Max(pageSize, 1))
+            throw new ArgumentOutOfRangeException(nameof(page), "Requested page is too large.");
         if (pageSize is < 1 or > MaximumPageSize)
             throw new ArgumentOutOfRangeException(nameof(pageSize), $"Page size must be between 1 and {MaximumPageSize}.");
         if (academicProgramId == Guid.Empty)
@@ -76,8 +78,7 @@ public sealed class StudentService
     {
         ArgumentNullException.ThrowIfNull(request);
         var student = await GetRequiredAsync(id, ct);
-        student.UpdateFullName(request.FullName);
-        student.UpdateContactDetails(request.Email, request.PhoneNumber);
+        student.UpdateProfile(request.FullName, request.Email, request.PhoneNumber);
         await _unitOfWork.SaveChangesAsync(ct);
     }
 
