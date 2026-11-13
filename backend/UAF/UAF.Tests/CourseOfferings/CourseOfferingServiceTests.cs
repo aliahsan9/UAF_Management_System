@@ -83,6 +83,34 @@ public sealed class CourseOfferingServiceTests
     }
 
     [Fact]
+    public async Task ConcurrentEnrollmentRequests_NeverExceedOfferingCapacity()
+    {
+        var id = await _service.CreateOfferingAsync(Request(capacity: 2));
+        await _service.PublishAsync(id);
+        var students = Enumerable.Range(0, 8).Select(_ => Guid.NewGuid()).ToArray();
+        foreach (var studentId in students)
+            _repository.EligibleStudents.Add(studentId);
+
+        var attempts = students.Select(async studentId =>
+        {
+            try
+            {
+                await _service.EnrollStudentAsync(studentId, id, new(2026, 11, 13));
+                return true;
+            }
+            catch (InvalidOperationException)
+            {
+                return false;
+            }
+        });
+
+        var results = await Task.WhenAll(attempts);
+
+        Assert.Equal(2, results.Count(x => x));
+        Assert.Equal(2, await _repository.GetActiveEnrollmentCountAsync(id));
+    }
+
+    [Fact]
     public async Task StudentCanReEnrollAfterDroppingPreviousRegistration()
     {
         var id = await _service.CreateOfferingAsync(Request(capacity: 1));
@@ -116,6 +144,7 @@ public sealed class CourseOfferingServiceTests
     {
         private readonly Dictionary<Guid, CourseOffering> _offerings = new();
         private readonly Dictionary<Guid, CourseEnrollment> _enrollments = new();
+        private readonly SemaphoreSlim _enrollmentGate = new(1, 1);
         public Guid CourseId { get; } = Guid.NewGuid();
         public Guid SessionId { get; } = Guid.NewGuid();
         public Guid StudentId { get; } = Guid.NewGuid();
@@ -152,16 +181,24 @@ public sealed class CourseOfferingServiceTests
         { _enrollments.TryGetValue(id, out var x); return Task.FromResult(x); }
         public Task<bool> StudentIsEligibleAsync(Guid id, CancellationToken ct = default) =>
             Task.FromResult((StudentActive && id == StudentId) || EligibleStudents.Contains(id));
-        public Task<CourseEnrollment> EnrollAsync(Guid studentId, Guid offeringId, DateOnly enrolledOn, CancellationToken ct = default)
+        public async Task<CourseEnrollment> EnrollAsync(Guid studentId, Guid offeringId, DateOnly enrolledOn, CancellationToken ct = default)
         {
-            var offering = _offerings[offeringId];
-            if (offering.Status != CourseOfferingStatus.Published) throw new InvalidOperationException();
-            if (_enrollments.Values.Any(x => x.StudentId == studentId && x.CourseOfferingId == offeringId && x.Status == EnrollmentStatus.Enrolled)) throw new InvalidOperationException();
-            if (_enrollments.Values.Count(x => x.CourseOfferingId == offeringId && x.Status == EnrollmentStatus.Enrolled) >= offering.Capacity)
-                throw new InvalidOperationException();
-            var enrollment = new CourseEnrollment(studentId, offeringId, enrolledOn);
-            _enrollments.Add(enrollment.Id, enrollment);
-            return Task.FromResult(enrollment);
+            await _enrollmentGate.WaitAsync(ct);
+            try
+            {
+                var offering = _offerings[offeringId];
+                if (offering.Status != CourseOfferingStatus.Published) throw new InvalidOperationException();
+                if (_enrollments.Values.Any(x => x.StudentId == studentId && x.CourseOfferingId == offeringId && x.Status == EnrollmentStatus.Enrolled)) throw new InvalidOperationException();
+                if (_enrollments.Values.Count(x => x.CourseOfferingId == offeringId && x.Status == EnrollmentStatus.Enrolled) >= offering.Capacity)
+                    throw new InvalidOperationException();
+                var enrollment = new CourseEnrollment(studentId, offeringId, enrolledOn);
+                _enrollments.Add(enrollment.Id, enrollment);
+                return enrollment;
+            }
+            finally
+            {
+                _enrollmentGate.Release();
+            }
         }
     }
 
