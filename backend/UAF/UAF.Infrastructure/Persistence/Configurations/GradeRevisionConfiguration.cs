@@ -67,6 +67,7 @@ public sealed class GradeRevisionAuditConfiguration : IEntityTypeConfiguration<G
         b.Property(x => x.PreviousStatus).HasConversion<int>().IsRequired();
         b.Property(x => x.NewStatus).HasConversion<int>().IsRequired();
         b.Property(x => x.Remarks).HasMaxLength(1000).IsRequired();
+        b.HasIndex(x => x.RequestId).IsUnique();
         b.HasIndex(x => new { x.RequestId, x.OccurredAtUtc });
         b.HasOne<GradeRevisionRequest>().WithMany().HasForeignKey(x => x.RequestId).OnDelete(DeleteBehavior.Restrict);
         b.HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.ActorId).OnDelete(DeleteBehavior.Restrict);
