@@ -10,6 +10,7 @@ public sealed class ExaminationConfiguration : IEntityTypeConfiguration<Examinat
         b.ToTable("Examinations", t =>
         {
             t.HasCheckConstraint("CK_Examinations_Marks", "[MaximumMarks] > 0 AND [PassingMarks] >= 0 AND [PassingMarks] <= [MaximumMarks]");
+            t.HasCheckConstraint("CK_Examinations_Weight", "[WeightPercentage] > 0 AND [WeightPercentage] <= 100");
         });
         b.HasKey(x => x.Id);
         b.Property(x => x.RowVersion).IsRowVersion();
