@@ -83,7 +83,7 @@ internal sealed class CourseOfferingRepository : ICourseOfferingRepository
             throw new InvalidOperationException("The course offering is no longer open for enrollment.");
 
         var duplicate = await _dbContext.CourseEnrollments.AnyAsync(
-            x => x.StudentId == studentId && x.CourseOfferingId == offeringId, ct);
+            x => x.StudentId == studentId && x.CourseOfferingId == offeringId && x.Status == EnrollmentStatus.Enrolled, ct);
         if (duplicate)
             throw new InvalidOperationException("This student already has an enrollment record for this course offering.");
 
