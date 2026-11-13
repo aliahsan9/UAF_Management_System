@@ -15,6 +15,5 @@ public interface ICourseOfferingRepository
     Task UpdateOfferingAsync(Guid offeringId, int capacity, Guid? instructorEmployeeId, CancellationToken ct = default);
     Task<IReadOnlyList<CourseEnrollment>> GetEnrollmentsAsync(Guid offeringId, CancellationToken ct = default);
     Task<CourseEnrollment?> GetEnrollmentAsync(Guid enrollmentId, CancellationToken ct = default);
-    Task<bool> StudentIsEligibleAsync(Guid studentId, CancellationToken ct = default);
     Task<CourseEnrollment> EnrollAsync(Guid studentId, Guid offeringId, DateOnly enrolledOn, CancellationToken ct = default);
 }
