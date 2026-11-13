@@ -25,7 +25,8 @@ public sealed class SecurityAuditMiddleware(RequestDelegate next, ILogger<Securi
         }
         catch
         {
-            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            if (!context.Response.HasStarted)
+                context.Response.StatusCode = StatusCodes.Status500InternalServerError;
             throw;
         }
         finally
