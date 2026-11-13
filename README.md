@@ -2,7 +2,7 @@
 
 A university-focused management platform being developed as a Final Year Project (FYP), with the goal of bringing important academic and administrative workflows into one structured digital system.
 
-The project is in its **foundation and early implementation stage**. The repository now contains the initial .NET Domain and Application projects, with core university, student, admission, and course-registration concepts being modelled. The broader university workflows remain under development and must be refined against confirmed requirements.
+The project is in its **foundation and early implementation stage**. The repository contains .NET Domain, Application, Infrastructure, API, and Tests projects. Initial university, student, admission, and course-registration concepts are modelled, and the first admission HTTP endpoints are in place. The broader university workflows remain under development and must be refined against confirmed requirements.
 
 > **Project status:** In development  
 > **Project context:** Independent academic / FYP project  
@@ -99,7 +99,7 @@ UAF_Management_System/
         └── UAF.sln
 ```
 
-The Domain, Application, Infrastructure, and Tests projects have been created. The API project and additional module folders will be added in later stages.
+The Domain, Application, Infrastructure, API, and Tests projects have been created. The API currently exposes the initial admission application workflow; authentication and further modules will be added in later stages.
 
 ### Layer responsibilities
 
@@ -127,7 +127,7 @@ The Domain project remains independent. Infrastructure implements contracts defi
 
 ## Getting Started
 
-The backend currently contains the Domain, Application, Infrastructure, and Tests projects. Infrastructure includes the EF Core SQL Server context, entity configurations, admission repository, dependency registration, and a design-time context factory. The API, database migrations, and production authentication have not yet been implemented. The test suite has been authored but still requires execution in a .NET 10 environment.
+The backend currently contains the Domain, Application, Infrastructure, API, and Tests projects. The API includes versioned admission endpoints, centralized Problem Details exception handling, health checks, and development-only OpenAPI/Scalar documentation. Infrastructure includes the EF Core SQL Server context, entity configurations, admission repository, dependency registration, and a design-time context factory. Database migrations and production authentication have not yet been implemented. The test suite has been authored but still requires execution in a .NET 10 environment.
 
 ### Prerequisites
 
@@ -196,7 +196,9 @@ These are engineering objectives; their implementation and verification will be 
 - [x] Configure entity mappings, keys, indexes, relationships, and database constraints.
 - [x] Implement the admission application repository and infrastructure dependency registration.
 - [ ] Generate and apply the initial EF Core migration against a real development database.
-- [ ] Create the API project and HTTP endpoints.
+- [x] Create the API project and initial admission HTTP endpoints.
+- [x] Add centralized Problem Details exception handling and health endpoint.
+- [x] Add development-only OpenAPI and Scalar documentation.
 - [ ] Set up ASP.NET Core Identity and JWT authentication.
 - [ ] Implement roles and authorization policies.
 - [ ] Establish the university structure (faculties, departments, programs, and academic sessions).
