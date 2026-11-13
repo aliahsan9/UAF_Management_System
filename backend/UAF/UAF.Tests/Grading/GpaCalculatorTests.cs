@@ -46,7 +46,7 @@ public sealed class GpaCalculatorTests
         Assert.Equal(0m, result.CreditHours);
     }
     private static AcademicRecordCourseItem Item(string code, decimal credits, decimal points, DateOnly? date = null, bool isPassed = true) =>
-        new(Guid.Parse(code == "CS101" ? "10000000-0000-0000-0000-000000000001" : "20000000-0000-0000-0000-000000000001"),
+        new(Guid.NewGuid(), Guid.Parse(code == "CS101" ? "10000000-0000-0000-0000-000000000001" : "20000000-0000-0000-0000-000000000001"),
             Guid.NewGuid(), Guid.NewGuid(), "Semester", date ?? new DateOnly(2025, 1, 1), code, code, credits, 100, points * 20,
             points * 20, "A", points, isPassed, true, RepeatCoursePolicy.AllAttempts, DateTimeOffset.UtcNow);
 }
