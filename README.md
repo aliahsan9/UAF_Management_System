@@ -331,15 +331,17 @@ The Infrastructure layer currently provides a local development storage adapter.
 
 ### Admission API access control
 
-The initial admission API is restricted to authenticated university staff because the current admission domain model does not yet associate an applicant record with the authenticated account. This avoids allowing one student account to submit, review, or withdraw another person's application by guessing or obtaining an application ID.
+Applicant self-service routes require the `Student` role and derive the application owner from the authenticated Identity account. Ownership-scoped queries prevent applicants from reading, editing, uploading to, or withdrawing another applicant's application. Admissions staff routes use backend authorization policies; configuring program-wide document requirements is restricted to Registrar and SuperAdmin, while document review and general admissions operations use the admissions staff policy.
 
 | Operation | Required role |
 |---|---|
-| Create draft, submit, withdraw | Registrar, DepartmentAdmin, SuperAdmin |
-| Start review | Registrar, DepartmentAdmin, SuperAdmin |
+| Applicant draft, readiness, upload, submit, withdraw | Student (owned applications only) |
+| Configure program document checklist | Registrar, SuperAdmin |
+| Staff document review and download | Registrar, DepartmentAdmin, SuperAdmin |
+| Staff-created application submission and review workflow | Registrar, DepartmentAdmin, SuperAdmin |
 | Accept, reject, waitlist | Registrar, SuperAdmin |
 
-These requirements are enforced by named ASP.NET Core authorization policies, not by frontend visibility. Student self-service admission endpoints should be introduced only after the domain model includes a trusted applicant-to-account relationship and ownership checks are covered by tests.
+These requirements are enforced by ASP.NET Core authorization policies and ownership checks in the Application/Infrastructure layers, not by frontend visibility. Automated HTTP authorization and SQL Server integration tests remain necessary.
 
 The current implementation is an initial authentication foundation, not a production-complete identity lifecycle: email verification, refresh-token rotation/revocation, password reset, MFA, audit events, and privileged account provisioning still need implementation and tests. Do not deploy it with real university accounts until those controls and security tests are completed.
 
