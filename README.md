@@ -2,7 +2,7 @@
 
 A university-focused management platform being developed as a Final Year Project (FYP), with the goal of bringing important academic and administrative workflows into one structured digital system.
 
-The project is in its **foundation and early implementation stage**. The repository contains .NET Domain, Application, Infrastructure, API, and Tests projects. Initial academic hierarchy management (universities, campuses, faculties, departments, and programs), admission workflow endpoints, and an initial Identity/JWT foundation are implemented in source. Student self-service, fees, LMS, examinations, and other broader workflows remain under development and must be refined against confirmed requirements.
+The project is in its **foundation and early implementation stage**. The repository contains .NET Domain, Application, Infrastructure, API, and Tests projects. Initial academic hierarchy management (universities, campuses, faculties, departments, and programs), administrative student-management use cases and endpoints, admission workflow endpoints, and an initial Identity/JWT foundation are implemented in source. Student self-service, fees, LMS, examinations, and other broader workflows remain under development and must be refined against confirmed requirements.
 
 > **Project status:** In development  
 > **Project context:** Independent academic / FYP project  
@@ -79,7 +79,7 @@ UAF_Management_System/
         │   ├── Common/
         │   │   └── Abstractions/
         │   └── Features/
-        │       ├── Admissions/\n        │       └── AcademicStructure/
+        │       ├── Admissions/\n        │       ├── AcademicStructure/\n        │       └── Students/
         │
         ├── UAF.Infrastructure/
         │   ├── Persistence/
@@ -186,7 +186,23 @@ dotnet user-secrets set "Jwt:SigningKey" "<generate-a-cryptographically-random-s
 
 The API refuses to start if issuer, audience, or a signing key of at least 32 bytes is missing. Access tokens currently expire after 15 minutes. After applying migrations, role creation can be enabled for a one-time development startup using the environment variable `Identity__SeedRolesOnStartup=true`; disable it again after roles are seeded. Production role provisioning should be performed through a controlled administrative process.
 
-Academic structure routes (all require DepartmentAdmin or SuperAdmin):\n\n| Method | Route | Purpose |\n|---|---|---|\n| GET / POST | `/api/v1/academic-structure/universities` | List / create university records |\n| PUT | `/api/v1/academic-structure/universities/{id}` | Update university details |\n| GET / POST | `/api/v1/academic-structure/campuses` | List / create campuses (`universityId` query filter supported) |\n| PUT / DELETE | `/api/v1/academic-structure/campuses/{id}` | Update / deactivate a campus |\n| GET / POST | `/api/v1/academic-structure/faculties` | List / create faculties (`universityId` query filter supported) |\n| PUT / DELETE | `/api/v1/academic-structure/faculties/{id}` | Update / deactivate a faculty |\n| GET / POST | `/api/v1/academic-structure/departments` | List / create departments (`facultyId` query filter supported) |\n| PUT / DELETE | `/api/v1/academic-structure/departments/{id}` | Update / deactivate a department |\n| GET / POST | `/api/v1/academic-structure/programs` | List / create academic programs (`departmentId` query filter supported) |\n| PUT / DELETE | `/api/v1/academic-structure/programs/{id}` | Update / deactivate an academic program |\n\nCodes are normalized to uppercase and checked for duplicates within their parent. Database unique indexes remain the final integrity safeguard. Parent records must exist; inactive faculties and departments cannot be used to create children. Deactivation is a soft state change and does not delete historical records.\n\nAuthentication routes:
+Academic structure routes (all require DepartmentAdmin or SuperAdmin):\n\n| Method | Route | Purpose |\n|---|---|---|\n| GET / POST | `/api/v1/academic-structure/universities` | List / create university records |\n| PUT | `/api/v1/academic-structure/universities/{id}` | Update university details |\n| GET / POST | `/api/v1/academic-structure/campuses` | List / create campuses (`universityId` query filter supported) |\n| PUT / DELETE | `/api/v1/academic-structure/campuses/{id}` | Update / deactivate a campus |\n| GET / POST | `/api/v1/academic-structure/faculties` | List / create faculties (`universityId` query filter supported) |\n| PUT / DELETE | `/api/v1/academic-structure/faculties/{id}` | Update / deactivate a faculty |\n| GET / POST | `/api/v1/academic-structure/departments` | List / create departments (`facultyId` query filter supported) |\n| PUT / DELETE | `/api/v1/academic-structure/departments/{id}` | Update / deactivate a department |\n| GET / POST | `/api/v1/academic-structure/programs` | List / create academic programs (`departmentId` query filter supported) |\n| PUT / DELETE | `/api/v1/academic-structure/programs/{id}` | Update / deactivate an academic program |\n\nCodes are normalized to uppercase and checked for duplicates within their parent. Database unique indexes remain the final integrity safeguard. Parent records must exist; inactive faculties and departments cannot be used to create children. Deactivation is a soft state change and does not delete historical records.\n\nStudent management routes (all require Registrar, DepartmentAdmin, or SuperAdmin):
+
+| Method | Route | Purpose |
+|---|---|---|
+| GET | `/api/v1/students?page=1&pageSize=20` | Paginated student list; optional `academicProgramId` and `status` filters |
+| GET | `/api/v1/students/{id}` | Student details |
+| POST | `/api/v1/students` | Register a student with an institution-issued registration number |
+| PUT | `/api/v1/students/{id}/profile` | Update student name and contact details |
+| PUT | `/api/v1/students/{id}/academic-program` | Change academic-program assignment |
+| POST | `/api/v1/students/{id}/suspend` | Suspend an active student |
+| POST | `/api/v1/students/{id}/reactivate` | Reactivate a suspended student |
+| POST | `/api/v1/students/{id}/graduate` | Mark an active or suspended student as graduated |
+| POST | `/api/v1/students/{id}/withdraw` | Withdraw an eligible student |
+
+Student records use the existing unique registration-number database index. Registration numbers are supplied by authorized staff rather than generated from an assumed UAF numbering policy. Listing is paginated (maximum 100 records per page) and supports program/status filters. Academic-program assignment requires an active program. Status transitions are enforced by the domain entity; graduated or withdrawn students cannot be moved to another program. Student self-service endpoints are not exposed until a trusted Identity-user-to-student ownership relationship and authorization tests are implemented.
+
+Authentication routes:
 
 | Method | Route | Access |
 |---|---|---|
@@ -243,10 +259,10 @@ These are engineering objectives; their implementation and verification will be 
 - [ ] Add email verification, refresh-token rotation/revocation, password reset, and MFA.
 - [x] Add admissions and academic-structure authorization policies (role seeding still requires migration and runtime verification).
 - [x] Implement university, campus, faculty, department, and academic-program management endpoints with parent validation and unique-code checks.\n- [ ] Add academic-session management endpoints and lifecycle tests.
-- [ ] Develop student and admissions workflows.
+- [x] Implement initial administrative student-management workflows.\n- [ ] Extend admissions and undergraduate application workflows with applicant ownership, document handling, and integration tests.
 - [ ] Develop fee and identity-card workflows.
 - [ ] Expand academic, LMS, examination, and employee modules.
-- [x] Add initial unit tests for admission application workflows (execution still pending).
+- [x] Add initial unit tests for admission application workflows (execution still pending).\n- [x] Implement administrative student registration, profile maintenance, program assignment, paginated search, and status lifecycle endpoints.\n- [x] Add student-management application unit tests (execution still pending).
 - [ ] Add broader domain, integration, and authorization tests.
 - [ ] Document deployment, operations, and backup procedures.
 
