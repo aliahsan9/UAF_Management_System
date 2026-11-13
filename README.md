@@ -328,7 +328,36 @@ The Infrastructure layer currently provides a local development storage adapter.
 
 **Admission policy note:** the checklist is configurable and intentionally has no assumed UAF defaults. The university's actual required documents, per-program differences, file rules, and deadlines must be confirmed against authorized requirements before production configuration. Submission gating is implemented for both applicant and staff submission routes. Policy changes should be coordinated with the admissions office because they affect every draft application in that program.
 
-**Scope still outstanding:** decision actor/time audit records, atomic acceptance-to-student conversion with registrar-issued registration numbers, malware scanning, SQL Server-backed API authorization/integration tests, and concurrency hardening for checklist changes versus simultaneous submission. These must be implemented and verified before treating admissions as complete or production-ready.
+### Admission review, decision audit, and student conversion
+
+The staff workflow records the authenticated reviewer and UTC timestamp when a submitted application enters review. Accept, reject, and waitlist decisions are recorded with the authenticated decision-maker, UTC timestamp, previous/new status, and remarks in an append-only application audit table. Rejection and waitlisting require a reason. Decision transitions use a serializable SQL Server transaction and an update lock on the application row so concurrent decisions cannot both succeed.
+
+| Method | Endpoint | Access |
+|---|---|---|
+| POST | `/api/v1/admissions/{id}/start-review` | Registrar, DepartmentAdmin, SuperAdmin |
+| POST | `/api/v1/admissions/{id}/accept` | Registrar, SuperAdmin |
+| POST | `/api/v1/admissions/{id}/reject` | Registrar, SuperAdmin |
+| POST | `/api/v1/admissions/{id}/waitlist` | Registrar, SuperAdmin |
+| GET | `/api/v1/admissions/{id}/decision-history` | Registrar, SuperAdmin |
+| POST | `/api/v1/admissions/registration-series` | Registrar, SuperAdmin |
+| POST | `/api/v1/admissions/{id}/convert-to-student` | Registrar, SuperAdmin |
+
+Before conversion, a Registrar configures a registration-number series for the academic program and application year:
+
+```json
+{
+  "academicProgramId": "00000000-0000-0000-0000-000000000000",
+  "admissionYear": 2026,
+  "prefix": "UAF-CS",
+  "nextNumber": 1
+}
+```
+
+The example prefix is illustrative and is not an official UAF registration-number policy. The server allocates the next number (for example, `UAF-CS-2026-00001`) under a row lock. The counter increment, Student insert, applicant Identity link, and registrar/time metadata are saved in one serializable transaction. A unique index on the originating admission application plus an application-row lock makes repeated or concurrent conversion requests idempotent: the same Student record is returned rather than creating a duplicate. A unique Identity-user link prevents one applicant account from being converted into multiple Student records.
+
+The Student record keeps the source AdmissionApplication ID, optional applicant Identity ID, registration number, registrar ID, and UTC registration timestamp. Its enrollment date is the conversion date. The registration series year is derived from the application's application date; confirm this convention with the authorized university registrar before production use.
+
+**Remaining admission hardening:** SQL Server-backed integration tests under concurrent requests, malware scanning/quarantine, immutable audit retention controls, production object storage, and checklist-change/submission concurrency tests. The current automated tests cover domain rules, service validation, and endpoint authorization metadata, but have not been executed in this environment.
 
 ### Admission API access control
 
@@ -340,9 +369,9 @@ Applicant self-service routes require the `Student` role and derive the applicat
 | Configure program document checklist | Registrar, SuperAdmin |
 | Staff document review and download | Registrar, DepartmentAdmin, SuperAdmin |
 | Staff-created application submission and review workflow | Registrar, DepartmentAdmin, SuperAdmin |
-| Accept, reject, waitlist | Registrar, SuperAdmin |
+| Accept, reject, waitlist, view decision history, configure registration series, convert accepted applicant | Registrar, SuperAdmin |
 
-These requirements are enforced by ASP.NET Core authorization policies and ownership checks in the Application/Infrastructure layers, not by frontend visibility. Automated HTTP authorization and SQL Server integration tests remain necessary.
+These requirements are enforced by ASP.NET Core authorization policies and ownership checks in the Application/Infrastructure layers, not by frontend visibility. Endpoint authorization metadata tests have been added; full HTTP authorization and SQL Server integration tests remain necessary.
 
 The current implementation is an initial authentication foundation, not a production-complete identity lifecycle: email verification, refresh-token rotation/revocation, password reset, MFA, audit events, and privileged account provisioning still need implementation and tests. Do not deploy it with real university accounts until those controls and security tests are completed.
 
