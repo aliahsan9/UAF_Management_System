@@ -53,6 +53,10 @@ public sealed class UafDbContext : IdentityDbContext<ApplicationUser, IdentityRo
 
     private void ApplyAuditInformation()
     {
+        if (ChangeTracker.Entries<AdmissionDecisionAudit>()
+            .Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
+            throw new InvalidOperationException("Admission decision audit records are append-only.");
+
         var now = DateTimeOffset.UtcNow;
         foreach (var entry in ChangeTracker.Entries<AuditableEntity>())
         {
