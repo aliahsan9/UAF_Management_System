@@ -26,6 +26,8 @@ public static class AuthorizationPolicyExtensions
                 policy.RequireRole("Registrar", "DepartmentAdmin", "SuperAdmin"));
             options.AddPolicy(AuthorizationPolicies.FinanceManagement, policy =>
                 policy.RequireAuthenticatedUser().RequireRole("FinanceOfficer", "SuperAdmin"));
+            options.AddPolicy(AuthorizationPolicies.EmployeeManagement, policy =>
+                policy.RequireAuthenticatedUser().RequireRole("HRManager", "SuperAdmin"));
         });
         return services;
     }
