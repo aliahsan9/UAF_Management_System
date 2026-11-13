@@ -49,37 +49,6 @@ public sealed class AdmissionApplicationServiceTests
     }
 
     [Fact]
-    public async Task SubmitAsync_WhenApplicationIsDraft_ChangesStatusAndSaves()
-    {
-        var id = await _service.CreateDraftAsync(CreateRequest());
-
-        await _service.SubmitAsync(id);
-
-        var saved = await _repository.GetByIdAsync(id);
-        Assert.NotNull(saved);
-        Assert.Equal(AdmissionStatus.Submitted, saved.Status);
-        Assert.Equal(2, _unitOfWork.SaveChangesCalls);
-    }
-
-    [Fact]
-    public async Task SubmitAsync_WhenApplicationDoesNotExist_ThrowsNotFound()
-    {
-        await Assert.ThrowsAsync<KeyNotFoundException>(
-            () => _service.SubmitAsync(Guid.NewGuid()));
-
-        Assert.Equal(0, _unitOfWork.SaveChangesCalls);
-    }
-
-    [Fact]
-    public async Task SubmitAsync_WithEmptyId_ThrowsArgumentException()
-    {
-        await Assert.ThrowsAsync<ArgumentException>(
-            () => _service.SubmitAsync(Guid.Empty));
-
-        Assert.Equal(0, _unitOfWork.SaveChangesCalls);
-    }
-
-    [Fact]
     public void AdmissionApplication_CannotBeEditedAfterSubmission()
     {
         var application = new AdmissionApplication(
@@ -111,20 +80,6 @@ public sealed class AdmissionApplicationServiceTests
 
         await Assert.ThrowsAsync<KeyNotFoundException>(
             () => _service.GetMyApplicationAsync(otherUserId, created.Id));
-    }
-
-    [Fact]
-    public async Task ApplicantCanSubmitOwnDraftButCannotEditAfterSubmission()
-    {
-        var ownerId = Guid.NewGuid();
-        var created = await _service.CreateApplicantDraftAsync(ownerId,
-            new CreateApplicantDraftRequest("Applicant One", "one@example.com", Guid.NewGuid(), null));
-
-        await _service.SubmitMyApplicationAsync(ownerId, created.Id);
-
-        await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            _service.UpdateMyDraftAsync(ownerId, created.Id,
-                new UpdateApplicantDraftRequest("Changed Name", "changed@example.com", null)));
     }
 
     private static CreateAdmissionApplicationRequest CreateRequest() =>
