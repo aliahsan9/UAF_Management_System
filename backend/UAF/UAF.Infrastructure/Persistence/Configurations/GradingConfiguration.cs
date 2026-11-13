@@ -12,6 +12,7 @@ public sealed class GradeScaleConfiguration : IEntityTypeConfiguration<GradeScal
             t.HasCheckConstraint("CK_GradeScales_RepeatCoursePolicy", "[RepeatCoursePolicy] IN (1, 2, 3)");
         });
         b.HasKey(x => x.Id);
+        b.Ignore(x => x.Bands);
         b.Property(x => x.Name).HasMaxLength(120).IsRequired();
         b.Property(x => x.RepeatCoursePolicy).HasConversion<int>().IsRequired();
         b.Property(x => x.IncludeFailedCoursesInGpa).IsRequired();
