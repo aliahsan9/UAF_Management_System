@@ -67,7 +67,7 @@ public sealed class AdmissionDocumentServiceTests
         var app = new AdmissionApplication("UAF-TEST-007", "Applicant", "applicant@example.com",
             Guid.NewGuid(), new DateOnly(2026, 11, 13), ownerUserId: ownerId);
         var storage = new FakeStorage();
-        var bytes = new byte[AdmissionDocumentService.MaximumFileSizeBytes + 1];
+        var bytes = new byte[checked((int)AdmissionDocumentService.MaximumFileSizeBytes + 1)];
         "%PDF-"u8.CopyTo(bytes);
         var service = new AdmissionDocumentService(new FakeRepository(app), storage, new FakeUnitOfWork());
 
