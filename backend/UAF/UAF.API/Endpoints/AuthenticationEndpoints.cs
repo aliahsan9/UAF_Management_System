@@ -124,7 +124,7 @@ public static class AuthenticationEndpoints
     private static void ClearRefreshCookie(HttpContext http) =>
         http.Response.Cookies.Delete(RefreshCookieName, new CookieOptions
         {
-            HttpOnly = true, Secure = true, SameSite = SameSiteMode.Strict, Path = "/"
+            HttpOnly = true, Secure = true, SameSite = SameSiteMode.None, Path = "/"
         });
 
     private static object ToPublicResponse(AuthenticationResult result) => new
