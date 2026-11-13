@@ -75,14 +75,6 @@ public sealed class AdmissionApplicationService
 
     public Task SubmitAsync(Guid id, CancellationToken ct = default) =>
         UpdateApplicationAsync(id, application => application.Submit(), ct);
-    public Task StartReviewAsync(Guid id, CancellationToken ct = default) =>
-        UpdateApplicationAsync(id, application => application.StartReview(), ct);
-    public Task AcceptAsync(Guid id, string? remarks = null, CancellationToken ct = default) =>
-        UpdateApplicationAsync(id, application => application.Accept(remarks), ct);
-    public Task RejectAsync(Guid id, string? remarks = null, CancellationToken ct = default) =>
-        UpdateApplicationAsync(id, application => application.Reject(remarks), ct);
-    public Task WaitlistAsync(Guid id, string? remarks = null, CancellationToken ct = default) =>
-        UpdateApplicationAsync(id, application => application.Waitlist(remarks), ct);
     public Task WithdrawAsync(Guid id, CancellationToken ct = default) =>
         UpdateApplicationAsync(id, application => application.Withdraw(), ct);
 
