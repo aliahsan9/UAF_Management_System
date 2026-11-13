@@ -8,7 +8,7 @@ namespace UAF.API.Middleware;
 /// Converts known application exceptions into consistent Problem Details responses.
 /// Unexpected exceptions remain generic and are logged without exposing internals.
 /// </summary>
-public sealed class GlobalExceptionHandler : IExceptionHandler
+public sealed class GlobalExceptionHandler
 {
     private readonly ILogger<GlobalExceptionHandler> _logger;
 
@@ -34,12 +34,13 @@ public sealed class GlobalExceptionHandler : IExceptionHandler
 
         if (statusCode >= StatusCodes.Status500InternalServerError)
         {
-            _logger.LogError(exception, "An unhandled exception occurred while processing {Path}.",
-                httpContext.Request.Path);
+            _logger.LogError(exception, "Unhandled exception. Path: {Path}, CorrelationId: {CorrelationId}",
+                httpContext.Request.Path, httpContext.TraceIdentifier);
         }
         else
         {
-            _logger.LogInformation(exception, "Request rejected with status code {StatusCode}.", statusCode);
+            _logger.LogInformation(exception, "Request rejected. StatusCode: {StatusCode}, CorrelationId: {CorrelationId}",
+                statusCode, httpContext.TraceIdentifier);
         }
 
         var problem = new ProblemDetails
@@ -53,6 +54,7 @@ public sealed class GlobalExceptionHandler : IExceptionHandler
         };
 
         problem.Extensions["traceId"] = httpContext.TraceIdentifier;
+        problem.Extensions["correlationId"] = httpContext.TraceIdentifier;
 
         httpContext.Response.StatusCode = statusCode;
         await httpContext.Response.WriteAsJsonAsync(problem, cancellationToken);
