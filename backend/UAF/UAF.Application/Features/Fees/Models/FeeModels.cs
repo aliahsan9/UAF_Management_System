@@ -1,0 +1,10 @@
+namespace UAF.Application.Features.Fees.Models;
+public sealed record CreateFeeHeadRequest(string Code,string Name,bool IsMandatory);
+public sealed record CreateFeeStructureRequest(Guid AcademicProgramId,Guid AcademicSessionId,int SemesterNumber,string Name,IReadOnlyList<FeeStructureItemRequest> Items);
+public sealed record FeeStructureItemRequest(Guid FeeHeadId,decimal Amount);
+public sealed record GenerateFeeChallanRequest(Guid StudentId,Guid FeeStructureId,DateOnly IssueDate,DateOnly DueDate,decimal LateFeeAmount);
+public sealed record RecordFeePaymentRequest(decimal Amount,string Method,string ReferenceNumber);
+public sealed record VerifyFeePaymentRequest(bool Approve,string? Remarks);
+public sealed record FeeChallanResponse(Guid Id,string ChallanNumber,DateOnly IssueDate,DateOnly DueDate,decimal Subtotal,decimal LateFeeAmount,decimal TotalAmount,string CurrencyCode,string Status);
+public sealed record FeePaymentResponse(Guid Id,Guid ChallanId,decimal Amount,string Method,string ReferenceNumber,string Status,Guid? VerifiedByUserId,DateTimeOffset? VerifiedAtUtc,string? VerificationRemarks);
+public sealed record StudentFeeAccountResponse(Guid StudentId,decimal TotalOutstanding,IReadOnlyList<FeeChallanResponse> Challans,IReadOnlyList<FeePaymentResponse> Payments);
