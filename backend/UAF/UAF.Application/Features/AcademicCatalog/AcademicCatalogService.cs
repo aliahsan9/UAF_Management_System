@@ -80,7 +80,7 @@ public sealed class AcademicCatalogService
             throw new KeyNotFoundException($"Active department '{request.DepartmentId}' was not found.");
 
         var code = NormalizeCode(request.Code, nameof(request.Code));
-        if (await _repository.CourseCodeExistsAsync(request.DepartmentId, code, cancellationToken: ct))
+        if (await _repository.CourseCodeExistsAsync(request.DepartmentId, code, ct: ct))
             throw new InvalidOperationException($"Course code '{code}' is already in use in this department.");
 
         var course = new Course(request.DepartmentId, code, request.Title, request.CreditHours, request.Description);
