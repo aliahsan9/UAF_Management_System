@@ -43,6 +43,9 @@ public sealed class UafDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<Examination> Examinations => Set<Examination>();
     public DbSet<ExaminationResult> ExaminationResults => Set<ExaminationResult>();
     public DbSet<ExaminationResultAudit> ExaminationResultAudits => Set<ExaminationResultAudit>();
+    public DbSet<GradeScale> GradeScales => Set<GradeScale>();
+    public DbSet<GradeScaleBand> GradeScaleBands => Set<GradeScaleBand>();
+    public DbSet<StudentCourseGrade> StudentCourseGrades => Set<StudentCourseGrade>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
