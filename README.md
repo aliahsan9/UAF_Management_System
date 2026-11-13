@@ -683,6 +683,7 @@ The initial examination workflow is built around a course offering and its curre
 - Teachers can manage only their own published course offerings, and their employee record must be active, academic, linked to the authenticated account, and have a TeacherProfile.
 - DepartmentAdmin access is scoped to their active employee department. Registrar and SuperAdmin can manage all published offerings.
 - Marks are restricted to students currently enrolled in the course offering.
+- Examination dates are validated against the academic session associated with the course offering.
 - A unique database index prevents duplicate result rows for the same examination and student.
 - Marks updates and result submission use SQL Server serializable transactions. Submission verifies that all currently enrolled students have marks, including explicit zero-mark absences. Examination and result rows use SQL Server rowversion concurrency tokens; stale concurrent updates return HTTP 409.
 - Every initial marks entry and correction creates an append-only audit record containing old/new marks, absence state, actor, reason, and timestamp.
