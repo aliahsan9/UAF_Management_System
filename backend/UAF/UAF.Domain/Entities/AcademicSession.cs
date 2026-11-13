@@ -5,16 +5,12 @@ namespace UAF.Domain.Entities;
 
 public sealed class AcademicSession : AuditableEntity
 {
-    private AcademicSession()
-    {
-        Name = string.Empty;
-        Code = string.Empty;
-    }
+    private AcademicSession() { Name = string.Empty; Code = string.Empty; }
 
     public AcademicSession(string name, string code, DateOnly startDate, DateOnly endDate)
     {
-        SetName(name);
-        SetCode(code);
+        Name = NormalizeName(name);
+        Code = NormalizeCode(code);
         ValidateDates(startDate, endDate);
         StartDate = startDate;
         EndDate = endDate;
@@ -31,10 +27,11 @@ public sealed class AcademicSession : AuditableEntity
     {
         if (Status is AcademicSessionStatus.Active or AcademicSessionStatus.Completed)
             throw new InvalidOperationException("An active or completed academic session cannot be edited.");
-
-        SetName(name);
-        SetCode(code);
+        var normalizedName = NormalizeName(name);
+        var normalizedCode = NormalizeCode(code);
         ValidateDates(startDate, endDate);
+        Name = normalizedName;
+        Code = normalizedCode;
         StartDate = startDate;
         EndDate = endDate;
         MarkUpdated();
@@ -64,24 +61,24 @@ public sealed class AcademicSession : AuditableEntity
         MarkUpdated();
     }
 
-    private void SetName(string name)
+    private static string NormalizeName(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Academic session name is required.", nameof(name));
-        var normalized = name.Trim();
-        if (normalized.Length > 100)
+        var value = name.Trim();
+        if (value.Length > 100)
             throw new ArgumentOutOfRangeException(nameof(name), "Academic session name cannot exceed 100 characters.");
-        Name = normalized;
+        return value;
     }
 
-    private void SetCode(string code)
+    private static string NormalizeCode(string code)
     {
         if (string.IsNullOrWhiteSpace(code))
             throw new ArgumentException("Academic session code is required.", nameof(code));
-        var normalized = code.Trim().ToUpperInvariant();
-        if (normalized.Length > 30)
+        var value = code.Trim().ToUpperInvariant();
+        if (value.Length > 30)
             throw new ArgumentOutOfRangeException(nameof(code), "Academic session code cannot exceed 30 characters.");
-        Code = normalized;
+        return value;
     }
 
     private static void ValidateDates(DateOnly startDate, DateOnly endDate)
