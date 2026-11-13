@@ -58,6 +58,21 @@ public sealed class Student : AuditableEntity
 
     public Guid? IdentityUserId { get; private set; }
 
+    public Guid? RegisteredByUserId { get; private set; }
+
+    public DateTimeOffset? RegisteredAtUtc { get; private set; }
+
+    public void RecordAdmissionRegistration(Guid registrarUserId, DateTimeOffset registeredAtUtc)
+    {
+        if (registrarUserId == Guid.Empty) throw new ArgumentException("Registrar account is required.", nameof(registrarUserId));
+        if (registeredAtUtc == default) throw new ArgumentException("Registration timestamp is required.", nameof(registeredAtUtc));
+        if (AdmissionApplicationId is null) throw new InvalidOperationException("Only an admission-converted student can record admission registration.");
+        if (RegisteredByUserId.HasValue) throw new InvalidOperationException("Student registration audit has already been recorded.");
+        RegisteredByUserId = registrarUserId;
+        RegisteredAtUtc = registeredAtUtc.ToUniversalTime();
+        MarkUpdated();
+    }
+
     public DateOnly EnrollmentDate { get; private set; }
 
     public StudentStatus Status { get; private set; }
