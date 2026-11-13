@@ -53,11 +53,11 @@ internal sealed class AttendanceRepository : IAttendanceRepository
             throw new UnauthorizedAccessException("You are not authorized to manage attendance for this course offering.");
     }
 
-    public async Task MarkAsync(Guid sessionId, Guid actorId, bool privileged, IReadOnlyCollection<AttendanceMarkItem> marks, CancellationToken ct)
+    public async Task MarkAsync(Guid sessionId, Guid actorId, bool privileged, IReadOnlyCollection<AttendanceMarkItem> marks, CancellationToken ct, bool departmentAdmin = false)
     {
         await using var tx = await _db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
         var session = await GetSessionForUpdateAsync(sessionId, ct) ?? throw new KeyNotFoundException("Attendance session was not found.");
-        await EnsureActorCanManageAsync(session, actorId, privileged, ct);
+        await EnsureActorCanManageAsync(session, actorId, privileged, ct, departmentAdmin);
         if (session.Status != AttendanceSessionStatus.Open) throw new InvalidOperationException("Attendance can only be changed while the session is open.");
 
         var requestedIds = marks.Select(x => x.StudentId).ToArray();
@@ -93,7 +93,7 @@ internal sealed class AttendanceRepository : IAttendanceRepository
         await tx.CommitAsync(ct);
     }
 
-    public async Task FinalizeAsync(Guid sessionId, Guid actorId, bool privileged, CancellationToken ct)
+    public async Task FinalizeAsync(Guid sessionId, Guid actorId, bool privileged, CancellationToken ct, bool departmentAdmin = false)
     {
         await using var tx = await _db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
         var session = await GetSessionForUpdateAsync(sessionId, ct) ?? throw new KeyNotFoundException("Attendance session was not found.");
