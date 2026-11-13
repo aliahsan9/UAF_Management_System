@@ -29,7 +29,7 @@ public static class AuthorizationPolicyExtensions
             AddPermissionPolicy(options, AuthorizationPolicies.ExaminationManagement, UafPermissions.ExaminationsManage);
             AddPermissionPolicy(options, AuthorizationPolicies.ExaminationApproval, UafPermissions.ExaminationsApprove);
             AddPermissionPolicy(options, AuthorizationPolicies.GradingScaleManagement, UafPermissions.GradingScalesManage);
-            AddPermissionPolicy(options, AuthorizationPolicies.CourseGradeManagement, UafPermissions.GradesManage);
+            AddPermissionPolicy(options, AuthorizationPolicies.CourseGradeManagement, UafPermissions.CourseGradesManage);
             options.AddPolicy(AuthorizationPolicies.StudentAcademicRecord, policy =>
                 policy.RequireAuthenticatedUser().RequireRole("Student"));
             AddPermissionPolicy(options, AuthorizationPolicies.GradeAppealReview, UafPermissions.GradeAppealsReview);
