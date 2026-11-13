@@ -121,5 +121,5 @@ internal sealed class ExaminationRepository : IExaminationRepository
                    result.MarksObtained, result.IsAbsent, !result.IsAbsent && result.MarksObtained >= exam.PassingMarks, result.Remarks)).ToListAsync(ct);
     public async Task<IReadOnlyList<ExaminationListItem>> GetOfferingExaminationsAsync(Guid offeringId, CancellationToken ct) =>
         await _db.Examinations.AsNoTracking().Where(x => x.CourseOfferingId == offeringId).OrderBy(x => x.ScheduledDate)
-            .Select(x => new ExaminationListItem(x.Id, x.Title, x.Type, x.ScheduledDate, x.MaximumMarks, x.PassingMarks, x.Status)).ToListAsync(ct);
+            .Select(x => new ExaminationListItem(x.Id, x.Title, x.Type, x.ScheduledDate, x.MaximumMarks, x.PassingMarks, x.WeightPercentage, x.Status)).ToListAsync(ct);
 }
