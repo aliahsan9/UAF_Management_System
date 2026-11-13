@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using UAF.Application.Features.Authentication.Abstractions;
 using UAF.Application.Features.Authentication.Models;
 using UAF.Infrastructure.Persistence;
@@ -10,23 +11,25 @@ namespace UAF.Infrastructure.Identity;
 
 public sealed class IdentityAuthenticationService : IAuthenticationService
 {
-    private static readonly TimeSpan RefreshTokenLifetime = TimeSpan.FromDays(14);
     private const string StudentRole = "Student";
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly IJwtTokenGenerator _tokenGenerator;
     private readonly UafDbContext _dbContext;
+    private readonly TimeSpan _refreshTokenLifetime;
 
     public IdentityAuthenticationService(
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
         IJwtTokenGenerator tokenGenerator,
-        UafDbContext dbContext)
+        UafDbContext dbContext,
+        IOptions<JwtOptions> jwtOptions)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _tokenGenerator = tokenGenerator;
         _dbContext = dbContext;
+        _refreshTokenLifetime = TimeSpan.FromDays(jwtOptions.Value.RefreshTokenDays);
     }
 
     public async Task<AuthenticationResult> RegisterAsync(RegisterRequest request, string? remoteIpAddress = null, CancellationToken cancellationToken = default)
@@ -111,7 +114,7 @@ public sealed class IdentityAuthenticationService : IAuthenticationService
             return AuthenticationResult.Failure("The account is unavailable.");
         }
 
-        var (newRawToken, newToken) = CreateRefreshToken(user.Id, remoteIpAddress);
+        var (newRawToken, newToken) = CreateRefreshToken(user.Id, remoteIpAddress, _refreshTokenLifetime);
         stored.Revoke(DateTimeOffset.UtcNow, remoteIpAddress, newToken.TokenHash);
         _dbContext.RefreshTokens.Add(newToken);
         try
@@ -153,7 +156,7 @@ public sealed class IdentityAuthenticationService : IAuthenticationService
 
         if (persistRefreshToken)
         {
-            var created = CreateRefreshToken(user.Id, remoteIpAddress);
+            var created = CreateRefreshToken(user.Id, remoteIpAddress, _refreshTokenLifetime);
             rawRefreshToken = created.RawToken;
             refreshExpires = created.Entity.ExpiresAtUtc;
             _dbContext.RefreshTokens.Add(created.Entity);
@@ -171,11 +174,11 @@ public sealed class IdentityAuthenticationService : IAuthenticationService
             user.Id.ToString(), user.Email, roles.ToArray(), rawRefreshToken, refreshExpires);
     }
 
-    private static (string RawToken, RefreshToken Entity) CreateRefreshToken(Guid userId, string? ipAddress)
+    private static (string RawToken, RefreshToken Entity) CreateRefreshToken(Guid userId, string? ipAddress, TimeSpan lifetime)
     {
         var raw = WebEncoders.Base64UrlEncode(RandomNumberGenerator.GetBytes(64));
         var now = DateTimeOffset.UtcNow;
-        return (raw, new RefreshToken(userId, HashToken(raw), now, now.Add(RefreshTokenLifetime), ipAddress));
+        return (raw, new RefreshToken(userId, HashToken(raw), now, now.Add(lifetime), ipAddress));
     }
 
     private static string HashToken(string rawToken) =>
