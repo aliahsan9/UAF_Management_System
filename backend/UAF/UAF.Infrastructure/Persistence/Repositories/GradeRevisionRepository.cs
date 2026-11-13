@@ -107,6 +107,22 @@ internal sealed class GradeRevisionRepository : IGradeRevisionRepository
     }
     public Task<bool> StudentOwnsGradeAsync(Guid gradeId, Guid studentId, CancellationToken ct) =>
         _db.StudentCourseGrades.AnyAsync(x => x.Id == gradeId && x.StudentId == studentId, ct);
+    public async Task<IReadOnlyList<GradeRevisionRequestResponse>> GetStudentRequestsAsync(Guid gradeId, Guid studentId, CancellationToken ct)
+    {
+        return await (from request in _db.GradeRevisionRequests.AsNoTracking()
+            join grade in _db.StudentCourseGrades.AsNoTracking() on request.StudentCourseGradeId equals grade.Id
+            join student in _db.Students.AsNoTracking() on grade.StudentId equals student.Id
+            where grade.Id == gradeId && grade.StudentId == studentId
+            let latestMarks = _db.GradeRevisions.Where(revision => revision.StudentCourseGradeId == grade.Id)
+                .OrderByDescending(revision => revision.RevisionNumber)
+                .Select(revision => (decimal?)revision.NewMarks).FirstOrDefault()
+            orderby request.RequestedAtUtc descending
+            select new GradeRevisionRequestResponse(request.Id, grade.Id, request.AppealId,
+                student.Id, student.RegistrationNumber, grade.CourseCode, grade.CourseTitle,
+                latestMarks ?? grade.MarksObtained, request.ProposedMarksObtained, request.Reason, request.Status,
+                request.RequestedByUserId, request.RequestedAtUtc, request.ReviewedByUserId,
+                request.ReviewedAtUtc, request.ReviewRemarks)).ToListAsync(ct);
+    }
     public async Task<IReadOnlyList<GradeRevisionResponse>> GetRevisionHistoryAsync(Guid gradeId, CancellationToken ct) =>
         await _db.GradeRevisions.AsNoTracking().Where(x => x.StudentCourseGradeId == gradeId)
             .OrderBy(x => x.RevisionNumber)
