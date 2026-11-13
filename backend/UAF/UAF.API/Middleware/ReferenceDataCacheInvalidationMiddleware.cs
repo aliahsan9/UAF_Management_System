@@ -8,7 +8,8 @@ public sealed class ReferenceDataCacheInvalidationMiddleware(
         await next(context);
         var isWrite = HttpMethods.IsPost(context.Request.Method) || HttpMethods.IsPut(context.Request.Method) ||
                       HttpMethods.IsPatch(context.Request.Method) || HttpMethods.IsDelete(context.Request.Method);
-        var isReferenceData = context.Request.Path.StartsWithSegments("/api/v1/academic-catalog") ||
+        var isReferenceData = context.Request.Path.StartsWithSegments("/api/v1/academic-sessions") ||
+                              context.Request.Path.StartsWithSegments("/api/v1/courses") ||
                               context.Request.Path.StartsWithSegments("/api/v1/academic-structure");
         if (isWrite && isReferenceData && context.Response.StatusCode is >= 200 and < 300)
         {
