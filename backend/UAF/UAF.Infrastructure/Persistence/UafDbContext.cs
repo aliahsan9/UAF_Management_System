@@ -27,6 +27,13 @@ public sealed class UafDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<Course> Courses => Set<Course>();
     public DbSet<CourseOffering> CourseOfferings => Set<CourseOffering>();
     public DbSet<CourseEnrollment> CourseEnrollments => Set<CourseEnrollment>();
+    public DbSet<FeeHead> FeeHeads => Set<FeeHead>();
+    public DbSet<FeeStructure> FeeStructures => Set<FeeStructure>();
+    public DbSet<FeeStructureItem> FeeStructureItems => Set<FeeStructureItem>();
+    public DbSet<StudentFeeAccount> StudentFeeAccounts => Set<StudentFeeAccount>();
+    public DbSet<FeeChallan> FeeChallans => Set<FeeChallan>();
+    public DbSet<FeeChallanLine> FeeChallanLines => Set<FeeChallanLine>();
+    public DbSet<FeePayment> FeePayments => Set<FeePayment>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
