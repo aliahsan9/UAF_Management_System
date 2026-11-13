@@ -9,4 +9,5 @@ public static class AuthorizationPolicies
     public const string StudentManagement = "Students.Management";
     public const string AcademicCatalogManagement = "AcademicCatalog.Management";
     public const string CourseOfferingManagement = "CourseOfferings.Management";
+    public const string FinanceManagement = "Finance.Management";
 }
