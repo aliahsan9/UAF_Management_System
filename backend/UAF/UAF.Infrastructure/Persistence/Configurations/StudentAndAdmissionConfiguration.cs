@@ -23,6 +23,7 @@ public sealed class StudentConfiguration : IEntityTypeConfiguration<Student>
         builder.HasIndex(x => x.AdmissionApplicationId).IsUnique().HasFilter("[AdmissionApplicationId] IS NOT NULL");
         builder.HasIndex(x => x.IdentityUserId).IsUnique().HasFilter("[IdentityUserId] IS NOT NULL");
         builder.HasIndex(x => x.Email);
+        builder.HasIndex(x => new { x.AcademicProgramId, x.Status, x.RegistrationNumber });
         builder.HasOne<AcademicProgram>().WithMany().HasForeignKey(x => x.AcademicProgramId)
             .OnDelete(DeleteBehavior.Restrict);
         builder.HasOne<AdmissionApplication>().WithMany().HasForeignKey(x => x.AdmissionApplicationId)

@@ -66,6 +66,24 @@ public sealed class StudentServiceTests
     }
 
     [Fact]
+    public async Task GetPageAsync_AppliesSearchAndAllowListedSort()
+    {
+        await _service.CreateAsync(CreateRequest() with { FullName = "Zara Student" });
+        await _service.CreateAsync(CreateRequest() with
+        {
+            RegistrationNumber = "UAF-2026-CS-002",
+            FullName = "Ayesha Student"
+        });
+
+        var result = await _service.GetPageAsync(1, 10, search: "student",
+            sortBy: "fullName", sortDirection: "asc");
+
+        Assert.Equal(2, result.TotalCount);
+        Assert.Equal("Ayesha Student", result.Items[0].FullName);
+        Assert.Equal("Zara Student", result.Items[1].FullName);
+    }
+
+    [Fact]
     public async Task SuspendAndReactivate_ApplyValidLifecycleTransitions()
     {
         var id = await _service.CreateAsync(CreateRequest());
@@ -149,6 +167,7 @@ public sealed class StudentServiceTests
 
         public Task<(IReadOnlyList<Student> Items, int TotalCount)> GetPageAsync(
             int page, int pageSize, Guid? academicProgramId, StudentStatus? status,
+            string? search, string sortBy, string sortDirection,
             CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -157,8 +176,21 @@ public sealed class StudentServiceTests
                 query = query.Where(x => x.AcademicProgramId == academicProgramId.Value);
             if (status.HasValue)
                 query = query.Where(x => x.Status == status.Value);
-            var ordered = query.OrderBy(x => x.RegistrationNumber).ToArray();
-            return Task.FromResult(((IReadOnlyList<Student>)ordered.Skip((page - 1) * pageSize).Take(pageSize).ToArray(), ordered.Length));
+            if (!string.IsNullOrWhiteSpace(search))
+                query = query.Where(x => x.FullName.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                                         x.Email.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                                         x.RegistrationNumber.Contains(search, StringComparison.OrdinalIgnoreCase));
+            var ordered = (sortBy, sortDirection) switch
+            {
+                ("fullname", "desc") => query.OrderByDescending(x => x.FullName),
+                ("fullname", _) => query.OrderBy(x => x.FullName),
+                ("enrollmentdate", "desc") => query.OrderByDescending(x => x.EnrollmentDate),
+                ("enrollmentdate", _) => query.OrderBy(x => x.EnrollmentDate),
+                (_, "desc") => query.OrderByDescending(x => x.RegistrationNumber),
+                _ => query.OrderBy(x => x.RegistrationNumber)
+            };
+            var items = ordered.ThenBy(x => x.Id).ToArray();
+            return Task.FromResult(((IReadOnlyList<Student>)items.Skip((page - 1) * pageSize).Take(pageSize).ToArray(), items.Length));
         }
 
         public Task<Student?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)

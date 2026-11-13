@@ -1,4 +1,5 @@
 using UAF.Application.Common.Abstractions;
+using UAF.Application.Common.Caching;
 using UAF.Application.Features.AcademicCatalog.Abstractions;
 using UAF.Application.Features.AcademicCatalog.Models;
 using UAF.Domain.Entities;
@@ -11,18 +12,24 @@ public sealed class AcademicCatalogService
 {
     private readonly IAcademicCatalogRepository _repository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IApplicationCache? _cache;
 
-    public AcademicCatalogService(IAcademicCatalogRepository repository, IUnitOfWork unitOfWork)
+    public AcademicCatalogService(IAcademicCatalogRepository repository, IUnitOfWork unitOfWork, IApplicationCache? cache = null)
     {
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+        _cache = cache;
     }
 
     public async Task<IReadOnlyList<AcademicSessionResponse>> GetSessionsAsync(AcademicSessionStatus? status, CancellationToken ct = default)
     {
         ValidateStatus(status);
-        var sessions = await _repository.GetSessionsAsync(status, ct);
-        return sessions.Select(Map).ToArray();
+        var key = $"academic-catalog:sessions:{status?.ToString() ?? "all"}";
+        if (_cache is null)
+            return (await _repository.GetSessionsAsync(status, ct)).Select(Map).ToArray();
+        return await _cache.GetOrCreateAsync(key,
+            async token => (await _repository.GetSessionsAsync(status, token)).Select(Map).ToArray(),
+            ["academic-reference-data"], TimeSpan.FromMinutes(5), ct);
     }
 
     public async Task<AcademicSessionResponse> GetSessionAsync(Guid id, CancellationToken ct = default) =>
@@ -66,8 +73,12 @@ public sealed class AcademicCatalogService
     {
         if (departmentId == Guid.Empty)
             throw new ArgumentException("Department filter must be a valid ID.", nameof(departmentId));
-        var courses = await _repository.GetCoursesAsync(departmentId, isActive, ct);
-        return courses.Select(Map).ToArray();
+        var key = $"academic-catalog:courses:{departmentId?.ToString() ?? "all"}:{isActive?.ToString() ?? "all"}";
+        if (_cache is null)
+            return (await _repository.GetCoursesAsync(departmentId, isActive, ct)).Select(Map).ToArray();
+        return await _cache.GetOrCreateAsync(key,
+            async token => (await _repository.GetCoursesAsync(departmentId, isActive, token)).Select(Map).ToArray(),
+            ["academic-reference-data"], TimeSpan.FromMinutes(5), ct);
     }
 
     public async Task<CourseResponse> GetCourseAsync(Guid id, CancellationToken ct = default) =>

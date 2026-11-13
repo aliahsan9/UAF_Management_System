@@ -1,4 +1,5 @@
 using UAF.Application.Common.Abstractions;
+using UAF.Application.Common.Models;
 using UAF.Application.Features.Students.Abstractions;
 using UAF.Application.Features.Students.Models;
 using UAF.Domain.Entities;
@@ -24,6 +25,7 @@ public sealed class StudentService
 
     public async Task<PagedStudentsResponse> GetPageAsync(
         int page, int pageSize, Guid? academicProgramId = null, StudentStatus? status = null,
+        string? search = null, string sortBy = "registrationNumber", string sortDirection = "asc",
         CancellationToken ct = default)
     {
         if (page < 1)
@@ -37,11 +39,19 @@ public sealed class StudentService
         if (status.HasValue && !Enum.IsDefined(status.Value))
             throw new ArgumentOutOfRangeException(nameof(status));
 
-        var (students, totalCount) = await _repository.GetPageAsync(page, pageSize, academicProgramId, status, ct);
-        var totalPages = totalCount == 0 ? 0 : (int)Math.Ceiling(totalCount / (double)pageSize);
+        var normalizedSort = sortBy.Trim().ToLowerInvariant();
+        if (normalizedSort is not ("registrationnumber" or "fullname" or "enrollmentdate"))
+            throw new ArgumentException("SortBy must be registrationNumber, fullName, or enrollmentDate.", nameof(sortBy));
+        var normalizedDirection = sortDirection.Trim().ToLowerInvariant();
+        if (normalizedDirection is not ("asc" or "desc"))
+            throw new ArgumentException("SortDirection must be asc or desc.", nameof(sortDirection));
+        var (students, totalCount) = await _repository.GetPageAsync(
+            page, pageSize, academicProgramId, status, search, normalizedSort, normalizedDirection, ct);
+        var pagination = PaginationMetadata.Create(page, pageSize, totalCount);
 
         return new PagedStudentsResponse(
-            students.Select(Map).ToArray(), page, pageSize, totalCount, totalPages);
+            students.Select(Map).ToArray(), pagination.Page, pagination.PageSize,
+            pagination.TotalCount, pagination.TotalPages);
     }
 
     public async Task<StudentResponse> GetByIdAsync(Guid id, CancellationToken ct = default) =>

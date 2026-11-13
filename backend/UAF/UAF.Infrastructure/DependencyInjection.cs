@@ -20,6 +20,7 @@ using UAF.Infrastructure.Persistence;
 using UAF.Infrastructure.Persistence.Repositories;
 using UAF.Infrastructure.Files;
 using UAF.Infrastructure.Documents;
+using UAF.Infrastructure.Persistence.Interceptors;
 
 namespace UAF.Infrastructure;
 
@@ -29,11 +30,42 @@ public static class DependencyInjection
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configuration);
+
         var connectionString = configuration.GetConnectionString("UafDatabase");
         if (string.IsNullOrWhiteSpace(connectionString))
-            throw new InvalidOperationException("Connection string 'UafDatabase' was not found. Configure it before registering Infrastructure.");
+            throw new InvalidOperationException("Connection string 'UafDatabase' was not found. Configure UAF_DB_CONNECTION_STRING or ConnectionStrings__UafDatabase.");
 
-        services.AddDbContext<UafDbContext>(options => options.UseSqlServer(connectionString));
+        var redisConnection = configuration.GetConnectionString("Redis");
+        if (!string.IsNullOrWhiteSpace(redisConnection))
+        {
+            services.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration = redisConnection;
+                options.InstanceName = configuration["Redis:InstanceName"] ?? "UAF:";
+            });
+        }
+
+        services.AddOptions<JwtOptions>()
+            .Bind(configuration.GetSection(JwtOptions.SectionName))
+            .Validate(options => !string.IsNullOrWhiteSpace(options.Issuer), "Jwt:Issuer is required.")
+            .Validate(options => !string.IsNullOrWhiteSpace(options.Audience), "Jwt:Audience is required.")
+            .Validate(options => !string.IsNullOrWhiteSpace(options.SigningKey) && System.Text.Encoding.UTF8.GetByteCount(options.SigningKey) >= 32, "Jwt:SigningKey must contain at least 32 UTF-8 bytes.")
+            .Validate(options => options.AccessTokenMinutes is >= 1 and <= 1440, "Jwt:AccessTokenMinutes must be between 1 and 1440.")
+            .ValidateOnStart();
+
+        services.AddOptions<AdmissionDocumentStorageOptions>()
+            .Bind(configuration.GetSection(AdmissionDocumentStorageOptions.SectionName))
+            .Validate(options => !string.IsNullOrWhiteSpace(options.RootPath), "AdmissionDocumentStorage:RootPath is required.")
+            .ValidateOnStart();
+
+        services.AddScoped<UafCommandMonitoringInterceptor>();
+        services.AddScoped<UafSaveChangesAuditInterceptor>();
+        services.AddDbContext<UafDbContext>((serviceProvider, options) =>
+            options.UseSqlServer(connectionString)
+                .AddInterceptors(
+                    serviceProvider.GetRequiredService<UafCommandMonitoringInterceptor>(),
+                    serviceProvider.GetRequiredService<UafSaveChangesAuditInterceptor>()));
+
         services.AddIdentityCore<ApplicationUser>(options =>
         {
             options.User.RequireUniqueEmail = true;
@@ -50,8 +82,6 @@ public static class DependencyInjection
         .AddEntityFrameworkStores<UafDbContext>()
         .AddSignInManager();
 
-        services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
-        services.Configure<AdmissionDocumentStorageOptions>(configuration.GetSection(AdmissionDocumentStorageOptions.SectionName));
         services.AddSingleton<IAdmissionDocumentStorage, LocalAdmissionDocumentStorage>();
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddScoped<IAuthenticationService, IdentityAuthenticationService>();
