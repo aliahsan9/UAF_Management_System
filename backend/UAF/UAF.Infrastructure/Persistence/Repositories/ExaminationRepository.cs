@@ -40,6 +40,11 @@ internal sealed class ExaminationRepository : IExaminationRepository
     public Task<Examination?> GetAsync(Guid id, CancellationToken ct) => _db.Examinations.SingleOrDefaultAsync(x => x.Id == id, ct);
     public Task<bool> ExistsAsync(Guid offeringId, string title, CancellationToken ct) =>
         _db.Examinations.AnyAsync(x => x.CourseOfferingId == offeringId && x.Title == title.Trim(), ct);
+    public Task<bool> IsScheduledDateWithinSessionAsync(Guid offeringId, DateOnly scheduledDate, CancellationToken ct) =>
+        (from offering in _db.CourseOfferings
+         join session in _db.AcademicSessions on offering.AcademicSessionId equals session.Id
+         where offering.Id == offeringId && scheduledDate >= session.StartDate && scheduledDate <= session.EndDate
+         select offering.Id).AnyAsync(ct);
 
     public async Task SaveMarksAsync(Guid examinationId, Guid actorId, IReadOnlyCollection<ExaminationMarkItem> marks, CancellationToken ct)
     {
