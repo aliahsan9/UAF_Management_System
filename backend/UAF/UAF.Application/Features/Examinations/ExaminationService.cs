@@ -14,6 +14,8 @@ public sealed class ExaminationService
         if (actorId == Guid.Empty) throw new ArgumentException("Authenticated actor is required.");
         if (!await _repository.CanAdministerOfferingAsync(request.CourseOfferingId, actorId, privileged, departmentAdmin, ct))
             throw new UnauthorizedAccessException("You cannot schedule examinations for this course offering.");
+        if (!await _repository.IsScheduledDateWithinSessionAsync(request.CourseOfferingId, request.ScheduledDate, ct))
+            throw new ArgumentException("Examination date must fall within the course offering's academic session.");
         if (await _repository.ExistsAsync(request.CourseOfferingId, request.Title, ct))
             throw new InvalidOperationException("An examination with this title already exists for this course offering.");
         var exam = new Examination(request.CourseOfferingId, request.Title, request.Type, request.ScheduledDate, request.MaximumMarks, request.PassingMarks);
