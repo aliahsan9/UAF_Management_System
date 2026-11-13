@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Microsoft.AspNetCore.Mvc;
 using UAF.API.Authorization;
 using UAF.Application.Features.Admissions;
 using UAF.Application.Features.Admissions.Models;
@@ -52,10 +53,10 @@ public static class ApplicantAdmissionEndpoints
             AdmissionDocumentService documents, CancellationToken ct) =>
             Results.Ok(await documents.GetMyDocumentsAsync(GetUserId(user), id, ct)));
 
-        group.MapPost("/{id:guid}/documents", async (Guid id, IFormFile file,
-            AdmissionDocumentType documentType, ClaimsPrincipal user,
-            AdmissionDocumentService documents, CancellationToken ct) =>
+        group.MapPost("/{id:guid}/documents", async (Guid id, [FromForm] AdmissionDocumentUploadForm form,
+            ClaimsPrincipal user, AdmissionDocumentService documents, CancellationToken ct) =>
         {
+            var file = form.File;
             if (file is null || file.Length <= 0)
                 return Results.BadRequest(new { message = "A non-empty file is required." });
             if (file.Length > AdmissionDocumentService.MaximumFileSizeBytes)
@@ -63,7 +64,7 @@ public static class ApplicantAdmissionEndpoints
 
             await using var input = file.OpenReadStream();
             var result = await documents.UploadForApplicantAsync(
-                GetUserId(user), id, documentType, file.FileName, file.ContentType, input, ct);
+                GetUserId(user), id, form.DocumentType, file.FileName, file.ContentType, input, ct);
             return Results.Created($"/api/v1/applicant/admissions/{id}/documents/{result.Id}", result);
         })
         .DisableAntiforgery()
