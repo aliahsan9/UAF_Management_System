@@ -163,6 +163,30 @@ public sealed class AdmissionApplicationServiceTests
             return Task.FromResult(application);
         }
 
+        public Task<AdmissionApplication?> GetOwnedByIdAsync(
+            Guid id, Guid ownerUserId, CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            _applications.TryGetValue(id, out var application);
+            return Task.FromResult(application?.OwnerUserId == ownerUserId ? application : null);
+        }
+
+        public Task<IReadOnlyList<AdmissionApplication>> GetOwnedAsync(
+            Guid ownerUserId, CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            IReadOnlyList<AdmissionApplication> items = _applications.Values
+                .Where(x => x.OwnerUserId == ownerUserId).ToArray();
+            return Task.FromResult(items);
+        }
+
+        public Task<bool> AcademicProgramIsActiveAsync(
+            Guid academicProgramId, CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(academicProgramId != Guid.Empty);
+        }
+
         public Task AddAsync(
             AdmissionApplication application,
             CancellationToken cancellationToken = default)
