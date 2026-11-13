@@ -36,22 +36,22 @@ internal sealed class CourseConfiguration : IEntityTypeConfiguration<Course>
             "CK_Courses_CreditHours", "[CreditHours] > 0 AND [CreditHours] <= 10"));
     }
 
-    internal sealed class CourseOfferingConfiguration : IEntityTypeConfiguration<CourseOffering>
+}
+
+internal sealed class CourseOfferingConfiguration : IEntityTypeConfiguration<CourseOffering>
+{
+    public void Configure(EntityTypeBuilder<CourseOffering> builder)
     {
-        public void Configure(EntityTypeBuilder<CourseOffering> builder)
-        {
-            builder.ToTable("CourseOfferings");
-            builder.HasKey(x => x.Id);
-            builder.Property(x => x.Section).HasMaxLength(20).IsRequired();
-            builder.Property(x => x.Status).HasConversion<int>().IsRequired();
-            builder.HasIndex(x => new { x.CourseId, x.AcademicSessionId, x.Section }).IsUnique();
-            builder.HasIndex(x => x.InstructorEmployeeId);
-            builder.HasOne<Course>().WithMany().HasForeignKey(x => x.CourseId)
-                .OnDelete(DeleteBehavior.Restrict);
-            builder.HasOne<AcademicSession>().WithMany().HasForeignKey(x => x.AcademicSessionId)
-                .OnDelete(DeleteBehavior.Restrict);
-            builder.ToTable(table => table.HasCheckConstraint(
-                "CK_CourseOfferings_Capacity", "[Capacity] > 0"));
-        }
+        builder.ToTable("CourseOfferings", table => table.HasCheckConstraint(
+            "CK_CourseOfferings_Capacity", "[Capacity] > 0"));
+        builder.HasKey(x => x.Id);
+        builder.Property(x => x.Section).HasMaxLength(20).IsRequired();
+        builder.Property(x => x.Status).HasConversion<int>().IsRequired();
+        builder.HasIndex(x => new { x.CourseId, x.AcademicSessionId, x.Section }).IsUnique();
+        builder.HasIndex(x => x.InstructorEmployeeId);
+        builder.HasOne<Course>().WithMany().HasForeignKey(x => x.CourseId)
+            .OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<AcademicSession>().WithMany().HasForeignKey(x => x.AcademicSessionId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
