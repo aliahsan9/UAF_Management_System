@@ -25,12 +25,12 @@ public static class GradingEndpoints
         var grades = endpoints.MapGroup("/api/v1/grading")
             .WithTags("Course Grade Finalization")
             .RequireAuthorization(AuthorizationPolicies.CourseGradeManagement);
-        grades.MapPost("/offerings/{offeringId:guid}/students/{studentId:guid}/finalize", async (Guid offeringId, Guid studentId, FinalizeCourseGradeRequest request, HttpContext http, GradingService service, CancellationToken ct) =>
+        grades.MapPost("/offerings/{offeringId:guid}/students/{studentId:guid}/finalize", async (Guid offeringId, Guid studentId, HttpContext http, GradingService service, CancellationToken ct) =>
         {
-            var result = await service.FinalizeCourseGradeAsync(offeringId, studentId, request, GetActorId(http.User),
+            var result = await service.FinalizeCourseGradeFromAssessmentsAsync(offeringId, studentId, GetActorId(http.User),
                 IsPrivileged(http.User), http.User.IsInRole("DepartmentAdmin"), ct);
             return Results.Ok(result);
-        }).WithName("FinalizeStudentCourseGrade");
+        }).WithName("FinalizeStudentCourseGradeFromPublishedAssessments");
 
         var records = endpoints.MapGroup("/api/v1/academic-records")
             .WithTags("Student Academic Records")
