@@ -188,7 +188,8 @@ public sealed class CourseOfferingServiceTests
                 if (offering.Status != CourseOfferingStatus.Published) throw new InvalidOperationException();
                 if (!((StudentActive && studentId == StudentId) || EligibleStudents.Contains(studentId)))
                     throw new InvalidOperationException();
-                if (_enrollments.Values.Any(x => x.StudentId == studentId && x.CourseOfferingId == offeringId && x.Status == EnrollmentStatus.Enrolled)) throw new InvalidOperationException();
+                if (_enrollments.Values.Any(x => x.StudentId == studentId && x.CourseOfferingId == offeringId &&
+                    (x.Status == EnrollmentStatus.Enrolled || x.Status == EnrollmentStatus.Completed))) throw new InvalidOperationException();
                 if (_enrollments.Values.Count(x => x.CourseOfferingId == offeringId && x.Status == EnrollmentStatus.Enrolled) >= offering.Capacity)
                     throw new InvalidOperationException();
                 var enrollment = new CourseEnrollment(studentId, offeringId, enrolledOn);
