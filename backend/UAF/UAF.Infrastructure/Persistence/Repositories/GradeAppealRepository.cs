@@ -73,6 +73,11 @@ internal sealed class GradeAppealRepository : IGradeAppealRepository
         await _db.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
     }
+    public async Task<IReadOnlyList<GradeAppealAuditResponse>> GetAppealHistoryAsync(Guid appealId, CancellationToken ct) =>
+        await _db.GradeAppealAudits.AsNoTracking().Where(x => x.AppealId == appealId)
+            .OrderBy(x => x.OccurredAtUtc)
+            .Select(x => new GradeAppealAuditResponse(x.Id, x.AppealId, x.PreviousStatus, x.NewStatus, x.ActorId, x.Remarks, x.OccurredAtUtc))
+            .ToListAsync(ct);
     private IQueryable<GradeAppealResponse> AppealQuery() =>
         from appeal in _db.GradeAppeals.AsNoTracking()
         join student in _db.Students.AsNoTracking() on appeal.StudentId equals student.Id
