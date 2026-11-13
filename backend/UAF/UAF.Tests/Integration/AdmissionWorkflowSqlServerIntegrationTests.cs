@@ -9,19 +9,17 @@ using UAF.Infrastructure;
 using UAF.Infrastructure.Identity;
 using UAF.Infrastructure.Persistence;
 using Xunit;
-using Xunit.Sdk;
 
 namespace UAF.Tests.Integration;
 
 [Trait("Category", "SqlServerIntegration")]
 public sealed class AdmissionWorkflowSqlServerIntegrationTests
 {
-    [Fact]
+    [SqlServerFact]
     public async Task ConcurrentConversionCreatesOneStudentAndConsumesOneRegistrationNumber()
     {
-        var configuredConnection = Environment.GetEnvironmentVariable("UAF_TEST_SQLSERVER_CONNECTION_STRING");
-        if (string.IsNullOrWhiteSpace(configuredConnection))
-            throw new SkipException("Set UAF_TEST_SQLSERVER_CONNECTION_STRING to run SQL Server integration tests.");
+        var configuredConnection = Environment.GetEnvironmentVariable("UAF_TEST_SQLSERVER_CONNECTION_STRING")
+            ?? throw new InvalidOperationException("SQL Server integration connection string was not configured.");
 
         var databaseName = $"UafAdmissionTests_{Guid.NewGuid():N}";
         var masterConnection = new SqlConnectionStringBuilder(configuredConnection) { InitialCatalog = "master" };
@@ -173,4 +171,14 @@ public sealed class AdmissionWorkflowSqlServerIntegrationTests
         FullName = userName,
         IsActive = true
     };
+}
+
+
+public sealed class SqlServerFactAttribute : FactAttribute
+{
+    public SqlServerFactAttribute()
+    {
+        if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("UAF_TEST_SQLSERVER_CONNECTION_STRING")))
+            Skip = "Set UAF_TEST_SQLSERVER_CONNECTION_STRING to run SQL Server integration tests.";
+    }
 }
