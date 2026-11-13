@@ -235,9 +235,17 @@ Course enrollment lifecycle routes (same staff policy):
 | POST | `/api/v1/course-enrollments/{id}/withdraw` | Withdraw an active registration |
 | POST | `/api/v1/course-enrollments/{id}/complete` | Mark an active registration completed |
 
+For the enrollment endpoint, provide the academic enrollment date explicitly in the request body (ISO date format):
+
+```json
+{
+  "enrolledOn": "2026-11-13"
+}
+```
+
 Offering sections are unique per course and academic session. Only active catalogue courses and planned/active sessions can be scheduled. An offering begins as Draft; enrollment is accepted only after publication. Capacity must be positive and cannot be reduced below the active enrollment count. Dropping or withdrawing a registration releases its seat; a student may re-enroll after dropping, while a filtered unique database index prevents two active registrations for the same student and offering.
 
-Enrollment insertion and capacity updates use SQL Server serializable transactions. The database also enforces unique active enrollment and section constraints. These controls are designed to prevent concurrent requests from allocating the same final seat twice; validate with SQL Server integration tests under concurrent load before production use. Instructor IDs are stored as references, but employee existence validation is deferred until the Employee module and its relationship are implemented. Student self-service enrollment is not exposed; these endpoints are staff-only until identity ownership and registration-window rules are designed.
+Enrollment insertion and capacity updates use SQL Server serializable transactions. The database also enforces unique active enrollment and section constraints. The application unit tests include concurrent enrollment attempts against a synchronized repository test double. These controls are designed to prevent concurrent requests from allocating the same final seat twice; SQL Server integration tests under concurrent load are still required before production use. Instructor IDs are stored as references, but employee existence validation is deferred until the Employee module and its relationship are implemented. Student self-service enrollment is not exposed; these endpoints are staff-only until identity ownership and registration-window rules are designed.
 
 Student management routes (all require Registrar, DepartmentAdmin, or SuperAdmin):
 
