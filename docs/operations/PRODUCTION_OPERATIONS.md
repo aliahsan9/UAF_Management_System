@@ -69,6 +69,8 @@ Do not use `WITH REPLACE`, `SINGLE_USER`, or overwrite a production database as 
 
 ## 7. Query performance and indexes
 
+- Review `scripts/database/Enable-UafQueryStore.sql` with the DBA and adjust storage/retention settings to the approved operations policy before execution.
+- Run `scripts/database/Inspect-UafPerformance.sql` periodically using a read-only diagnostic identity to review Query Store duration, logical reads, index usage, and missing-index hypotheses.
 - Enable SQL Server Query Store in the target database and retain its data according to the approved operations policy.
 - Capture actual execution plans for slow or high-CPU queries.
 - Review logical reads, duration, CPU, spills, blocking, and parameter sensitivity before adding indexes.
