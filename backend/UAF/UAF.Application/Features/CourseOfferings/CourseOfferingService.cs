@@ -56,13 +56,9 @@ public sealed class CourseOfferingService
     public async Task UpdateOfferingAsync(Guid id, UpdateCourseOfferingRequest request, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var offering = await GetRequiredOfferingAsync(id, ct);
-        var enrolled = await _repository.GetActiveEnrollmentCountAsync(id, ct);
-        if (request.Capacity < enrolled)
-            throw new InvalidOperationException($"Capacity cannot be lower than the {enrolled} currently enrolled students.");
-        offering.UpdateCapacity(request.Capacity);
-        offering.AssignInstructor(request.InstructorEmployeeId);
-        await _unitOfWork.SaveChangesAsync(ct);
+        _ = await GetRequiredOfferingAsync(id, ct);
+        // Capacity changes share a serializable transaction with enrollment inserts.
+        await _repository.UpdateOfferingAsync(id, request.Capacity, request.InstructorEmployeeId, ct);
     }
 
     public Task PublishAsync(Guid id, CancellationToken ct = default) =>
