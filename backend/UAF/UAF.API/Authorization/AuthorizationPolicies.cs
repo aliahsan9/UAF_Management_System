@@ -8,4 +8,5 @@ public static class AuthorizationPolicies
 {
     public const string AdmissionsStaff = "Admissions.Staff";
     public const string AdmissionsDecision = "Admissions.Decision";
+    public const string AcademicStructureAdmin = "AcademicStructure.Admin";
 }
