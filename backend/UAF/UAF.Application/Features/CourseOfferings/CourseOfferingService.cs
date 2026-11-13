@@ -44,7 +44,7 @@ public sealed class CourseOfferingService
             throw new InvalidOperationException("Course offerings can only be scheduled in a planned or active academic session.");
 
         var section = NormalizeSection(request.Section);
-        if (await _repository.OfferingSectionExistsAsync(request.CourseId, request.AcademicSessionId, section, cancellationToken: ct))
+        if (await _repository.OfferingSectionExistsAsync(request.CourseId, request.AcademicSessionId, section, ct: ct))
             throw new InvalidOperationException($"Section '{section}' already exists for this course and academic session.");
 
         var offering = new CourseOffering(request.CourseId, request.AcademicSessionId, section, request.Capacity, request.InstructorEmployeeId);
