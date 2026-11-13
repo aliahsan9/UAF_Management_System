@@ -78,11 +78,11 @@ public static class StudentEndpoints
         Guid? academicProgramId,
         StudentStatus? status,
         string? search,
-        string sortBy,
-        string sortDirection,
+        string? sortBy,
+        string? sortDirection,
         StudentService service,
         CancellationToken ct) =>
-        service.GetPageAsync(page, pageSize, academicProgramId, status, search, sortBy, sortDirection, ct);
+        service.GetPageAsync(page, pageSize, academicProgramId, status, search, sortBy ?? "registrationNumber", sortDirection ?? "asc", ct);
 
     private static async Task<IResult> GetStudent(Guid id, StudentService service, CancellationToken ct) =>
         Results.Ok(await service.GetByIdAsync(id, ct));
