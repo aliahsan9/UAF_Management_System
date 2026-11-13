@@ -53,38 +53,38 @@ public sealed class ExaminationService
     }
     public async Task ApproveAsync(Guid id, Guid actorId, bool privileged, bool departmentAdmin, CancellationToken ct)
     {
-        var exam = await GetAuthorizedAsync(id, actorId, privileged, departmentAdmin, ct);
+        var exam = await GetAuthorizedAsync(id, actorId, privileged, departmentAdmin, ct, allowClosed: true);
         exam.Approve(actorId, DateTimeOffset.UtcNow);
         await _unitOfWork.SaveChangesAsync(ct);
     }
     public async Task PublishAsync(Guid id, Guid actorId, bool privileged, bool departmentAdmin, CancellationToken ct)
     {
-        var exam = await GetAuthorizedAsync(id, actorId, privileged, departmentAdmin, ct);
+        var exam = await GetAuthorizedAsync(id, actorId, privileged, departmentAdmin, ct, allowClosed: true);
         exam.Publish(actorId, DateTimeOffset.UtcNow);
         await _unitOfWork.SaveChangesAsync(ct);
     }
     public async Task<ExaminationResponse> GetAsync(Guid id, Guid actorId, bool privileged, bool departmentAdmin, CancellationToken ct)
     {
-        var exam = await GetAuthorizedAsync(id, actorId, privileged, departmentAdmin, ct);
+        var exam = await GetAuthorizedAsync(id, actorId, privileged, departmentAdmin, ct, allowClosed: true);
         return ToResponse(exam);
     }
     public async Task<IReadOnlyList<ExaminationListItem>> GetOfferingExaminationsAsync(Guid offeringId, Guid actorId, bool privileged, bool departmentAdmin, CancellationToken ct)
     {
-        if (!await _repository.CanManageOfferingAsync(offeringId, actorId, privileged, departmentAdmin, ct))
+        if (!await _repository.CanManageOfferingAsync(offeringId, actorId, privileged, departmentAdmin, ct, allowClosed: true))
             throw new UnauthorizedAccessException("You cannot view examinations for this offering.");
         return await _repository.GetOfferingExaminationsAsync(offeringId, ct);
     }
     public async Task<IReadOnlyList<ExaminationResultView>> GetResultsAsync(Guid id, Guid actorId, bool privileged, bool departmentAdmin, CancellationToken ct)
     {
-        var exam = await GetAuthorizedAsync(id, actorId, privileged, departmentAdmin, ct);
+        var exam = await GetAuthorizedAsync(id, actorId, privileged, departmentAdmin, ct, allowClosed: true);
         if (exam.Status != UAF.Domain.Enums.ExaminationStatus.Published)
             throw new InvalidOperationException("Results are available only after publication.");
         return await _repository.GetResultsAsync(id, ct);
     }
-    private async Task<Examination> GetAuthorizedAsync(Guid id, Guid actorId, bool privileged, bool departmentAdmin, CancellationToken ct)
+    private async Task<Examination> GetAuthorizedAsync(Guid id, Guid actorId, bool privileged, bool departmentAdmin, CancellationToken ct, bool allowClosed = false)
     {
         var exam = await _repository.GetAsync(id, ct) ?? throw new KeyNotFoundException("Examination not found.");
-        if (!await _repository.CanManageOfferingAsync(exam.CourseOfferingId, actorId, privileged, departmentAdmin, ct))
+        if (!await _repository.CanManageOfferingAsync(exam.CourseOfferingId, actorId, privileged, departmentAdmin, ct, allowClosed))
             throw new UnauthorizedAccessException("You cannot access this examination.");
         return exam;
     }
