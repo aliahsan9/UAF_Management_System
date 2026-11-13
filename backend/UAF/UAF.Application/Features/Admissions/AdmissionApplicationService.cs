@@ -54,9 +54,37 @@ public sealed class AdmissionApplicationService
         return application.Id;
     }
 
-    public async Task SubmitAsync(
+    public Task SubmitAsync(Guid applicationId, CancellationToken cancellationToken = default) =>
+        UpdateApplicationAsync(applicationId, application => application.Submit(), cancellationToken);
+
+    public Task StartReviewAsync(Guid applicationId, CancellationToken cancellationToken = default) =>
+        UpdateApplicationAsync(applicationId, application => application.StartReview(), cancellationToken);
+
+    public Task AcceptAsync(
         Guid applicationId,
-        CancellationToken cancellationToken = default)
+        string? decisionRemarks = null,
+        CancellationToken cancellationToken = default) =>
+        UpdateApplicationAsync(applicationId, application => application.Accept(decisionRemarks), cancellationToken);
+
+    public Task RejectAsync(
+        Guid applicationId,
+        string? decisionRemarks = null,
+        CancellationToken cancellationToken = default) =>
+        UpdateApplicationAsync(applicationId, application => application.Reject(decisionRemarks), cancellationToken);
+
+    public Task WaitlistAsync(
+        Guid applicationId,
+        string? decisionRemarks = null,
+        CancellationToken cancellationToken = default) =>
+        UpdateApplicationAsync(applicationId, application => application.Waitlist(decisionRemarks), cancellationToken);
+
+    public Task WithdrawAsync(Guid applicationId, CancellationToken cancellationToken = default) =>
+        UpdateApplicationAsync(applicationId, application => application.Withdraw(), cancellationToken);
+
+    private async Task UpdateApplicationAsync(
+        Guid applicationId,
+        Action<AdmissionApplication> update,
+        CancellationToken cancellationToken)
     {
         if (applicationId == Guid.Empty)
             throw new ArgumentException("A valid application ID is required.", nameof(applicationId));
@@ -66,7 +94,7 @@ public sealed class AdmissionApplicationService
         if (application is null)
             throw new KeyNotFoundException($"Admission application '{applicationId}' was not found.");
 
-        application.Submit();
+        update(application);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }
