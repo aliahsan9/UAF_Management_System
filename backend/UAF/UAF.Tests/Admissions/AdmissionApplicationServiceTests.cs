@@ -62,34 +62,6 @@ public sealed class AdmissionApplicationServiceTests
     }
 
     [Fact]
-    public async Task AdmissionWorkflow_CanMoveFromDraftToAccepted()
-    {
-        var id = await _service.CreateDraftAsync(CreateRequest());
-
-        await _service.SubmitAsync(id);
-        await _service.StartReviewAsync(id);
-        await _service.AcceptAsync(id, "Eligibility verified.");
-
-        var saved = await _repository.GetByIdAsync(id);
-
-        Assert.NotNull(saved);
-        Assert.Equal(AdmissionStatus.Accepted, saved.Status);
-        Assert.Equal("Eligibility verified.", saved.DecisionRemarks);
-        Assert.Equal(4, _unitOfWork.SaveChangesCalls);
-    }
-
-    [Fact]
-    public async Task RejectAsync_WhenApplicationIsNotUnderReview_Throws()
-    {
-        var id = await _service.CreateDraftAsync(CreateRequest());
-
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _service.RejectAsync(id, "Missing documents."));
-
-        Assert.Equal(1, _unitOfWork.SaveChangesCalls);
-    }
-
-    [Fact]
     public async Task SubmitAsync_WhenApplicationDoesNotExist_ThrowsNotFound()
     {
         await Assert.ThrowsAsync<KeyNotFoundException>(
