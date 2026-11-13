@@ -11,5 +11,6 @@ public sealed class FeeStructureItem : Entity
     }
     public Guid FeeStructureId { get; private set; }
     public Guid FeeHeadId { get; private set; }
+    public FeeHead FeeHead { get; private set; } = null!;
     public decimal Amount { get; private set; }
 }
