@@ -61,6 +61,7 @@ app.MapCourseOfferingEndpoints();
 app.MapCourseEnrollmentEndpoints();
 app.MapFeeEndpoints();
 app.MapEmployeeEndpoints();
+app.MapAttendanceEndpoints();
 app.MapAuthenticationEndpoints();
 app.Run();
 
