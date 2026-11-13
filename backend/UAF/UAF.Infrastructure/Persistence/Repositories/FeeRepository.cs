@@ -64,7 +64,7 @@ internal sealed class FeeRepository : IFeeRepository
  {
   var query=from c in db.FeeChallans where c.StudentFeeAccount.StudentId==studentId&&c.Status!=FeeChallanStatus.Cancelled
    join p in db.FeePayments.Where(x=>x.Status==FeePaymentStatus.Verified) on c.Id equals p.ChallanId into ps
-   select new { c.TotalAmount, Paid=ps.Sum(x=>(decimal?)x.Amount)??0m };
+   select new { TotalAmount = c.Subtotal + c.LateFeeAmount, Paid=ps.Sum(x=>(decimal?)x.Amount)??0m };
   return await query.SumAsync(x=>(decimal?)(x.TotalAmount-x.Paid),ct)??0m;
  }
 }

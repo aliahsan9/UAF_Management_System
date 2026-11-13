@@ -929,3 +929,55 @@ PDF rendering uses QuestPDF under its Community license. Confirm the library's l
 - A transcript's SHA-256 digest detects snapshot corruption, but it is not a digital signature. Production deployment should add a managed signing key/HSM-backed signature and transcript revocation workflow.
 - No official UAF transcript layout, grading regulation, appeal deadline, rechecking fee or transcript signing authority is assumed. Confirm these with the university before presenting generated documents as official UAF records.
 - The database migration for these new tables must be generated, reviewed and applied before using these endpoints.
+
+
+## Database Readiness and SQL Server Integration Testing
+
+### SQL Server-backed CI
+
+The GitHub Actions workflow provisions an ephemeral SQL Server 2022 Developer service for the test job and sets `UAF_TEST_SQLSERVER_CONNECTION_STRING`. This enables the opt-in SQL Server integration tests to run in CI instead of being skipped when the variable is absent.
+
+The integration tests create uniquely named temporary databases, run their scenarios, and drop those databases in a `finally` block. The test connection therefore needs permission to create and drop databases. Never point this variable at a production database.
+
+The transcript SQL Server integration test verifies:
+
+- Transcript snapshots can be persisted and retrieved by verification code.
+- A student can retrieve only their own transcript.
+- Verification codes are unique at the database level.
+- Issued transcript records cannot be modified through the EF Core context.
+
+The existing admission, attendance and fee SQL Server integration suites also run against the CI SQL Server service.
+
+### EF Core migration tooling
+
+The repository pins `dotnet-ef` 10.0.0 in `.config/dotnet-tools.json`. The design-time context factory reads `UAF_DB_CONNECTION_STRING`; always set it to the intended non-production SQL Server database before running migration commands.
+
+Generate the initial migration from the repository root in PowerShell:
+
+```powershell
+$env:UAF_DB_CONNECTION_STRING = "Server=localhost;Database=UafManagementDb;Trusted_Connection=True;TrustServerCertificate=True;Encrypt=False"
+./scripts/database/New-UafInitialMigration.ps1
+```
+
+Review the generated C# migration, model snapshot and `artifacts/database/UafManagement-InitialCreate.sql`. Commit the generated `backend/UAF/UAF.Infrastructure/Persistence/Migrations` files. Do not commit secrets or connection strings.
+
+After reviewing the migration and taking an appropriate database backup, apply it to a development database:
+
+```powershell
+$env:UAF_DB_CONNECTION_STRING = "Server=localhost;Database=UafManagementDb;Trusted_Connection=True;TrustServerCertificate=True;Encrypt=False"
+./scripts/database/Apply-UafMigrations.ps1
+```
+
+For a SQL login, use a protected environment variable or secret store rather than putting credentials in source control.
+
+**Important:** This repository currently has no committed EF Core migration. The scripts make migration generation and application repeatable, but the initial migration still must be generated, reviewed and committed before a normal deployment can use `Database.Migrate` or `dotnet ef database update`. The SQL integration tests use `EnsureCreated` only to create isolated disposable test databases; they do not prove the migration is correct.
+
+### Test locally
+
+With SQL Server reachable and `UAF_TEST_SQLSERVER_CONNECTION_STRING` configured:
+
+```powershell
+dotnet test backend/UAF/UAF.sln --configuration Release
+```
+
+Without that environment variable, SQL Server integration tests are intentionally skipped. The CI workflow supplies it automatically.
