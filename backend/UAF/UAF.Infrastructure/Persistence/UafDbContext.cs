@@ -21,6 +21,7 @@ public sealed class UafDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<Student> Students => Set<Student>();
     public DbSet<AdmissionApplication> AdmissionApplications => Set<AdmissionApplication>();
     public DbSet<AdmissionDocument> AdmissionDocuments => Set<AdmissionDocument>();
+    public DbSet<AdmissionDocumentRequirement> AdmissionDocumentRequirements => Set<AdmissionDocumentRequirement>();
     public DbSet<Course> Courses => Set<Course>();
     public DbSet<CourseOffering> CourseOfferings => Set<CourseOffering>();
     public DbSet<CourseEnrollment> CourseEnrollments => Set<CourseEnrollment>();
