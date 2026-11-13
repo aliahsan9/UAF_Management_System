@@ -83,7 +83,7 @@ internal sealed class CourseOfferingRepository : ICourseOfferingRepository
         // Serializable isolation protects the seat-count predicate from concurrent inserts.
         // The unique (StudentId, CourseOfferingId) index independently prevents duplicate registrations.
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
-        var offering = await _dbContext.CourseOfferings.FirstOrDefaultAsync(x => x.Id == offeringId, ct)
+        var offering = await GetOfferingForUpdateAsync(offeringId, ct)
             ?? throw new KeyNotFoundException($"Course offering '{offeringId}' was not found.");
         if (offering.Status != CourseOfferingStatus.Published)
             throw new InvalidOperationException("The course offering is no longer open for enrollment.");
