@@ -3,6 +3,7 @@ using UAF.Application.Features.Admissions;
 using UAF.Application.Features.AcademicStructure;
 using UAF.Application.Features.AcademicCatalog;
 using UAF.Application.Features.Students;
+using UAF.Application.Features.CourseOfferings;
 
 namespace UAF.Application;
 
@@ -15,6 +16,7 @@ public static class DependencyInjection
         services.AddScoped<AcademicStructureService>();
         services.AddScoped<AcademicCatalogService>();
         services.AddScoped<StudentService>();
+        services.AddScoped<CourseOfferingService>();
         return services;
     }
 }
