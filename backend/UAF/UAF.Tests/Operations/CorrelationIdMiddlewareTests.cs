@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging.Abstractions;
 using UAF.API.Middleware;
+using Xunit;
 
 namespace UAF.Tests.Operations;
 
