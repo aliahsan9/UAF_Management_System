@@ -97,6 +97,8 @@ public sealed class AdmissionApplication : AuditableEntity
         EnsureActorAndTimestamp(actorUserId, occurredAtUtc);
         EnsureUnderReview();
         var normalizedRemarks = NormalizeOptional(remarks);
+        if (decision is AdmissionStatus.Rejected or AdmissionStatus.Waitlisted && normalizedRemarks is null)
+            throw new ArgumentException("A reason is required for rejection and waitlisting.", nameof(remarks));
         if (normalizedRemarks?.Length > 2000)
             throw new ArgumentException("Decision remarks cannot exceed 2000 characters.", nameof(remarks));
         Status = decision;
