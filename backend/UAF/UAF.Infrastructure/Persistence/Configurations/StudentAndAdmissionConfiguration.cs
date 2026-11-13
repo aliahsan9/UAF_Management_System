@@ -18,6 +18,7 @@ public sealed class StudentConfiguration : IEntityTypeConfiguration<Student>
         builder.Property(x => x.Status).HasConversion<int>().IsRequired();
         builder.Property(x => x.AdmissionApplicationId);
         builder.Property(x => x.IdentityUserId);
+        builder.Property(x => x.RegisteredAtUtc);
         builder.HasIndex(x => x.RegistrationNumber).IsUnique();
         builder.HasIndex(x => x.AdmissionApplicationId).IsUnique().HasFilter("[AdmissionApplicationId] IS NOT NULL");
         builder.HasIndex(x => x.IdentityUserId).IsUnique().HasFilter("[IdentityUserId] IS NOT NULL");
@@ -27,6 +28,8 @@ public sealed class StudentConfiguration : IEntityTypeConfiguration<Student>
         builder.HasOne<AdmissionApplication>().WithMany().HasForeignKey(x => x.AdmissionApplicationId)
             .OnDelete(DeleteBehavior.Restrict);
         builder.HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.IdentityUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.RegisteredByUserId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }
