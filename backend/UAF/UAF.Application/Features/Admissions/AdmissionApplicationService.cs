@@ -5,96 +5,123 @@ using UAF.Domain.Entities;
 
 namespace UAF.Application.Features.Admissions;
 
-/// <summary>
-/// Coordinates admission application use cases without depending on a database or web framework.
-/// </summary>
 public sealed class AdmissionApplicationService
 {
     private readonly IAdmissionApplicationRepository _repository;
     private readonly IUnitOfWork _unitOfWork;
 
-    public AdmissionApplicationService(
-        IAdmissionApplicationRepository repository,
-        IUnitOfWork unitOfWork)
+    public AdmissionApplicationService(IAdmissionApplicationRepository repository, IUnitOfWork unitOfWork)
     {
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
     }
 
-    public async Task<Guid> CreateDraftAsync(
-        CreateAdmissionApplicationRequest request,
-        CancellationToken cancellationToken = default)
+    public async Task<Guid> CreateDraftAsync(CreateAdmissionApplicationRequest request, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(request);
+        var number = NormalizeNumber(request.ApplicationNumber);
+        if (await _repository.ExistsByApplicationNumberAsync(number, ct))
+            throw new InvalidOperationException($"An admission application with number '{number}' already exists.");
 
-        var normalizedApplicationNumber = request.ApplicationNumber?.Trim().ToUpperInvariant();
-
-        if (string.IsNullOrWhiteSpace(normalizedApplicationNumber))
-            throw new ArgumentException("Application number is required.", nameof(request));
-
-        var alreadyExists = await _repository.ExistsByApplicationNumberAsync(
-            normalizedApplicationNumber,
-            cancellationToken);
-
-        if (alreadyExists)
-            throw new InvalidOperationException(
-                $"An admission application with number '{normalizedApplicationNumber}' already exists.");
-
-        var application = new AdmissionApplication(
-            normalizedApplicationNumber,
-            request.ApplicantFullName,
-            request.ApplicantEmail,
-            request.AcademicProgramId,
-            request.ApplicationDate,
-            request.PhoneNumber);
-
-        await _repository.AddAsync(application, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
-
+        var application = new AdmissionApplication(number, request.ApplicantFullName, request.ApplicantEmail,
+            request.AcademicProgramId, request.ApplicationDate, request.PhoneNumber);
+        await _repository.AddAsync(application, ct);
+        await _unitOfWork.SaveChangesAsync(ct);
         return application.Id;
     }
 
-    public Task SubmitAsync(Guid applicationId, CancellationToken cancellationToken = default) =>
-        UpdateApplicationAsync(applicationId, application => application.Submit(), cancellationToken);
-
-    public Task StartReviewAsync(Guid applicationId, CancellationToken cancellationToken = default) =>
-        UpdateApplicationAsync(applicationId, application => application.StartReview(), cancellationToken);
-
-    public Task AcceptAsync(
-        Guid applicationId,
-        string? decisionRemarks = null,
-        CancellationToken cancellationToken = default) =>
-        UpdateApplicationAsync(applicationId, application => application.Accept(decisionRemarks), cancellationToken);
-
-    public Task RejectAsync(
-        Guid applicationId,
-        string? decisionRemarks = null,
-        CancellationToken cancellationToken = default) =>
-        UpdateApplicationAsync(applicationId, application => application.Reject(decisionRemarks), cancellationToken);
-
-    public Task WaitlistAsync(
-        Guid applicationId,
-        string? decisionRemarks = null,
-        CancellationToken cancellationToken = default) =>
-        UpdateApplicationAsync(applicationId, application => application.Waitlist(decisionRemarks), cancellationToken);
-
-    public Task WithdrawAsync(Guid applicationId, CancellationToken cancellationToken = default) =>
-        UpdateApplicationAsync(applicationId, application => application.Withdraw(), cancellationToken);
-
-    private async Task UpdateApplicationAsync(
-        Guid applicationId,
-        Action<AdmissionApplication> update,
-        CancellationToken cancellationToken)
+    public async Task<ApplicantApplicationResponse> CreateApplicantDraftAsync(
+        Guid ownerUserId, CreateApplicantDraftRequest request, CancellationToken ct = default)
     {
-        if (applicationId == Guid.Empty)
-            throw new ArgumentException("A valid application ID is required.", nameof(applicationId));
+        if (ownerUserId == Guid.Empty) throw new ArgumentException("Authenticated applicant is required.", nameof(ownerUserId));
+        ArgumentNullException.ThrowIfNull(request);
+        if (!await _repository.AcademicProgramIsActiveAsync(request.AcademicProgramId, ct))
+            throw new KeyNotFoundException("The selected academic program is not available.");
 
-        var application = await _repository.GetByIdAsync(applicationId, cancellationToken);
-
-        if (application is null)
-            throw new KeyNotFoundException($"Admission application '{applicationId}' was not found.");
-
-        update(application);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        var number = $"UAF-{DateTime.UtcNow:yyyy}-{Guid.NewGuid():N}"[..17].ToUpperInvariant();
+        var application = new AdmissionApplication(number, request.ApplicantFullName, request.ApplicantEmail,
+            request.AcademicProgramId, DateOnly.FromDateTime(DateTime.UtcNow), request.PhoneNumber, ownerUserId);
+        await _repository.AddAsync(application, ct);
+        await _unitOfWork.SaveChangesAsync(ct);
+        return Map(application);
     }
+
+    public async Task<IReadOnlyList<ApplicantApplicationResponse>> GetMyApplicationsAsync(
+        Guid ownerUserId, CancellationToken ct = default)
+    {
+        EnsureOwner(ownerUserId);
+        var applications = await _repository.GetOwnedAsync(ownerUserId, ct);
+        return applications.Select(Map).ToArray();
+    }
+
+    public async Task<ApplicantApplicationResponse> GetMyApplicationAsync(
+        Guid ownerUserId, Guid applicationId, CancellationToken ct = default) =>
+        Map(await GetOwnedRequiredAsync(ownerUserId, applicationId, ct));
+
+    public async Task UpdateMyDraftAsync(Guid ownerUserId, Guid applicationId,
+        UpdateApplicantDraftRequest request, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var application = await GetOwnedRequiredAsync(ownerUserId, applicationId, ct);
+        application.UpdateApplicantDetails(request.ApplicantFullName, request.ApplicantEmail, request.PhoneNumber);
+        await _unitOfWork.SaveChangesAsync(ct);
+    }
+
+    public Task SubmitMyApplicationAsync(Guid ownerUserId, Guid applicationId, CancellationToken ct = default) =>
+        UpdateOwnedAsync(ownerUserId, applicationId, application => application.Submit(), ct);
+
+    public Task WithdrawMyApplicationAsync(Guid ownerUserId, Guid applicationId, CancellationToken ct = default) =>
+        UpdateOwnedAsync(ownerUserId, applicationId, application => application.Withdraw(), ct);
+
+    public Task SubmitAsync(Guid id, CancellationToken ct = default) =>
+        UpdateApplicationAsync(id, application => application.Submit(), ct);
+    public Task StartReviewAsync(Guid id, CancellationToken ct = default) =>
+        UpdateApplicationAsync(id, application => application.StartReview(), ct);
+    public Task AcceptAsync(Guid id, string? remarks = null, CancellationToken ct = default) =>
+        UpdateApplicationAsync(id, application => application.Accept(remarks), ct);
+    public Task RejectAsync(Guid id, string? remarks = null, CancellationToken ct = default) =>
+        UpdateApplicationAsync(id, application => application.Reject(remarks), ct);
+    public Task WaitlistAsync(Guid id, string? remarks = null, CancellationToken ct = default) =>
+        UpdateApplicationAsync(id, application => application.Waitlist(remarks), ct);
+    public Task WithdrawAsync(Guid id, CancellationToken ct = default) =>
+        UpdateApplicationAsync(id, application => application.Withdraw(), ct);
+
+    private async Task UpdateOwnedAsync(Guid ownerId, Guid id, Action<AdmissionApplication> update, CancellationToken ct)
+    {
+        var application = await GetOwnedRequiredAsync(ownerId, id, ct);
+        update(application);
+        await _unitOfWork.SaveChangesAsync(ct);
+    }
+
+    private async Task<AdmissionApplication> GetOwnedRequiredAsync(Guid ownerId, Guid id, CancellationToken ct)
+    {
+        EnsureOwner(ownerId);
+        if (id == Guid.Empty) throw new ArgumentException("A valid application ID is required.", nameof(id));
+        return await _repository.GetOwnedByIdAsync(id, ownerId, ct)
+            ?? throw new KeyNotFoundException("Admission application was not found.");
+    }
+
+    private async Task UpdateApplicationAsync(Guid id, Action<AdmissionApplication> update, CancellationToken ct)
+    {
+        if (id == Guid.Empty) throw new ArgumentException("A valid application ID is required.", nameof(id));
+        var application = await _repository.GetByIdAsync(id, ct)
+            ?? throw new KeyNotFoundException($"Admission application '{id}' was not found.");
+        update(application);
+        await _unitOfWork.SaveChangesAsync(ct);
+    }
+
+    private static void EnsureOwner(Guid id)
+    {
+        if (id == Guid.Empty) throw new ArgumentException("Authenticated applicant is required.", nameof(id));
+    }
+
+    private static string NormalizeNumber(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) throw new ArgumentException("Application number is required.", nameof(value));
+        return value.Trim().ToUpperInvariant();
+    }
+
+    private static ApplicantApplicationResponse Map(AdmissionApplication x) =>
+        new(x.Id, x.ApplicationNumber, x.ApplicantFullName, x.ApplicantEmail, x.PhoneNumber,
+            x.AcademicProgramId, x.ApplicationDate, x.Status, x.DecisionRemarks, x.CreatedAtUtc, x.UpdatedAtUtc);
 }
