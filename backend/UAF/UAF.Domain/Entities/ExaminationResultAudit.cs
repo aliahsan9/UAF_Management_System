@@ -8,6 +8,7 @@ public sealed class ExaminationResultAudit : Entity
     {
         if (examinationId == Guid.Empty || studentId == Guid.Empty || actorId == Guid.Empty) throw new ArgumentException("Examination, student and actor are required.");
         if (newMarks < 0 || (previousMarks.HasValue && previousMarks.Value < 0)) throw new ArgumentOutOfRangeException(nameof(newMarks));
+        if ((newAbsent && newMarks != 0) || (previousAbsent && previousMarks.HasValue && previousMarks.Value != 0)) throw new ArgumentException("Absent states must have zero marks.");
         if (string.IsNullOrWhiteSpace(reason) || reason.Trim().Length > 500) throw new ArgumentException("An audit reason is required (maximum 500 characters).", nameof(reason));
         if (changedAtUtc == default) throw new ArgumentException("Audit timestamp is required.", nameof(changedAtUtc));
         ExaminationId = examinationId; StudentId = studentId; PreviousMarks = previousMarks; NewMarks = newMarks;
