@@ -26,11 +26,19 @@ internal sealed class LocalAdmissionDocumentStorage : IAdmissionDocumentStorage
         ArgumentNullException.ThrowIfNull(content);
         var key = $"{Guid.NewGuid():N}.bin";
         var path = ResolvePath(key);
-        await using var output = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None,
-            81920, FileOptions.Asynchronous | FileOptions.WriteThrough);
-        await content.CopyToAsync(output, ct);
-        await output.FlushAsync(ct);
-        return key;
+        try
+        {
+            await using var output = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None,
+                81920, FileOptions.Asynchronous | FileOptions.WriteThrough);
+            await content.CopyToAsync(output, ct);
+            await output.FlushAsync(ct);
+            return key;
+        }
+        catch
+        {
+            if (File.Exists(path)) File.Delete(path);
+            throw;
+        }
     }
 
     public Task<Stream> OpenReadAsync(string storageKey, CancellationToken ct = default)
