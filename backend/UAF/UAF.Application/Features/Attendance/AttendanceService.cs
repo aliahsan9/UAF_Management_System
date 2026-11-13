@@ -10,12 +10,12 @@ public sealed class AttendanceService
     private readonly IUnitOfWork _unitOfWork;
     public AttendanceService(IAttendanceRepository repository, IUnitOfWork unitOfWork) { _repository = repository; _unitOfWork = unitOfWork; }
 
-    public async Task<Guid> CreateSessionAsync(CreateAttendanceSessionRequest request, Guid actorId, bool privileged, CancellationToken ct)
+    public async Task<Guid> CreateSessionAsync(CreateAttendanceSessionRequest request, Guid actorId, bool privileged, CancellationToken ct, bool departmentAdmin = false)
     {
         ArgumentNullException.ThrowIfNull(request);
         if (actorId == Guid.Empty) throw new ArgumentException("Authenticated actor is required.");
         if (request.CourseOfferingId == Guid.Empty) throw new ArgumentException("Course offering is required.");
-        if (!await _repository.CanManageOfferingAsync(request.CourseOfferingId, actorId, privileged, ct))
+        if (!await _repository.CanManageOfferingAsync(request.CourseOfferingId, actorId, privileged, ct, departmentAdmin))
             throw new UnauthorizedAccessException("You are not assigned to this active course offering.");
         if (await _repository.SessionExistsForDateAsync(request.CourseOfferingId, request.AttendanceDate, ct))
             throw new InvalidOperationException("An attendance session already exists for this offering and date.");
@@ -35,19 +35,19 @@ public sealed class AttendanceService
         if (request.Marks.Select(x => x.StudentId).Distinct().Count() != request.Marks.Count)
             throw new ArgumentException("A student can appear only once in a batch.");
         if (request.Marks.Any(x => !Enum.IsDefined(x.Status))) throw new ArgumentOutOfRangeException(nameof(request), "An attendance status is invalid.");
-        await _repository.MarkAsync(sessionId, actorId, privileged, request.Marks, ct);
+        await _repository.MarkAsync(sessionId, actorId, privileged, request.Marks, ct, departmentAdmin);
     }
 
-    public async Task FinalizeAsync(Guid sessionId, Guid actorId, bool privileged, CancellationToken ct)
+    public async Task FinalizeAsync(Guid sessionId, Guid actorId, bool privileged, CancellationToken ct, bool departmentAdmin = false)
     {
         if (sessionId == Guid.Empty || actorId == Guid.Empty) throw new ArgumentException("Session and authenticated actor are required.");
-        await _repository.FinalizeAsync(sessionId, actorId, privileged, ct);
+        await _repository.FinalizeAsync(sessionId, actorId, privileged, ct, departmentAdmin);
     }
 
-    public async Task<AttendanceSessionResponse> GetAsync(Guid sessionId, Guid actorId, bool privileged, CancellationToken ct)
+    public async Task<AttendanceSessionResponse> GetAsync(Guid sessionId, Guid actorId, bool privileged, CancellationToken ct, bool departmentAdmin = false)
     {
         var session = await _repository.GetSessionAsync(sessionId, ct) ?? throw new KeyNotFoundException("Attendance session was not found.");
-        if (!await _repository.CanManageOfferingAsync(session.CourseOfferingId, actorId, privileged, ct))
+        if (!await _repository.CanManageOfferingAsync(session.CourseOfferingId, actorId, privileged, ct, departmentAdmin))
             throw new UnauthorizedAccessException("You are not authorized to view attendance for this course offering.");
         var marks = await _repository.GetMarksAsync(sessionId, ct);
         return new(session.Id, session.CourseOfferingId, session.AttendanceDate, session.Topic, session.Status,
