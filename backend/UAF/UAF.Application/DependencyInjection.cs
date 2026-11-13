@@ -31,6 +31,7 @@ public static class DependencyInjection
         services.AddScoped<ExaminationService>();
         services.AddScoped<GradingService>();
         services.AddScoped<GradeAppealService>();
+        services.AddScoped<GradeRevisionService>();
         return services;
     }
 }
