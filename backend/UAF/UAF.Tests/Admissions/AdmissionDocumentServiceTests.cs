@@ -188,6 +188,17 @@ public sealed class AdmissionDocumentServiceTests
     }
 
     [Fact]
+    public async Task StaffSubmissionCannotBypassUnconfiguredChecklist()
+    {
+        var app = new AdmissionApplication("UAF-TEST-012", "Staff Applicant", "staffapplicant@example.com",
+            Guid.NewGuid(), new DateOnly(2026, 11, 13));
+        var service = new AdmissionDocumentService(new FakeRepository(app), new FakeStorage(), new FakeUnitOfWork());
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.SubmitStaffApplicationAsync(app.Id));
+        Assert.Equal(AdmissionStatus.Draft, app.Status);
+    }
+
+    [Fact]
     public async Task ReconfiguringChecklistReplacesPreviousRequirements()
     {
         var ownerId = Guid.NewGuid();
