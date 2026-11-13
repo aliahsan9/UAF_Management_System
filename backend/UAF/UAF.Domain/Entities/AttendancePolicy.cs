@@ -33,7 +33,7 @@ public sealed class AttendancePolicy : AuditableEntity
     private static void Validate(Guid sessionId, decimal required, decimal lateCredit, Guid actor)
     {
         if (sessionId == Guid.Empty || actor == Guid.Empty) throw new ArgumentException("Academic session and configuring actor are required.");
-        if (required is < 0 or > 100) throw new ArgumentOutOfRangeException(nameof(requiredPercentage), "Required attendance percentage must be between 0 and 100.");
-        if (lateCredit is < 0 or > 100) throw new ArgumentOutOfRangeException(nameof(lateCreditPercentage), "Late attendance credit must be between 0 and 100.");
+        if (required is < 0 or > 100) throw new ArgumentOutOfRangeException(nameof(required), "Required attendance percentage must be between 0 and 100.");
+        if (lateCredit is < 0 or > 100) throw new ArgumentOutOfRangeException(nameof(lateCredit), "Late attendance credit must be between 0 and 100.");
     }
 }
