@@ -2,7 +2,7 @@
 
 A university-focused management platform being developed as a Final Year Project (FYP), with the goal of bringing important academic and administrative workflows into one structured digital system.
 
-The project is currently in its **early development stage**. The repository and documentation will evolve as the system's requirements, architecture, and modules are implemented and validated.
+The project is in its **foundation and early implementation stage**. The repository now contains the initial .NET Domain and Application projects, with core university, student, admission, and course-registration concepts being modelled. The broader university workflows remain under development and must be refined against confirmed requirements.
 
 > **Project status:** In development  
 > **Project context:** Independent academic / FYP project  
@@ -77,8 +77,9 @@ UAF_Management_System/
         │
         ├── UAF.Application/
         │   ├── Common/
-        │   ├── Features/
-        │   └── Validators/
+        │   │   └── Abstractions/
+        │   └── Features/
+        │       └── Admissions/
         │
         ├── UAF.Infrastructure/
         │   ├── Persistence/
@@ -123,7 +124,7 @@ The Domain project remains independent. Infrastructure implements contracts defi
 
 ## Getting Started
 
-The repository is at the initial setup stage. Once the backend solution and its prerequisites are committed, setup instructions will be added here.
+The backend currently contains the Domain project and an initial Application project. The full solution, Infrastructure, API, database configuration, and automated test projects have not yet been added. Setup and run instructions will be expanded as those pieces are implemented.
 
 ### Prerequisites
 
@@ -164,7 +165,10 @@ These are engineering objectives; their implementation and verification will be 
 ## Development Roadmap
 
 - [ ] Confirm project requirements and module boundaries.
-- [ ] Create the .NET solution and Clean Architecture projects.
+- [x] Create the initial .NET Domain and Application projects.
+- [x] Model the initial university structure, students, admissions, academic sessions, courses, offerings, and course enrollments.
+- [x] Establish the first Application-layer admission use cases and persistence contracts.
+- [ ] Create the .NET solution file and remaining Clean Architecture projects.
 - [ ] Configure SQL Server and Entity Framework Core.
 - [ ] Set up ASP.NET Core Identity and JWT authentication.
 - [ ] Implement roles and authorization policies.
