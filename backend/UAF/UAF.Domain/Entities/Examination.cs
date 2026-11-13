@@ -19,6 +19,7 @@ public sealed class Examination : AuditableEntity
         PassingMarks = passingMarks;
         Status = ExaminationStatus.Draft;
     }
+    public byte[] RowVersion { get; private set; } = Array.Empty<byte>();
     public Guid CourseOfferingId { get; private set; }
     public string Title { get; private set; }
     public ExaminationType Type { get; private set; }
