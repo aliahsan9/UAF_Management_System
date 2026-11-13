@@ -37,6 +37,7 @@ The following areas represent the intended project scope. They are **planned cap
 | Learning Management | A foundation for course-related learning activities and academic resources. |
 | Examination & Results | Examination-related records, assessments, and result management. |
 | Teacher & Employee Management | Faculty and staff profiles, assignments, and relevant administrative records. |
+| Attendance Management | Course-session attendance, student status records, correction audit, and session finalization. |
 
 The final module boundaries and workflows will be refined against documented requirements and feedback from the project supervisor and relevant stakeholders.
 
@@ -173,7 +174,7 @@ Do not place real database passwords, JWT signing keys, API keys, or other secre
 
 ### Authentication configuration
 
-The API uses ASP.NET Core Identity with GUID user and role keys. Public registration always assigns the `Student` role; clients cannot submit a role name or grant themselves elevated privileges. The initial role set is `Student`, `Teacher`, `DepartmentAdmin`, `Registrar`, `FinanceOfficer`, and `SuperAdmin`. Role seeding is opt-in and must be run only after the Identity database migration has been applied.
+The API uses ASP.NET Core Identity with GUID user and role keys. Public registration always assigns the `Student` role; clients cannot submit a role name or grant themselves elevated privileges. The role set includes `Student`, `Teacher`, `DepartmentAdmin`, `Registrar`, `FinanceOfficer`, `HRManager`, and `SuperAdmin`. Role seeding is opt-in and must be run only after the Identity database migration has been applied.
 
 Configure JWT settings with .NET user secrets (do not commit a signing key):
 
@@ -421,7 +422,8 @@ These are engineering objectives; their implementation and verification will be 
 - [x] Implement course offering scheduling and student enrollment workflows (build/test execution pending).\n- [x] Implement applicant ownership, private document upload/review, configurable program requirements, and verified-document submission gating (automated test execution and database migration pending).
 - [x] Add admission decision actor/time audit records and atomic, idempotent acceptance-to-student conversion (SQL Server integration verification pending).
 - [ ] Develop fee and identity-card workflows.
-- [ ] Expand academic, LMS, examination, and employee modules.
+- [x] Implement initial course attendance sessions, teacher assignment authorization, student marks, audit history, and finalization (runtime verification pending).
+- [ ] Expand attendance policy/reporting, academic, LMS, and examination modules.
 - [x] Add initial unit tests for admission application workflows (execution still pending).\n- [x] Implement administrative student registration, profile maintenance, program assignment, paginated search, and status lifecycle endpoints.\n- [x] Add student-management application unit tests (execution still pending).
 - [x] Add admission decision domain/service tests and endpoint/role authorization policy tests (execution pending).
 - [x] Add an opt-in SQL Server integration test for concurrent decisions and idempotent student conversion (execution against a dedicated SQL Server instance pending).
