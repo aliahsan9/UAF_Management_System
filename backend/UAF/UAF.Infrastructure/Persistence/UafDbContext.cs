@@ -77,6 +77,9 @@ public sealed class UafDbContext : IdentityDbContext<ApplicationUser, IdentityRo
             .Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
             throw new InvalidOperationException("Attendance change audit records are append-only.");
 
+        if (ChangeTracker.Entries<ExaminationResultAudit>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
+            throw new InvalidOperationException("Examination result audit records are append-only.");
+
         var now = DateTimeOffset.UtcNow;
         foreach (var entry in ChangeTracker.Entries<AuditableEntity>())
         {
