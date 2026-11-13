@@ -886,6 +886,7 @@ Endpoints:
 - `POST /api/v1/grading/grades/{gradeId}/revision-requests`
 - `GET /api/v1/grading/revision-requests/pending`
 - `POST /api/v1/grading/revision-requests/{requestId}/decision`
+- `GET /api/v1/academic-records/me/course-grades/{gradeId}/revision-requests`
 - `GET /api/v1/academic-records/me/course-grades/{gradeId}/revisions`
 
 A revision request body:
@@ -918,7 +919,7 @@ Endpoints:
 - `GET /api/v1/academic-records/me/transcripts/{transcriptId}/pdf`
 - `GET /api/v1/transcripts/verify/{verificationCode}` (public)
 
-Students can list and download only transcripts belonging to their own linked student record. Public verification returns limited information: authenticity result, registration number, issue timestamp and snapshot digest.
+Students can list and download only transcripts belonging to their own linked student record. Public verification returns limited information: authenticity result, registration number, issue timestamp and snapshot digest. The public verification endpoint is rate-limited to 30 requests per minute per observed client IP.
 
 PDF rendering uses QuestPDF under its Community license. Confirm the library's licensing terms against the project's intended distribution before any commercial deployment.
 
