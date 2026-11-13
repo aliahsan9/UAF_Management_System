@@ -66,7 +66,8 @@ public sealed class AdmissionDocumentService
         var verifiedTypes = (await _repository.GetVerifiedDocumentTypesAsync(applicationId, ct)).ToHashSet();
         var missing = requiredTypes.Where(x => !verifiedTypes.Contains(x)).ToArray();
         return new AdmissionSubmissionReadinessResponse(
-            applicationId, requiredTypes.Length > 0, requiredTypes.Length > 0 && missing.Length == 0,
+            applicationId, requiredTypes.Length > 0,
+            application.Status == AdmissionStatus.Draft && requiredTypes.Length > 0 && missing.Length == 0,
             requiredTypes, missing);
     }
 
