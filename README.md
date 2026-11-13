@@ -411,7 +411,7 @@ These are engineering objectives; their implementation and verification will be 
 - [x] Implement initial administrative student-management workflows.
 - [x] Implement academic-session lifecycle and course catalogue management (build/test execution pending).
 - [x] Implement course offering scheduling and student enrollment workflows (build/test execution pending).\n- [x] Implement applicant ownership, private document upload/review, configurable program requirements, and verified-document submission gating (automated test execution and database migration pending).
-- [ ] Add admission decision actor/time audit records and atomic acceptance-to-student conversion.
+- [x] Add admission decision actor/time audit records and atomic, idempotent acceptance-to-student conversion (SQL Server integration verification pending).
 - [ ] Develop fee and identity-card workflows.
 - [ ] Expand academic, LMS, examination, and employee modules.
 - [x] Add initial unit tests for admission application workflows (execution still pending).\n- [x] Implement administrative student registration, profile maintenance, program assignment, paginated search, and status lifecycle endpoints.\n- [x] Add student-management application unit tests (execution still pending).
