@@ -27,6 +27,8 @@ builder.Services.AddAuthorization(options =>
         policy.RequireRole("Registrar", "DepartmentAdmin", "SuperAdmin"));
     options.AddPolicy(AuthorizationPolicies.AcademicCatalogManagement, policy =>
         policy.RequireRole("Registrar", "DepartmentAdmin", "SuperAdmin"));
+    options.AddPolicy(AuthorizationPolicies.CourseOfferingManagement, policy =>
+        policy.RequireRole("Registrar", "DepartmentAdmin", "SuperAdmin"));
 });
 
 builder.Services.AddRateLimiter(options =>
@@ -67,6 +69,8 @@ app.MapAdmissionEndpoints();
 app.MapAcademicStructureEndpoints();
 app.MapAcademicCatalogEndpoints();
 app.MapStudentEndpoints();
+app.MapCourseOfferingEndpoints();
+app.MapCourseEnrollmentEndpoints();
 app.MapAuthenticationEndpoints();
 app.Run();
 
