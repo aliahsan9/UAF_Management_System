@@ -4,22 +4,17 @@ namespace UAF.Domain.Entities;
 
 public sealed class Course : AuditableEntity
 {
-    private Course()
-    {
-        Code = string.Empty;
-        Title = string.Empty;
-    }
+    private Course() { Code = string.Empty; Title = string.Empty; }
 
     public Course(Guid departmentId, string code, string title, decimal creditHours, string? description = null)
     {
         if (departmentId == Guid.Empty)
             throw new ArgumentException("A department must be specified.", nameof(departmentId));
-
         DepartmentId = departmentId;
-        SetCode(code);
-        SetTitle(title);
-        SetCreditHours(creditHours);
-        Description = NormalizeOptional(description);
+        Code = NormalizeCode(code);
+        Title = NormalizeTitle(title);
+        CreditHours = NormalizeCreditHours(creditHours);
+        Description = NormalizeDescription(description);
         IsActive = true;
     }
 
@@ -32,10 +27,14 @@ public sealed class Course : AuditableEntity
 
     public void UpdateDetails(string code, string title, decimal creditHours, string? description)
     {
-        SetCode(code);
-        SetTitle(title);
-        SetCreditHours(creditHours);
-        Description = NormalizeOptional(description);
+        var normalizedCode = NormalizeCode(code);
+        var normalizedTitle = NormalizeTitle(title);
+        var normalizedCreditHours = NormalizeCreditHours(creditHours);
+        var normalizedDescription = NormalizeDescription(description);
+        Code = normalizedCode;
+        Title = normalizedTitle;
+        CreditHours = normalizedCreditHours;
+        Description = normalizedDescription;
         MarkUpdated();
     }
 
@@ -53,39 +52,39 @@ public sealed class Course : AuditableEntity
         MarkUpdated();
     }
 
-    private void SetCode(string code)
+    private static string NormalizeCode(string code)
     {
         if (string.IsNullOrWhiteSpace(code))
             throw new ArgumentException("Course code is required.", nameof(code));
-        var normalized = code.Trim().ToUpperInvariant();
-        if (normalized.Length > 30)
+        var value = code.Trim().ToUpperInvariant();
+        if (value.Length > 30)
             throw new ArgumentOutOfRangeException(nameof(code), "Course code cannot exceed 30 characters.");
-        Code = normalized;
+        return value;
     }
 
-    private void SetTitle(string title)
+    private static string NormalizeTitle(string title)
     {
         if (string.IsNullOrWhiteSpace(title))
             throw new ArgumentException("Course title is required.", nameof(title));
-        var normalized = title.Trim();
-        if (normalized.Length > 180)
+        var value = title.Trim();
+        if (value.Length > 180)
             throw new ArgumentOutOfRangeException(nameof(title), "Course title cannot exceed 180 characters.");
-        Title = normalized;
+        return value;
     }
 
-    private void SetCreditHours(decimal creditHours)
+    private static decimal NormalizeCreditHours(decimal creditHours)
     {
         if (creditHours <= 0 || creditHours > 10)
             throw new ArgumentOutOfRangeException(nameof(creditHours), "Credit hours must be greater than 0 and no more than 10.");
-        CreditHours = creditHours;
+        return creditHours;
     }
 
-    private static string? NormalizeOptional(string? value)
+    private static string? NormalizeDescription(string? description)
     {
-        if (string.IsNullOrWhiteSpace(value)) return null;
-        var normalized = value.Trim();
-        if (normalized.Length > 1000)
-            throw new ArgumentOutOfRangeException(nameof(value), "Course description cannot exceed 1000 characters.");
-        return normalized;
+        if (string.IsNullOrWhiteSpace(description)) return null;
+        var value = description.Trim();
+        if (value.Length > 1000)
+            throw new ArgumentOutOfRangeException(nameof(description), "Course description cannot exceed 1000 characters.");
+        return value;
     }
 }
