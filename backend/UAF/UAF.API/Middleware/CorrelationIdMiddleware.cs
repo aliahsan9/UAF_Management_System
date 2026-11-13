@@ -25,6 +25,9 @@ public sealed class CorrelationIdMiddleware
         var correlationId = ResolveCorrelationId(context);
         context.TraceIdentifier = correlationId;
 
+        // Set immediately for in-memory/server-side consumers and again at response start
+        // so downstream middleware cannot accidentally omit the public response header.
+        context.Response.Headers[HeaderName] = correlationId;
         context.Response.OnStarting(() =>
         {
             context.Response.Headers[HeaderName] = correlationId;
