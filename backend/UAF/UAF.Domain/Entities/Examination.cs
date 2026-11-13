@@ -11,6 +11,7 @@ public sealed class Examination : AuditableEntity
         Title = NormalizeTitle(title);
         if (!Enum.IsDefined(type)) throw new ArgumentOutOfRangeException(nameof(type));
         ValidateMarks(maximumMarks, passingMarks);
+        if (weightPercentage <= 0 || weightPercentage > 100) throw new ArgumentOutOfRangeException(nameof(weightPercentage));
         if (scheduledDate == default) throw new ArgumentOutOfRangeException(nameof(scheduledDate));
         CourseOfferingId = courseOfferingId;
         Type = type;
