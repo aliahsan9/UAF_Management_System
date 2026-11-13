@@ -5,6 +5,7 @@ namespace UAF.Application.Features.Admissions.Abstractions;
 
 public interface IAdmissionDocumentRepository
 {
+    Task<AdmissionApplication?> GetApplicationByIdAsync(Guid applicationId, CancellationToken ct = default);
     Task<AdmissionApplication?> GetOwnedApplicationAsync(Guid applicationId, Guid ownerUserId, CancellationToken ct = default);
     Task<AdmissionDocument?> GetOwnedDocumentAsync(Guid applicationId, Guid documentId, Guid ownerUserId, CancellationToken ct = default);
     Task<AdmissionDocument?> GetByIdAsync(Guid documentId, CancellationToken ct = default);
