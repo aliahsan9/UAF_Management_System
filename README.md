@@ -83,9 +83,9 @@ UAF_Management_System/
         │
         ├── UAF.Infrastructure/
         │   ├── Persistence/
-        │   ├── Identity/
-        │   ├── Repositories/
-        │   └── Services/
+        │   │   ├── Configurations/
+        │   │   └── Repositories/
+        │   └── DependencyInjection.cs
         │
         ├── UAF.API/
         │   ├── Endpoints/
@@ -93,7 +93,10 @@ UAF_Management_System/
         │   ├── Extensions/
         │   └── Program.cs
         │
-        └── UAF.Tests/
+        ├── UAF.Tests/
+        │   └── Admissions/
+        │
+        └── UAF.sln
 ```
 
 The Domain, Application, Infrastructure, and Tests projects have been created. The API project and additional module folders will be added in later stages.
