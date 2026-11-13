@@ -18,7 +18,7 @@ public sealed class ExaminationService
             throw new ArgumentException("Examination date must fall within the course offering's academic session.");
         if (await _repository.ExistsAsync(request.CourseOfferingId, request.Title, ct))
             throw new InvalidOperationException("An examination with this title already exists for this course offering.");
-        var exam = new Examination(request.CourseOfferingId, request.Title, request.Type, request.ScheduledDate, request.MaximumMarks, request.PassingMarks);
+        var exam = new Examination(request.CourseOfferingId, request.Title, request.Type, request.ScheduledDate, request.MaximumMarks, request.PassingMarks, request.WeightPercentage);
         await _repository.AddAsync(exam, ct);
         await _unitOfWork.SaveChangesAsync(ct);
         return exam.Id;
