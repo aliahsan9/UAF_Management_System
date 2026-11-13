@@ -24,6 +24,68 @@ public sealed class AdmissionDocumentService
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
     }
 
+    public async Task ConfigureRequirementsAsync(
+        Guid academicProgramId, Guid configuredByUserId,
+        IReadOnlyCollection<AdmissionDocumentType> requiredDocumentTypes, CancellationToken ct = default)
+    {
+        if (academicProgramId == Guid.Empty) throw new ArgumentException("A valid academic program is required.", nameof(academicProgramId));
+        if (configuredByUserId == Guid.Empty) throw new ArgumentException("An authenticated staff account is required.", nameof(configuredByUserId));
+        ArgumentNullException.ThrowIfNull(requiredDocumentTypes);
+        if (requiredDocumentTypes.Count == 0)
+            throw new ArgumentException("Configure at least one required document type. An empty checklist cannot be used to enable submission.", nameof(requiredDocumentTypes));
+        if (requiredDocumentTypes.Any(x => !Enum.IsDefined(x)))
+            throw new ArgumentException("The checklist contains an unsupported document type.", nameof(requiredDocumentTypes));
+        if (requiredDocumentTypes.Distinct().Count() != requiredDocumentTypes.Count)
+            throw new ArgumentException("A document type can only appear once in the checklist.", nameof(requiredDocumentTypes));
+        if (!await _repository.AcademicProgramExistsAsync(academicProgramId, ct))
+            throw new KeyNotFoundException("Academic program was not found.");
+
+        var requested = requiredDocumentTypes.ToHashSet();
+        var existing = await _repository.GetRequirementsForProgramAsync(academicProgramId, ct);
+        foreach (var requirement in existing)
+        {
+            if (!requested.Remove(requirement.DocumentType))
+                _repository.RemoveRequirement(requirement);
+        }
+        foreach (var type in requested)
+            await _repository.AddRequirementAsync(new AdmissionDocumentRequirement(academicProgramId, type, configuredByUserId), ct);
+
+        await _unitOfWork.SaveChangesAsync(ct);
+    }
+
+    public async Task<AdmissionSubmissionReadinessResponse> GetSubmissionReadinessAsync(
+        Guid ownerUserId, Guid applicationId, CancellationToken ct = default)
+    {
+        if (ownerUserId == Guid.Empty) throw new ArgumentException("Authenticated applicant is required.", nameof(ownerUserId));
+        var application = await _repository.GetOwnedApplicationAsync(applicationId, ownerUserId, ct)
+            ?? throw new KeyNotFoundException("Admission application was not found.");
+        var requirements = await _repository.GetRequirementsForProgramAsync(application.AcademicProgramId, ct);
+        var requiredTypes = requirements.Select(x => x.DocumentType).Distinct().OrderBy(x => x).ToArray();
+        var verifiedTypes = (await _repository.GetVerifiedDocumentTypesAsync(applicationId, ct)).ToHashSet();
+        var missing = requiredTypes.Where(x => !verifiedTypes.Contains(x)).ToArray();
+        return new AdmissionSubmissionReadinessResponse(
+            applicationId, requiredTypes.Length > 0, requiredTypes.Length > 0 && missing.Length == 0,
+            requiredTypes, missing);
+    }
+
+    public async Task SubmitMyApplicationAsync(Guid ownerUserId, Guid applicationId, CancellationToken ct = default)
+    {
+        if (ownerUserId == Guid.Empty) throw new ArgumentException("Authenticated applicant is required.", nameof(ownerUserId));
+        var application = await _repository.GetOwnedApplicationAsync(applicationId, ownerUserId, ct)
+            ?? throw new KeyNotFoundException("Admission application was not found.");
+        if (application.Status != AdmissionStatus.Draft)
+            throw new InvalidOperationException("Only a draft application can be submitted.");
+
+        var readiness = await GetSubmissionReadinessAsync(ownerUserId, applicationId, ct);
+        if (!readiness.RequirementsConfigured)
+            throw new InvalidOperationException("Submission is disabled because admissions staff have not configured required documents for this academic program.");
+        if (!readiness.CanSubmit)
+            throw new InvalidOperationException($"Application cannot be submitted. Verified documents are missing for: {string.Join(", ", readiness.MissingVerifiedDocumentTypes)}.");
+
+        application.Submit();
+        await _unitOfWork.SaveChangesAsync(ct);
+    }
+
     public async Task<AdmissionDocumentResponse> UploadForApplicantAsync(
         Guid ownerUserId, Guid applicationId, AdmissionDocumentType documentType,
         string fileName, string contentType, Stream input, CancellationToken ct = default)
