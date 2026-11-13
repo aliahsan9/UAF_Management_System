@@ -68,7 +68,8 @@ public static class ApplicantAdmissionEndpoints
             return Results.Created($"/api/v1/applicant/admissions/{id}/documents/{result.Id}", result);
         })
         .DisableAntiforgery()
-        .Accepts<AdmissionDocumentUploadForm>("multipart/form-data");
+        .Accepts<AdmissionDocumentUploadForm>("multipart/form-data")
+        .WithMetadata(new RequestSizeLimitAttribute(11 * 1024 * 1024));
 
         group.MapGet("/{applicationId:guid}/documents/{documentId:guid}/download",
             async (Guid applicationId, Guid documentId, ClaimsPrincipal user,
