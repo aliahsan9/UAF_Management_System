@@ -84,6 +84,12 @@ internal sealed class CourseOfferingRepository : ICourseOfferingRepository
         if (offering.Status != CourseOfferingStatus.Published)
             throw new InvalidOperationException("The course offering is no longer open for enrollment.");
 
+        var sessionAllowsEnrollment = await _dbContext.AcademicSessions.AnyAsync(
+            x => x.Id == offering.AcademicSessionId &&
+                (x.Status == AcademicSessionStatus.Planned || x.Status == AcademicSessionStatus.Active), ct);
+        if (!sessionAllowsEnrollment)
+            throw new InvalidOperationException("Enrollment is not available for a completed or cancelled academic session.");
+
         var duplicate = await _dbContext.CourseEnrollments.AnyAsync(
             x => x.StudentId == studentId && x.CourseOfferingId == offeringId &&
                 (x.Status == EnrollmentStatus.Enrolled || x.Status == EnrollmentStatus.Completed), ct);
