@@ -7,7 +7,7 @@ public sealed class ExaminationDomainTests
     [Fact]
     public void New_examination_starts_as_draft_and_normalizes_title()
     {
-        var exam = new Examination(Guid.NewGuid(), "  Mid Term  ", ExaminationType.Midterm, new DateOnly(2026, 11, 20), 50m, 20m);
+        var exam = new Examination(Guid.NewGuid(), "  Mid Term  ", ExaminationType.Midterm, new DateOnly(2026, 11, 20), 50m, 20m, 40m);
         Assert.Equal("Mid Term", exam.Title);
         Assert.Equal(ExaminationStatus.Draft, exam.Status);
     }
@@ -37,7 +37,7 @@ public sealed class ExaminationDomainTests
     [InlineData(50, 51)]
     public void Rejects_invalid_mark_boundaries(decimal maximum, decimal passing)
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => new Examination(Guid.NewGuid(), "Final", ExaminationType.Final, new DateOnly(2026, 12, 1), maximum, passing));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new Examination(Guid.NewGuid(), "Final", ExaminationType.Final, new DateOnly(2026, 12, 1), maximum, passing, 100m));
     }
     [Fact]
     public void Cannot_cancel_submitted_examination()
@@ -46,5 +46,5 @@ public sealed class ExaminationDomainTests
         exam.Schedule(); exam.OpenMarksEntry(); exam.Submit(Guid.NewGuid(), DateTimeOffset.UtcNow);
         Assert.Throws<InvalidOperationException>(() => exam.Cancel());
     }
-    private static Examination Create() => new(Guid.NewGuid(), "Midterm", ExaminationType.Midterm, new DateOnly(2026, 11, 20), 50m, 20m);
+    private static Examination Create() => new(Guid.NewGuid(), "Midterm", ExaminationType.Midterm, new DateOnly(2026, 11, 20), 50m, 20m, 100m);
 }
