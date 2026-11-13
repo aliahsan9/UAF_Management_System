@@ -137,6 +137,8 @@ public sealed class AdmissionWorkflowSqlServerIntegrationTests
                 Assert.Equal(2, history.Count);
                 Assert.Contains(history, x => x.FromStatus == AdmissionStatus.Submitted && x.ToStatus == AdmissionStatus.UnderReview);
                 Assert.Contains(history, x => x.FromStatus == AdmissionStatus.UnderReview && x.ToStatus == AdmissionStatus.Accepted);
+                db.Entry(history[0]).State = EntityState.Modified;
+                await Assert.ThrowsAsync<InvalidOperationException>(() => db.SaveChangesAsync());
             }
 
             Assert.Equal(registrarId, converted[0].RegisteredByUserId);
