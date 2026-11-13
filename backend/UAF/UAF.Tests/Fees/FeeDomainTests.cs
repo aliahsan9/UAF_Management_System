@@ -1,3 +1,4 @@
+using Xunit;
 using UAF.Domain.Entities;
 using UAF.Domain.Enums;
 namespace UAF.Tests.Fees;
