@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using FluentValidation;
 using UAF.API.Authorization;
 using UAF.Application.Features.Admissions;
 using UAF.Application.Features.Admissions.Models;
@@ -92,13 +93,19 @@ public static class AdmissionsEndpoints
 
     private static async Task<IResult> CreateDraft(
         CreateAdmissionDraftRequest request,
+        IValidator<CreateAdmissionDraftRequest> validator,
         AdmissionApplicationService service,
         CancellationToken cancellationToken)
     {
-        var errors = Validate(request);
-
-        if (errors.Count > 0)
+        var validation = await validator.ValidateAsync(request, cancellationToken);
+        if (!validation.IsValid)
+        {
+            var errors = validation.Errors
+                .GroupBy(error => error.PropertyName)
+                .ToDictionary(grouping => grouping.Key,
+                    grouping => grouping.Select(error => error.ErrorMessage).Distinct().ToArray());
             return Results.ValidationProblem(errors);
+        }
 
         var applicationId = await service.CreateDraftAsync(
             new CreateAdmissionApplicationRequest(
@@ -111,7 +118,6 @@ public static class AdmissionsEndpoints
             cancellationToken);
 
         var response = new CreateAdmissionResponse(applicationId);
-
         return Results.Created($"/api/v1/admissions/{applicationId}", response);
     }
 
@@ -170,39 +176,6 @@ public static class AdmissionsEndpoints
         if (!Guid.TryParse(value, out var id) || id == Guid.Empty)
             throw new UnauthorizedAccessException("The authenticated account identifier is invalid.");
         return id;
-    }
-
-    private static Dictionary<string, string[]> Validate(CreateAdmissionDraftRequest request)
-    {
-        var errors = new Dictionary<string, string[]>();
-
-        if (string.IsNullOrWhiteSpace(request.ApplicationNumber))
-            errors[nameof(request.ApplicationNumber)] = ["Application number is required."];
-        else if (request.ApplicationNumber.Trim().Length > 50)
-            errors[nameof(request.ApplicationNumber)] = ["Application number cannot exceed 50 characters."];
-
-        if (string.IsNullOrWhiteSpace(request.ApplicantFullName))
-            errors[nameof(request.ApplicantFullName)] = ["Applicant name is required."];
-        else if (request.ApplicantFullName.Trim().Length > 180)
-            errors[nameof(request.ApplicantFullName)] = ["Applicant name cannot exceed 180 characters."];
-
-        if (string.IsNullOrWhiteSpace(request.ApplicantEmail))
-            errors[nameof(request.ApplicantEmail)] = ["Applicant email is required."];
-        else if (request.ApplicantEmail.Trim().Length > 254 ||
-                 !System.Net.Mail.MailAddress.TryCreate(request.ApplicantEmail.Trim(), out var address) ||
-                 !string.Equals(address.Address, request.ApplicantEmail.Trim(), StringComparison.OrdinalIgnoreCase))
-            errors[nameof(request.ApplicantEmail)] = ["A valid email address is required."];
-
-        if (request.AcademicProgramId == Guid.Empty)
-            errors[nameof(request.AcademicProgramId)] = ["A valid academic program ID is required."];
-
-        if (request.ApplicationDate == default)
-            errors[nameof(request.ApplicationDate)] = ["Application date is required."];
-
-        if (request.PhoneNumber?.Length > 30)
-            errors[nameof(request.PhoneNumber)] = ["Phone number cannot exceed 30 characters."];
-
-        return errors;
     }
 }
 
