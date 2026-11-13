@@ -33,6 +33,7 @@ public sealed class Student : AuditableEntity
 
         AcademicProgramId = academicProgramId;
         EnrollmentDate = enrollmentDate;
+        ValidatePhoneNumber(phoneNumber);
         PhoneNumber = NormalizeOptional(phoneNumber);
         Status = StudentStatus.Active;
     }
