@@ -8,6 +8,7 @@ public interface IExaminationRepository
     Task AddAsync(Examination examination, CancellationToken ct);
     Task<Examination?> GetAsync(Guid examinationId, CancellationToken ct);
     Task<bool> ExistsAsync(Guid offeringId, string title, CancellationToken ct);
+    Task<bool> IsScheduledDateWithinSessionAsync(Guid offeringId, DateOnly scheduledDate, CancellationToken ct);
     Task SaveMarksAsync(Guid examinationId, Guid actorId, IReadOnlyCollection<ExaminationMarkItem> marks, CancellationToken ct);
     Task SubmitAsync(Guid examinationId, Guid actorId, CancellationToken ct);
     Task ApproveAsync(Guid examinationId, Guid actorId, CancellationToken ct);
