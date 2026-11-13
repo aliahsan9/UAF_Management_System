@@ -1,0 +1,31 @@
+using Microsoft.EntityFrameworkCore;
+using UAF.Application.Features.Admissions.Abstractions;
+using UAF.Domain.Entities;
+
+namespace UAF.Infrastructure.Persistence.Repositories;
+
+internal sealed class AdmissionDocumentRepository : IAdmissionDocumentRepository
+{
+    private readonly UafDbContext _db;
+    public AdmissionDocumentRepository(UafDbContext db) => _db = db;
+
+    public Task<AdmissionApplication?> GetOwnedApplicationAsync(Guid applicationId, Guid ownerUserId, CancellationToken ct = default) =>
+        _db.AdmissionApplications.FirstOrDefaultAsync(x => x.Id == applicationId && x.OwnerUserId == ownerUserId, ct);
+
+    public Task<AdmissionDocument?> GetOwnedDocumentAsync(Guid applicationId, Guid documentId, Guid ownerUserId, CancellationToken ct = default) =>
+        _db.AdmissionDocuments.FirstOrDefaultAsync(x =>
+            x.Id == documentId && x.ApplicationId == applicationId &&
+            x.Application.OwnerUserId == ownerUserId, ct);
+
+    public Task<AdmissionDocument?> GetByIdAsync(Guid documentId, CancellationToken ct = default) =>
+        _db.AdmissionDocuments.FirstOrDefaultAsync(x => x.Id == documentId, ct);
+
+    public async Task<IReadOnlyList<AdmissionDocument>> GetForApplicationAsync(Guid applicationId, CancellationToken ct = default) =>
+        await _db.AdmissionDocuments.AsNoTracking()
+            .Where(x => x.ApplicationId == applicationId)
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .ToListAsync(ct);
+
+    public async Task AddAsync(AdmissionDocument document, CancellationToken ct = default) =>
+        await _db.AdmissionDocuments.AddAsync(document, ct);
+}
