@@ -48,6 +48,8 @@ public static class AuthorizationPolicyExtensions
                 policy.RequireAuthenticatedUser().RequireRole("Registrar", "DepartmentAdmin", "SuperAdmin"));
             options.AddPolicy(AuthorizationPolicies.GradeRevisionApproval, policy =>
                 policy.RequireAuthenticatedUser().RequireRole("Registrar", "SuperAdmin"));
+            options.AddPolicy(AuthorizationPolicies.TranscriptIssuance, policy =>
+                policy.RequireAuthenticatedUser().RequireRole("Registrar", "SuperAdmin"));
         });
         return services;
     }
