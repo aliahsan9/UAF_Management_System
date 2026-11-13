@@ -751,6 +751,7 @@ The values above are illustrative only, not UAF's approved grading policy. `repe
 - Grade finalization is restricted to Registrar, SuperAdmin and DepartmentAdmin scoped to the course department.
 - Finalization revalidates enrollment and offering state inside a SQL Server serializable transaction.
 - A unique index prevents more than one finalized grade for the same student and course offering.
+- Finalization rechecks the published grading scale and course-credit snapshot inside its transaction; grade-scale rowversion detects concurrent policy publication.
 - Course grades are immutable after finalization. There is no grade correction/revision workflow in this milestone; do not edit records directly in production.
 - Student self-service resolves the student's record from the authenticated Identity account and exposes only finalized course grades.
 
