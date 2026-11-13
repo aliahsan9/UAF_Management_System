@@ -14,6 +14,14 @@ public static class AdmissionDocumentReviewEndpoints
             .WithTags("Admission Document Review")
             .RequireAuthorization(AuthorizationPolicies.AdmissionsStaff);
 
+        group.MapPut("/requirements/program/{academicProgramId:guid}", async (Guid academicProgramId,
+            ConfigureAdmissionRequirementsRequest request, ClaimsPrincipal user,
+            AdmissionDocumentService service, CancellationToken ct) =>
+        {
+            await service.ConfigureRequirementsAsync(academicProgramId, GetUserId(user), request.RequiredDocumentTypes, ct);
+            return Results.NoContent();
+        });
+
         group.MapGet("/application/{applicationId:guid}", async (Guid applicationId,
             AdmissionDocumentService service, CancellationToken ct) =>
             Results.Ok(await service.GetForStaffAsync(applicationId, ct)));
