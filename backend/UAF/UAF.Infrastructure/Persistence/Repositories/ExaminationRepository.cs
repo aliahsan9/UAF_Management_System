@@ -133,14 +133,5 @@ internal sealed class ExaminationRepository : IExaminationRepository
     public async Task<IReadOnlyList<ExaminationListItem>> GetOfferingExaminationsAsync(Guid offeringId, CancellationToken ct) =>
         await _db.Examinations.AsNoTracking().Where(x => x.CourseOfferingId == offeringId).OrderBy(x => x.ScheduledDate)
             .Select(x => new ExaminationListItem(x.Id, x.Title, x.Type, x.ScheduledDate, x.MaximumMarks, x.PassingMarks, x.WeightPercentage, x.Status)).ToListAsync(ct);
-    public async Task<IReadOnlyList<AssessmentGradeItem>> GetAssessmentGradeItemsAsync(Guid offeringId, Guid studentId, CancellationToken ct) =>
-        await (from exam in _db.Examinations.AsNoTracking()
-               where exam.CourseOfferingId == offeringId && exam.Status != ExaminationStatus.Cancelled
-               join result in _db.ExaminationResults.AsNoTracking().Where(x => x.StudentId == studentId)
-                   on exam.Id equals result.ExaminationId into resultGroup
-               from result in resultGroup.DefaultIfEmpty()
-               orderby exam.ScheduledDate, exam.Id
-               select new AssessmentGradeItem(exam.Id, exam.Title, exam.WeightPercentage, exam.MaximumMarks,
-                   result == null ? null : (decimal?)result.MarksObtained,
-                   result == null ? null : (bool?)result.IsAbsent, exam.Status)).ToListAsync(ct);
+
 }
