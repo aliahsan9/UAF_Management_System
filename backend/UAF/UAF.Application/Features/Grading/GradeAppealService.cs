@@ -32,6 +32,12 @@ public sealed class GradeAppealService
         if (actorId == Guid.Empty) throw new ArgumentException("Authenticated reviewer is required.");
         return await _repository.GetPendingAppealsAsync(actorId, privileged, departmentAdmin, ct);
     }
+    public async Task<IReadOnlyList<GradeAppealAuditResponse>> GetHistoryAsync(Guid appealId, Guid actorId, bool privileged, bool departmentAdmin, CancellationToken ct)
+    {
+        if (!await _repository.CanReviewAppealAsync(appealId, actorId, privileged, departmentAdmin, ct))
+            throw new UnauthorizedAccessException("You cannot view this grade appeal history.");
+        return await _repository.GetAppealHistoryAsync(appealId, ct);
+    }
     public async Task<GradeAppealResponse> DecideAsync(Guid appealId, Guid actorId, bool privileged, bool departmentAdmin, DecideGradeAppealRequest request, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(request);
