@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace UAF.API.Middleware;
 
@@ -27,6 +28,7 @@ public sealed class GlobalExceptionHandler : IExceptionHandler
             KeyNotFoundException => (StatusCodes.Status404NotFound, "Resource not found"),
             UnauthorizedAccessException => (StatusCodes.Status403Forbidden, "Access denied"),
             InvalidOperationException => (StatusCodes.Status409Conflict, "Request conflicts with the current resource state"),
+            DbUpdateConcurrencyException => (StatusCodes.Status409Conflict, "The record was changed by another request. Reload and retry."),
             _ => (StatusCodes.Status500InternalServerError, "An unexpected error occurred")
         };
 
