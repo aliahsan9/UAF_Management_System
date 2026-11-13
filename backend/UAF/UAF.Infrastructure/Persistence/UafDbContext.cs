@@ -51,6 +51,7 @@ public sealed class UafDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<GradeRevisionRequest> GradeRevisionRequests => Set<GradeRevisionRequest>();
     public DbSet<GradeRevision> GradeRevisions => Set<GradeRevision>();
     public DbSet<GradeRevisionAudit> GradeRevisionAudits => Set<GradeRevisionAudit>();
+    public DbSet<AcademicTranscript> AcademicTranscripts => Set<AcademicTranscript>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -96,6 +97,9 @@ public sealed class UafDbContext : IdentityDbContext<ApplicationUser, IdentityRo
 
         if (ChangeTracker.Entries<GradeRevision>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
             throw new InvalidOperationException("Grade revision snapshots are immutable.");
+
+        if (ChangeTracker.Entries<AcademicTranscript>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
+            throw new InvalidOperationException("Issued academic transcripts are immutable; issue a new transcript for updated records.");
 
         if (ChangeTracker.Entries<StudentCourseGrade>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
             throw new InvalidOperationException("Finalized student course grades are immutable; use an authorized grade-revision workflow.");
