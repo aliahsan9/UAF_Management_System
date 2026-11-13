@@ -33,7 +33,7 @@ public sealed class AdmissionDocument : AuditableEntity
             throw new ArgumentException("A valid storage key is required.", nameof(storageKey));
         if (string.IsNullOrWhiteSpace(contentType) || contentType.Length > 100)
             throw new ArgumentException("A valid content type is required.", nameof(contentType));
-        if (sizeBytes <= 0) throw new ArgumentOutOfRangeException(nameof(sizeBytes));
+        if (sizeBytes <= 0 || sizeBytes > 10 * 1024 * 1024) throw new ArgumentOutOfRangeException(nameof(sizeBytes), "Document size must be between 1 byte and 10 MB.");
         if (string.IsNullOrWhiteSpace(sha256) || sha256.Length != 64)
             throw new ArgumentException("A SHA-256 hash is required.", nameof(sha256));
 
