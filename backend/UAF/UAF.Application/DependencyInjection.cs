@@ -7,6 +7,7 @@ using UAF.Application.Features.CourseOfferings;
 using UAF.Application.Features.Fees;
 using UAF.Application.Features.Employees;
 using UAF.Application.Features.Attendance;
+using UAF.Application.Features.Examinations;
 
 namespace UAF.Application;
 
