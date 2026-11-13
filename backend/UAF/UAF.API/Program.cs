@@ -24,6 +24,9 @@ builder.Services.AddAuthorization(options =>
 
     options.AddPolicy(AuthorizationPolicies.AdmissionsDecision, policy =>
         policy.RequireRole("Registrar", "SuperAdmin"));
+
+    options.AddPolicy(AuthorizationPolicies.AcademicStructureAdmin, policy =>
+        policy.RequireRole("DepartmentAdmin", "SuperAdmin"));
 });
 
 builder.Services.AddRateLimiter(options =>
@@ -64,6 +67,7 @@ if (app.Environment.IsDevelopment())
 
 app.MapHealthChecks("/health");
 app.MapAdmissionEndpoints();
+app.MapAcademicStructureEndpoints();
 app.MapAuthenticationEndpoints();
 
 app.Run();
