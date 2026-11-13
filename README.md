@@ -496,3 +496,35 @@ Run the fee payment concurrency integration test against a dedicated SQL Server 
 $env:UAF_TEST_SQLSERVER_CONNECTION_STRING = "Server=localhost;Database=master;Trusted_Connection=True;TrustServerCertificate=True;"
 dotnet test backend/UAF/UAF.Tests/UAF.Tests.csproj --filter "Category=SqlServerIntegration"
 ```
+
+
+## Teacher and Employee Management
+
+The initial HR module separates university employment records from ASP.NET Core Identity accounts:
+
+- Employee number, profile/contact details, designation, department, category, joining date, and employment status.
+- Optional link to an existing active Identity account; employee creation never creates an account or grants roles.
+- Unique employee number and one-to-one optional Identity account link.
+- Department transfers require an active department.
+- Employment status lifecycle supports Active, OnLeave, Suspended, and Terminated. A terminated employment record cannot be reactivated; a new employment record is required for rehire.
+- Teacher profiles store highest qualification, specialization, and academic rank separately from the general employee record.
+- Course offerings now reference an Employee record for their optional instructor assignment.
+
+### Employee API
+
+All routes require the `HRManager` or `SuperAdmin` role.
+
+| Method | Route | Purpose |
+|---|---|---|
+| GET | `/api/v1/employees` | Paginated employee listing with department/status/category filters |
+| GET | `/api/v1/employees/{id}` | Read employee record |
+| POST | `/api/v1/employees` | Create employee record |
+| PUT | `/api/v1/employees/{id}/profile` | Update profile and contact details |
+| PUT | `/api/v1/employees/{id}/department` | Transfer to an active department |
+| PUT | `/api/v1/employees/{id}/status` | Change employment status |
+| POST | `/api/v1/employees/{id}/teacher-profile` | Create teacher academic profile |
+| PUT | `/api/v1/employees/{id}/teacher-profile` | Update teacher academic profile |
+
+The `HRManager` role is included in role seeding. Assigning that role to a real account must be performed through a trusted administrative provisioning process; public registration remains Student-only. This module does not yet implement payroll, leave requests/approval, attendance, contract/document management, staff self-service, or employee identity provisioning. Teacher qualification and rank fields are generic configurable profile data and do not assert official UAF HR classifications.
+
+Domain and authorization tests have been authored but not executed. A database migration is required because the module adds Employee and TeacherProfile tables and an instructor foreign key on CourseOfferings.
