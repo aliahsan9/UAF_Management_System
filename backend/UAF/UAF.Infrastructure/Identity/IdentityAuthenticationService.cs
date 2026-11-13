@@ -75,7 +75,7 @@ public sealed class IdentityAuthenticationService : IAuthenticationService
         if (!signInResult.Succeeded)
             return AuthenticationResult.Failure("Invalid email or password.");
 
-        return await CreateAuthenticationResultAsync(user, null, cancellationToken, remoteIpAddress: remoteIpAddress);
+        return await CreateAuthenticationResultAsync(user, cancellationToken, remoteIpAddress);
     }
 
     public async Task<AuthenticationResult> RefreshAsync(
