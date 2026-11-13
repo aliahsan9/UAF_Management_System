@@ -20,6 +20,7 @@ public sealed class ExaminationConfiguration : IEntityTypeConfiguration<Examinat
         b.Property(x => x.ScheduledDate).HasColumnType("date").IsRequired();
         b.Property(x => x.MaximumMarks).HasPrecision(10, 2).IsRequired();
         b.Property(x => x.PassingMarks).HasPrecision(10, 2).IsRequired();
+        b.Property(x => x.WeightPercentage).HasPrecision(5, 2).IsRequired();
         b.HasIndex(x => new { x.CourseOfferingId, x.Title }).IsUnique();
         b.HasIndex(x => new { x.CourseOfferingId, x.Status, x.ScheduledDate });
         b.HasOne<CourseOffering>().WithMany().HasForeignKey(x => x.CourseOfferingId).OnDelete(DeleteBehavior.Restrict);
