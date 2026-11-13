@@ -4,6 +4,7 @@ using UAF.API.Extensions;
 using UAF.API.Middleware;
 using UAF.Application;
 using UAF.Infrastructure;
+using UAF.Infrastructure.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +19,10 @@ builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddHealthChecks();
 
 var app = builder.Build();
+
+// Run the one-time role seed only when explicitly enabled after applying database migrations.
+if (app.Configuration.GetValue<bool>("Identity:SeedRolesOnStartup"))
+    await IdentityRoleSeeder.SeedRolesAsync(app.Services);
 
 app.UseExceptionHandler();
 app.UseHttpsRedirection();
