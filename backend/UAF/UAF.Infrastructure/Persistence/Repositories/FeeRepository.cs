@@ -27,7 +27,7 @@ internal sealed class FeeRepository : IFeeRepository
   var account=await db.StudentFeeAccounts.FirstOrDefaultAsync(x=>x.StudentId==studentId,ct);
   if(account is null){account=new StudentFeeAccount(studentId);db.StudentFeeAccounts.Add(account);await db.SaveChangesAsync(ct);}
   var challanNumber=$"UAF-FEE-{issue:yyyyMMdd}-{Guid.NewGuid():N}"[..30];
-  var lines=structure.Items.Where(x=>x.Amount>0).ToArray();var subtotal=lines.Sum(x=>x.Amount);
+  var lines=structure.Items.Where(x=>x.Amount>0).ToArray();var subtotal=lines.Sum(x=>x.Amount);if(subtotal<=0)throw new InvalidOperationException("Published fee structure has no chargeable items.");
   var challan=new FeeChallan(account.Id,challanNumber,issue,due,subtotal,lateFee,structure.CurrencyCode,actor);
   db.FeeChallans.Add(challan);
   foreach(var line in lines)db.FeeChallanLines.Add(new FeeChallanLine(challan.Id,line.FeeHeadId,line.FeeHead.Code,line.FeeHead.Name,line.Amount));
