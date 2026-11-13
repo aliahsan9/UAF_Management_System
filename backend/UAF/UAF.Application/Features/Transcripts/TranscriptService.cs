@@ -33,7 +33,7 @@ public sealed class TranscriptService
         var studentId = await _repository.GetStudentIdForIdentityUserAsync(actorId, ct)
             ?? throw new KeyNotFoundException("No student record is linked to this account.");
         var items = await _repository.GetForStudentAsync(studentId, ct);
-        return items.Select(x => new TranscriptListItem(x.Id, x.VerificationCode, x.SnapshotSha256, x.IssuedAtUtc)).ToArray();
+        return items;
     }
 
     public async Task<byte[]> GetMyPdfAsync(Guid transcriptId, Guid actorId, CancellationToken ct)
@@ -55,8 +55,7 @@ public sealed class TranscriptService
         try
         {
             _ = DeserializeAndVerify(transcript);
-            var registrationNumber = await _repository.GetRegistrationNumberAsync(transcript.StudentId, ct);
-            return new TranscriptVerificationResponse(registrationNumber is not null, registrationNumber, transcript.IssuedAtUtc, transcript.SnapshotSha256);
+            return new TranscriptVerificationResponse(true, record.RegistrationNumber, transcript.IssuedAtUtc, transcript.SnapshotSha256);
         }
         catch (InvalidOperationException)
         {
