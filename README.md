@@ -357,7 +357,7 @@ The example prefix is illustrative and is not an official UAF registration-numbe
 
 The Student record keeps the source AdmissionApplication ID, optional applicant Identity ID, registration number, registrar ID, and UTC registration timestamp. Its enrollment date is the conversion date. The registration series year is derived from the application's application date; confirm this convention with the authorized university registrar before production use.
 
-**Remaining admission hardening:** SQL Server-backed integration tests under concurrent requests, malware scanning/quarantine, immutable audit retention controls, production object storage, and checklist-change/submission concurrency tests. The current automated tests cover domain rules, service validation, and endpoint authorization metadata, but have not been executed in this environment.
+**Remaining admission hardening:** SQL Server-backed integration tests under concurrent requests, malware scanning/quarantine, immutable audit retention controls, production object storage, and checklist-change/submission concurrency tests. The current automated tests cover domain rules, service validation, endpoint authorization metadata, and role-policy evaluation. They have not been executed in this environment. SQL Server integration tests for transaction isolation and concurrent conversion remain outstanding.
 
 ### Admission API access control
 
@@ -415,7 +415,8 @@ These are engineering objectives; their implementation and verification will be 
 - [ ] Develop fee and identity-card workflows.
 - [ ] Expand academic, LMS, examination, and employee modules.
 - [x] Add initial unit tests for admission application workflows (execution still pending).\n- [x] Implement administrative student registration, profile maintenance, program assignment, paginated search, and status lifecycle endpoints.\n- [x] Add student-management application unit tests (execution still pending).
-- [ ] Add broader domain, integration, and authorization tests.
+- [x] Add admission decision domain/service tests and endpoint/role authorization policy tests (execution pending).
+- [ ] Add SQL Server integration tests for transactional conversion, registration-sequence contention, and duplicate concurrent requests.
 - [ ] Document deployment, operations, and backup procedures.
 
 Roadmap items will be checked off only when the corresponding work is implemented and verified.
