@@ -59,6 +59,7 @@ app.MapAcademicCatalogEndpoints();
 app.MapStudentEndpoints();
 app.MapCourseOfferingEndpoints();
 app.MapCourseEnrollmentEndpoints();
+app.MapFeeEndpoints();
 app.MapAuthenticationEndpoints();
 app.Run();
 
