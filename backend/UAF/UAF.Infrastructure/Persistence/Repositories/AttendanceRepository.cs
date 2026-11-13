@@ -10,13 +10,13 @@ internal sealed class AttendanceRepository : IAttendanceRepository
     private readonly UafDbContext _db;
     public AttendanceRepository(UafDbContext db) => _db = db;
 
-    public async Task<bool> CanManageOfferingAsync(Guid offeringId, Guid actorId, bool privileged, CancellationToken ct, bool departmentAdmin = false)
+    public async Task<bool> CanManageOfferingAsync(Guid offeringId, Guid actorId, bool privileged, CancellationToken ct, bool departmentAdmin = false, bool allowClosed = false)
     {
         var offering = await (
             from courseOffering in _db.CourseOfferings.AsNoTracking()
             join course in _db.Courses.AsNoTracking() on courseOffering.CourseId equals course.Id
             where courseOffering.Id == offeringId
-                && (courseOffering.Status == CourseOfferingStatus.Published || courseOffering.Status == CourseOfferingStatus.Closed)
+                && (courseOffering.Status == CourseOfferingStatus.Published || (allowClosed && courseOffering.Status == CourseOfferingStatus.Closed))
             select new { courseOffering.Id, courseOffering.InstructorEmployeeId, course.DepartmentId }
         ).SingleOrDefaultAsync(ct);
         if (offering is null) return false;
