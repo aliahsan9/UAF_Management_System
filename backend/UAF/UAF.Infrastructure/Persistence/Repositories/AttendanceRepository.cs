@@ -10,13 +10,20 @@ internal sealed class AttendanceRepository : IAttendanceRepository
     private readonly UafDbContext _db;
     public AttendanceRepository(UafDbContext db) => _db = db;
 
-    public async Task<bool> CanManageOfferingAsync(Guid offeringId, Guid actorId, bool privileged, CancellationToken ct)
+    public async Task<bool> CanManageOfferingAsync(Guid offeringId, Guid actorId, bool privileged, CancellationToken ct, bool departmentAdmin = false)
     {
-        var offering = await _db.CourseOfferings.AsNoTracking()
-            .Where(x => x.Id == offeringId && (x.Status == CourseOfferingStatus.Published || x.Status == CourseOfferingStatus.Closed))
-            .Select(x => new { x.Id, x.InstructorEmployeeId }).SingleOrDefaultAsync(ct);
+        var offering = await (
+            from courseOffering in _db.CourseOfferings.AsNoTracking()
+            join course in _db.Courses.AsNoTracking() on courseOffering.CourseId equals course.Id
+            where courseOffering.Id == offeringId
+                && (courseOffering.Status == CourseOfferingStatus.Published || courseOffering.Status == CourseOfferingStatus.Closed)
+            select new { courseOffering.Id, courseOffering.InstructorEmployeeId, course.DepartmentId }
+        ).SingleOrDefaultAsync(ct);
         if (offering is null) return false;
         if (privileged) return true;
+        if (departmentAdmin)
+            return await _db.Employees.AnyAsync(e => e.IdentityUserId == actorId
+                && e.Status == EmployeeStatus.Active && e.DepartmentId == offering.DepartmentId, ct);
         if (!offering.InstructorEmployeeId.HasValue) return false;
         return await _db.Employees.AnyAsync(e => e.Id == offering.InstructorEmployeeId.Value
             && e.IdentityUserId == actorId && e.Status == EmployeeStatus.Active
@@ -40,9 +47,9 @@ internal sealed class AttendanceRepository : IAttendanceRepository
         _db.AttendanceSessions.FromSqlInterpolated($"SELECT * FROM [AttendanceSessions] WITH (UPDLOCK, HOLDLOCK) WHERE [Id] = {id}")
             .FirstOrDefaultAsync(ct);
 
-    private async Task EnsureActorCanManageAsync(AttendanceSession session, Guid actorId, bool privileged, CancellationToken ct)
+    private async Task EnsureActorCanManageAsync(AttendanceSession session, Guid actorId, bool privileged, CancellationToken ct, bool departmentAdmin = false)
     {
-        if (!await CanManageOfferingAsync(session.CourseOfferingId, actorId, privileged, ct))
+        if (!await CanManageOfferingAsync(session.CourseOfferingId, actorId, privileged, ct, departmentAdmin))
             throw new UnauthorizedAccessException("You are not authorized to manage attendance for this course offering.");
     }
 
