@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using UAF.Application.Features.Admissions.Abstractions;
 using UAF.Domain.Entities;
+using UAF.Domain.Enums;
 
 namespace UAF.Infrastructure.Persistence.Repositories;
 
@@ -26,6 +27,28 @@ internal sealed class AdmissionDocumentRepository : IAdmissionDocumentRepository
             .OrderByDescending(x => x.CreatedAtUtc)
             .ToListAsync(ct);
 
+    public async Task<IReadOnlyList<AdmissionDocumentRequirement>> GetRequirementsForProgramAsync(Guid academicProgramId, CancellationToken ct = default) =>
+        await _db.AdmissionDocumentRequirements
+            .Where(x => x.AcademicProgramId == academicProgramId && x.IsRequired)
+            .OrderBy(x => x.DocumentType)
+            .ToListAsync(ct);
+
+    public Task<bool> AcademicProgramExistsAsync(Guid academicProgramId, CancellationToken ct = default) =>
+        _db.AcademicPrograms.AnyAsync(x => x.Id == academicProgramId, ct);
+
+    public async Task<IReadOnlyCollection<AdmissionDocumentType>> GetVerifiedDocumentTypesAsync(Guid applicationId, CancellationToken ct = default) =>
+        await _db.AdmissionDocuments.AsNoTracking()
+            .Where(x => x.ApplicationId == applicationId && x.Status == AdmissionDocumentStatus.Verified)
+            .Select(x => x.DocumentType)
+            .Distinct()
+            .ToArrayAsync(ct);
+
     public async Task AddAsync(AdmissionDocument document, CancellationToken ct = default) =>
         await _db.AdmissionDocuments.AddAsync(document, ct);
+
+    public async Task AddRequirementAsync(AdmissionDocumentRequirement requirement, CancellationToken ct = default) =>
+        await _db.AdmissionDocumentRequirements.AddAsync(requirement, ct);
+
+    public void RemoveRequirement(AdmissionDocumentRequirement requirement) =>
+        _db.AdmissionDocumentRequirements.Remove(requirement);
 }
