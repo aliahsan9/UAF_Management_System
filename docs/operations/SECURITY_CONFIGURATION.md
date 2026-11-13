@@ -19,7 +19,7 @@
 
 ## RBAC and permissions
 
-- Identity roles are seeded by the existing controlled role-seeding workflow.
+- Identity roles are seeded by the existing controlled role-seeding workflow. Local Development enables this through `Identity:SeedRolesOnStartup`; in Staging/Production, run the seed as a controlled provisioning step and keep automatic startup seeding disabled.
 - Existing role-based endpoint policies remain in place.
 - Fine-grained policies are available as `Permission:<permission-name>` (for example `Permission:finance.manage`).
 - Permission grants are centralized in `PermissionAuthorizationHandler`; review that mapping whenever a role or permission changes. Resource ownership (for example, a student accessing only their own records) must still be enforced in the application service/repository, not by a broad role permission alone.
