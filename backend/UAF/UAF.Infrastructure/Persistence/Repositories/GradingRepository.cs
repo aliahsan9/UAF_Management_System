@@ -1,3 +1,4 @@
+using System.Data;
 using Microsoft.EntityFrameworkCore;
 using UAF.Application.Features.Grading.Abstractions;
 using UAF.Application.Features.Grading.Models;
@@ -11,7 +12,7 @@ internal sealed class GradingRepository : IGradingRepository
     public Task<bool> AcademicSessionExistsAsync(Guid id, CancellationToken ct) =>
         _db.AcademicSessions.AnyAsync(x => x.Id == id, ct);
     public Task<GradeScale?> GetScaleForSessionAsync(Guid id, CancellationToken ct) =>
-        _db.GradeScales.Include(x => EF.Property<ICollection<GradeScaleBand>>(x, "_bands"))
+        _db.GradeScales.Include("_bands")
             .SingleOrDefaultAsync(x => x.AcademicSessionId == id, ct);
     public Task<GradeScale?> GetScaleAsync(Guid id, CancellationToken ct) =>
         _db.GradeScales.Include(x => EF.Property<ICollection<GradeScaleBand>>(x, "_bands"))
@@ -41,8 +42,22 @@ internal sealed class GradingRepository : IGradingRepository
             course.Id, offering.AcademicSessionId, course.Code, course.Title, course.CreditHours)).FirstOrDefaultAsync(ct);
     public Task<bool> CourseGradeExistsAsync(Guid offeringId, Guid studentId, CancellationToken ct) =>
         _db.StudentCourseGrades.AnyAsync(x => x.CourseOfferingId == offeringId && x.StudentId == studentId, ct);
-    public Task AddCourseGradeAsync(StudentCourseGrade grade, CancellationToken ct) =>
-        _db.StudentCourseGrades.AddAsync(grade, ct).AsTask();
+    public async Task FinalizeCourseGradeAsync(StudentCourseGrade grade, CancellationToken ct)
+    {
+        await using var tx = await _db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
+        var eligibleEnrollment = await _db.CourseEnrollments.AnyAsync(x =>
+            x.StudentId == grade.StudentId && x.CourseOfferingId == grade.CourseOfferingId
+            && (x.Status == EnrollmentStatus.Enrolled || x.Status == EnrollmentStatus.Completed), ct);
+        if (!eligibleEnrollment) throw new InvalidOperationException("The student is no longer eligible for this course grade.");
+        var offeringIsActiveOrClosed = await _db.CourseOfferings.AnyAsync(x => x.Id == grade.CourseOfferingId
+            && (x.Status == CourseOfferingStatus.Published || x.Status == CourseOfferingStatus.Closed), ct);
+        if (!offeringIsActiveOrClosed) throw new InvalidOperationException("Grades can only be finalized for a published or closed course offering.");
+        if (await _db.StudentCourseGrades.AnyAsync(x => x.StudentId == grade.StudentId && x.CourseOfferingId == grade.CourseOfferingId, ct))
+            throw new InvalidOperationException("A finalized course grade already exists for this student and offering.");
+        _db.StudentCourseGrades.Add(grade);
+        await _db.SaveChangesAsync(ct);
+        await tx.CommitAsync(ct);
+    }
     public Task<Guid?> GetStudentIdForIdentityUserAsync(Guid identityUserId, CancellationToken ct) =>
         _db.Students.Where(x => x.IdentityUserId == identityUserId).Select(x => (Guid?)x.Id).SingleOrDefaultAsync(ct);
     public async Task<StudentAcademicRecordSource?> GetAcademicRecordAsync(Guid studentId, CancellationToken ct)
