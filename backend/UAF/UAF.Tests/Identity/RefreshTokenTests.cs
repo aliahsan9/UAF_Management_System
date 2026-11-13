@@ -17,7 +17,7 @@ public sealed class RefreshTokenTests
         Assert.Equal(createdAt.AddMinutes(1), token.RevokedAtUtc);
         Assert.Equal("192.0.2.20", token.RevokedByIpAddress);
         Assert.Equal(new string('B', 64), token.ReplacedByTokenHash);
-        Assert.Null(token.CreatedByIpAddress == null ? null : token.RevokedAtUtc);
+        Assert.Equal("192.0.2.10", token.CreatedByIpAddress);
     }
 
     [Fact]
