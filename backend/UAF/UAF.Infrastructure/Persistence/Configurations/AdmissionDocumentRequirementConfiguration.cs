@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using UAF.Domain.Entities;
+using UAF.Infrastructure.Identity;
 
 namespace UAF.Infrastructure.Persistence.Configurations;
 
