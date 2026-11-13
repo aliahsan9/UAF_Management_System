@@ -39,6 +39,14 @@ public sealed class ExaminationDomainTests
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => new Examination(Guid.NewGuid(), "Final", ExaminationType.Final, new DateOnly(2026, 12, 1), maximum, passing, 100m));
     }
+    [Theory]
+    [InlineData(0)]
+    [InlineData(100.01)]
+    public void Rejects_invalid_assessment_weight(decimal weight)
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => new Examination(Guid.NewGuid(), "Quiz", ExaminationType.Quiz,
+            new DateOnly(2026, 11, 20), 10m, 4m, weight));
+    }
     [Fact]
     public void Cannot_cancel_submitted_examination()
     {
