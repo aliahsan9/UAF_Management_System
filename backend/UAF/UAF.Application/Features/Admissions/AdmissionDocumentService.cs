@@ -102,6 +102,14 @@ public sealed class AdmissionDocumentService
         return (Map(document), await _storage.OpenReadAsync(document.StorageKey, ct));
     }
 
+    public async Task<IReadOnlyList<AdmissionDocumentResponse>> GetForStaffAsync(
+        Guid applicationId, CancellationToken ct = default)
+    {
+        if (applicationId == Guid.Empty) throw new ArgumentException("A valid application ID is required.", nameof(applicationId));
+        var documents = await _repository.GetForApplicationAsync(applicationId, ct);
+        return documents.Select(Map).ToArray();
+    }
+
     public async Task<(AdmissionDocumentResponse Document, Stream Content)> DownloadForStaffAsync(
         Guid documentId, CancellationToken ct = default)
     {
