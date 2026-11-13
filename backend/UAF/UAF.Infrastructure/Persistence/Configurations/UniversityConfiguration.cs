@@ -4,7 +4,7 @@ using UAF.Domain.Entities;
 
 namespace UAF.Infrastructure.Persistence.Configurations;
 
-internal sealed class UniversityConfiguration : IEntityTypeConfiguration<University>
+public sealed class UniversityConfiguration : IEntityTypeConfiguration<University>
 {
     public void Configure(EntityTypeBuilder<University> builder)
     {
@@ -18,7 +18,7 @@ internal sealed class UniversityConfiguration : IEntityTypeConfiguration<Univers
     }
 }
 
-internal sealed class CampusConfiguration : IEntityTypeConfiguration<Campus>
+public sealed class CampusConfiguration : IEntityTypeConfiguration<Campus>
 {
     public void Configure(EntityTypeBuilder<Campus> builder)
     {
