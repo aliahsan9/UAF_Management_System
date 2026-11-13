@@ -19,7 +19,7 @@ public sealed class EmployeeServiceTests
     [Fact]
     public async Task CreateAsync_NormalizesEmployeeNumberAndPersists()
     {
-        var id = await _service.CreateAsync(Request());
+        var id = await _service.CreateAsync(Request(), default);
         var employee = await _repository.GetByIdAsync(id, default);
         Assert.NotNull(employee);
         Assert.Equal("EMP-001", employee.EmployeeNumber);
@@ -31,15 +31,15 @@ public sealed class EmployeeServiceTests
     public async Task CreateAsync_RejectsInactiveDepartmentWithoutSaving()
     {
         _repository.DepartmentActive = false;
-        await Assert.ThrowsAsync<KeyNotFoundException>(() => _service.CreateAsync(Request()));
+        await Assert.ThrowsAsync<KeyNotFoundException>(() => _service.CreateAsync(Request(), default));
         Assert.Equal(0, _unitOfWork.SaveCalls);
     }
 
     [Fact]
     public async Task CreateAsync_RejectsDuplicateEmployeeNumber()
     {
-        await _service.CreateAsync(Request());
-        await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateAsync(Request()));
+        await _service.CreateAsync(Request(), default);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateAsync(Request(), default));
         Assert.Equal(1, _unitOfWork.SaveCalls);
     }
 
@@ -48,18 +48,18 @@ public sealed class EmployeeServiceTests
     {
         var identity = Guid.NewGuid();
         _repository.IdentityExists = false;
-        await Assert.ThrowsAsync<KeyNotFoundException>(() => _service.CreateAsync(Request() with { IdentityUserId = identity }));
+        await Assert.ThrowsAsync<KeyNotFoundException>(() => _service.CreateAsync(Request() with { IdentityUserId = identity }, default));
         _repository.IdentityExists = true;
         _repository.IdentityLinked = true;
-        await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateAsync(Request() with { IdentityUserId = identity }));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateAsync(Request() with { IdentityUserId = identity }, default));
         Assert.Equal(0, _unitOfWork.SaveCalls);
     }
 
     [Fact]
     public async Task GetPageAsync_ValidatesPaginationAndMapsTotalPages()
     {
-        await _service.CreateAsync(Request());
-        await _service.CreateAsync(Request() with { EmployeeNumber = "EMP-002" });
+        await _service.CreateAsync(Request(), default);
+        await _service.CreateAsync(Request() with { EmployeeNumber = "EMP-002" }, default);
         var page = await _service.GetPageAsync(1, 1, null, null, null, default);
         Assert.Single(page.Items);
         Assert.Equal(2, page.TotalCount);
@@ -79,7 +79,7 @@ public sealed class EmployeeServiceTests
     [Fact]
     public async Task UpdateProfileAsync_UpdatesEmployeeAndPersists()
     {
-        var id = await _service.CreateAsync(Request());
+        var id = await _service.CreateAsync(Request(), default);
         await _service.UpdateProfileAsync(id, new("Ali Updated", "updated@example.edu", "Senior Lecturer", "03000000000"), default);
         var employee = await _repository.GetByIdAsync(id, default);
         Assert.Equal("Ali Updated", employee!.FullName);
@@ -90,7 +90,7 @@ public sealed class EmployeeServiceTests
     [Fact]
     public async Task TransferAsync_RequiresActiveDepartmentAndExistingEmployee()
     {
-        var id = await _service.CreateAsync(Request());
+        var id = await _service.CreateAsync(Request(), default);
         _repository.DepartmentActive = false;
         await Assert.ThrowsAsync<KeyNotFoundException>(() => _service.TransferAsync(id, new(Guid.NewGuid()), default));
         _repository.DepartmentActive = true;
@@ -102,7 +102,7 @@ public sealed class EmployeeServiceTests
     [Fact]
     public async Task ChangeStatusAsync_TerminatesEmployeeAndPreventsReactivation()
     {
-        var id = await _service.CreateAsync(Request());
+        var id = await _service.CreateAsync(Request(), default);
         await _service.ChangeStatusAsync(id, new(EmployeeStatus.Terminated, new DateOnly(2026, 11, 1)), default);
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             _service.ChangeStatusAsync(id, new(EmployeeStatus.Active, null), default));
@@ -112,11 +112,11 @@ public sealed class EmployeeServiceTests
     [Fact]
     public async Task CreateTeacherProfileAsync_RequiresAcademicEmployeeAndPreventsDuplicates()
     {
-        var adminId = await _service.CreateAsync(Request() with { EmployeeNumber = "EMP-ADMIN", Category = EmployeeCategory.Administrative });
+        var adminId = await _service.CreateAsync(Request() with { EmployeeNumber = "EMP-ADMIN", Category = EmployeeCategory.Administrative }, default);
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             _service.CreateTeacherProfileAsync(adminId, TeacherRequest(), default));
 
-        var teacherId = await _service.CreateAsync(Request());
+        var teacherId = await _service.CreateAsync(Request(), default);
         var profile = await _service.CreateTeacherProfileAsync(teacherId, TeacherRequest(), default);
         Assert.Equal(teacherId, profile.EmployeeId);
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
@@ -126,7 +126,7 @@ public sealed class EmployeeServiceTests
     [Fact]
     public async Task UpdateTeacherProfileAsync_RequiresExistingProfile()
     {
-        var id = await _service.CreateAsync(Request());
+        var id = await _service.CreateAsync(Request(), default);
         await Assert.ThrowsAsync<KeyNotFoundException>(() =>
             _service.UpdateTeacherProfileAsync(id, new("PhD", "AI", "Professor"), default));
         await _service.CreateTeacherProfileAsync(id, TeacherRequest(), default);
