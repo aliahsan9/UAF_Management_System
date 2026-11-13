@@ -15,7 +15,7 @@
 - Refresh rotates the token on every successful use. The old token is revoked; reuse of a revoked token revokes all active refresh sessions for that account.
 - Browser refresh/revoke requests must send `X-Refresh-Request: 1`. The custom header is a CSRF defense in addition to the strict cookie policy and exact CORS allow-list.
 - Access tokens should be held in memory by browser clients, not localStorage/sessionStorage. Do not log or persist raw tokens.
-- The refresh-token table requires an EF Core migration before deployment.
+- The refresh-token table requires an EF migration before deployment.
 
 ## RBAC and permissions
 
@@ -60,7 +60,8 @@
 
 ## Required rollout steps
 
-- Add and review an EF migration for `RefreshTokens`, then apply it through the documented guarded migration workflow.
+- Generate and review the first EF Core migration from the complete current model (this repository does not yet contain a committed migration baseline). It must include `RefreshTokens` and all prior model changes. Do not apply an ad-hoc partial migration.
 - Configure production JWT secrets, database connection, allowed CORS origins and private document storage path.
 - Verify HTTPS termination, secure cookies, rate limiting, role seed, and authorization policies in a staging environment.
+- Configure trusted reverse-proxy forwarded headers before relying on client IP-based rate limiting behind a load balancer.
 - Enable malware scanning and durable private storage before production admission uploads.
