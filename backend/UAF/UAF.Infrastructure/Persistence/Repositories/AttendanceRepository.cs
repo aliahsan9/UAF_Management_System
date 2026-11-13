@@ -13,7 +13,7 @@ internal sealed class AttendanceRepository : IAttendanceRepository
     public async Task<bool> CanManageOfferingAsync(Guid offeringId, Guid actorId, bool privileged, CancellationToken ct)
     {
         var offering = await _db.CourseOfferings.AsNoTracking()
-            .Where(x => x.Id == offeringId && x.Status == CourseOfferingStatus.Published)
+            .Where(x => x.Id == offeringId && (x.Status == CourseOfferingStatus.Published || x.Status == CourseOfferingStatus.Closed))
             .Select(x => new { x.Id, x.InstructorEmployeeId }).SingleOrDefaultAsync(ct);
         if (offering is null) return false;
         if (privileged) return true;
