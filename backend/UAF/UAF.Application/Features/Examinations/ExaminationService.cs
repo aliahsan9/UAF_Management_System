@@ -21,6 +21,12 @@ public sealed class ExaminationService
         await _unitOfWork.SaveChangesAsync(ct);
         return exam.Id;
     }
+    public async Task ScheduleAsync(Guid id, Guid actorId, bool privileged, bool departmentAdmin, CancellationToken ct)
+    {
+        var exam = await GetAuthorizedAsync(id, actorId, privileged, departmentAdmin, ct);
+        exam.Schedule();
+        await _unitOfWork.SaveChangesAsync(ct);
+    }
     public async Task OpenMarksEntryAsync(Guid id, Guid actorId, bool privileged, bool departmentAdmin, CancellationToken ct)
     {
         var exam = await GetAuthorizedAsync(id, actorId, privileged, departmentAdmin, ct);
@@ -53,7 +59,7 @@ public sealed class ExaminationService
     }
     public async Task PublishAsync(Guid id, Guid actorId, bool privileged, bool departmentAdmin, CancellationToken ct)
     {
-        var exam = await GetAuthorizedAsync(id, actorId, privileged: false, departmentAdmin, ct);
+        var exam = await GetAuthorizedAsync(id, actorId, privileged, departmentAdmin, ct);
         exam.Publish(actorId, DateTimeOffset.UtcNow);
         await _unitOfWork.SaveChangesAsync(ct);
     }
