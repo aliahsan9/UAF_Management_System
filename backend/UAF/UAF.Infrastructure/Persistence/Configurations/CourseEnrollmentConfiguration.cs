@@ -4,7 +4,7 @@ using UAF.Domain.Entities;
 
 namespace UAF.Infrastructure.Persistence.Configurations;
 
-internal sealed class CourseEnrollmentConfiguration : IEntityTypeConfiguration<CourseEnrollment>
+public sealed class CourseEnrollmentConfiguration : IEntityTypeConfiguration<CourseEnrollment>
 {
     public void Configure(EntityTypeBuilder<CourseEnrollment> builder)
     {
