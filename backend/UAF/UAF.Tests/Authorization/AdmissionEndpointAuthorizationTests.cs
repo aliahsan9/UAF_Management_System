@@ -42,7 +42,7 @@ public sealed class AdmissionEndpointAuthorizationTests
         await using var app = builder.Build();
         app.MapAdmissionEndpoints();
 
-        var endpoint = app.DataSources.SelectMany(x => x.Endpoints)
+        var endpoint = ((IEndpointRouteBuilder)app).DataSources.SelectMany(x => x.Endpoints)
             .OfType<RouteEndpoint>()
             .Single(x => x.RoutePattern.RawText == "/api/v1/admissions/{id:guid}/start-review");
 
