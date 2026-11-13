@@ -2,6 +2,7 @@ using UAF.Domain.Entities;
 namespace UAF.Application.Features.Transcripts.Abstractions;
 public interface ITranscriptRepository
 {
+    Task<Guid?> GetStudentIdForIdentityUserAsync(Guid identityUserId, CancellationToken ct);
     Task<bool> StudentExistsAsync(Guid studentId, CancellationToken ct);
     Task AddAsync(AcademicTranscript transcript, CancellationToken ct);
     Task<IReadOnlyList<AcademicTranscript>> GetForStudentAsync(Guid studentId, CancellationToken ct);
