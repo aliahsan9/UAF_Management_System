@@ -26,7 +26,7 @@ public static class AuthenticationEndpoints
                     ["request"] = ["Full name, email and password are required."]
                 });
 
-            var result = await authentication.RegisterAsync(request, ct);
+            var result = await authentication.RegisterAsync(request, http.Connection.RemoteIpAddress?.ToString(), ct);
             if (!result.Succeeded) return Results.BadRequest(new { error = result.Error });
             SetRefreshCookie(http, result.RefreshToken!, result.RefreshTokenExpiresAtUtc!.Value);
             return Results.Ok(ToPublicResponse(result));
@@ -45,7 +45,7 @@ public static class AuthenticationEndpoints
                     ["request"] = ["Email and password are required."]
                 });
 
-            var result = await authentication.LoginAsync(request, ct);
+            var result = await authentication.LoginAsync(request, http.Connection.RemoteIpAddress?.ToString(), ct);
             if (!result.Succeeded) return Results.Unauthorized();
             SetRefreshCookie(http, result.RefreshToken!, result.RefreshTokenExpiresAtUtc!.Value);
             return Results.Ok(ToPublicResponse(result));
