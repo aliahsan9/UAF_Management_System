@@ -2,6 +2,7 @@ using UAF.Domain.Common;
 namespace UAF.Domain.Entities;
 public sealed class FeeStructure : AuditableEntity
 {
+    private readonly List<FeeStructureItem> _items = new();
     private FeeStructure() { Name = CurrencyCode = "PKR"; }
     public FeeStructure(Guid academicProgramId, Guid academicSessionId, int semesterNumber, string name, string currencyCode = "PKR")
     {
@@ -19,6 +20,7 @@ public sealed class FeeStructure : AuditableEntity
     public string CurrencyCode { get; private set; }
     public bool IsPublished { get; private set; }
     public bool IsActive { get; private set; }
+    public IReadOnlyCollection<FeeStructureItem> Items => _items.AsReadOnly();
     public void Publish() { if (!IsActive) throw new InvalidOperationException("Inactive fee structure cannot be published."); IsPublished = true; MarkUpdated(); }
     public void Deactivate() { IsActive = false; MarkUpdated(); }
     private static string Required(string value, int max) { if (string.IsNullOrWhiteSpace(value) || value.Trim().Length > max) throw new ArgumentException("A valid value is required."); return value.Trim(); }
