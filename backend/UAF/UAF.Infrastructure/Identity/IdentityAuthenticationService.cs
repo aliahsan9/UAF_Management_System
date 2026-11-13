@@ -130,14 +130,14 @@ public sealed class IdentityAuthenticationService : IAuthenticationService
     }
 
     public async Task<bool> RevokeAsync(
-        Guid userId, string refreshToken, string? remoteIpAddress, CancellationToken cancellationToken = default)
+        string refreshToken, string? remoteIpAddress, CancellationToken cancellationToken = default)
     {
-        if (userId == Guid.Empty || string.IsNullOrWhiteSpace(refreshToken) || refreshToken.Length > 512)
+        if (string.IsNullOrWhiteSpace(refreshToken) || refreshToken.Length > 512)
             return false;
 
         var hash = HashToken(refreshToken);
         var stored = await _dbContext.RefreshTokens.SingleOrDefaultAsync(
-            x => x.TokenHash == hash && x.UserId == userId, cancellationToken);
+            x => x.TokenHash == hash, cancellationToken);
         if (stored is null || stored.RevokedAtUtc is not null)
             return false;
 
