@@ -52,5 +52,7 @@ public sealed class CourseOfferingConfiguration : IEntityTypeConfiguration<Cours
             .OnDelete(DeleteBehavior.Restrict);
         builder.HasOne<AcademicSession>().WithMany().HasForeignKey(x => x.AcademicSessionId)
             .OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<Employee>().WithMany().HasForeignKey(x => x.InstructorEmployeeId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
