@@ -4,6 +4,7 @@ namespace UAF.Application.Features.Grading.Abstractions;
 public sealed record GradeRevisionContext(StudentCourseGrade Grade, GradeScale Scale, GradeRevision? LatestRevision);
 public interface IGradeRevisionRepository
 {
+    Task<Guid?> GetStudentIdForIdentityUserAsync(Guid identityUserId, CancellationToken ct);
     Task<bool> CanRequestRevisionAsync(Guid gradeId, Guid actorId, bool privileged, bool departmentAdmin, CancellationToken ct);
     Task<GradeRevisionContext?> GetRevisionContextAsync(Guid gradeId, CancellationToken ct);
     Task<bool> ApprovedAppealExistsAsync(Guid appealId, Guid gradeId, CancellationToken ct);
