@@ -88,6 +88,10 @@ internal sealed class AdmissionWorkflowRepository : IAdmissionWorkflowRepository
             return existing;
         }
 
+        if (application.OwnerUserId.HasValue &&
+            await _db.Students.AnyAsync(x => x.IdentityUserId == application.OwnerUserId.Value, ct))
+            throw new InvalidOperationException("This applicant account is already linked to a student record.");
+
         var year = application.ApplicationDate.Year;
         var series = await _db.RegistrationNumberSeries.FromSqlInterpolated(
                 $"SELECT * FROM [RegistrationNumberSeries] WITH (UPDLOCK, HOLDLOCK) WHERE [AcademicProgramId] = {application.AcademicProgramId} AND [AdmissionYear] = {year}")
@@ -97,7 +101,7 @@ internal sealed class AdmissionWorkflowRepository : IAdmissionWorkflowRepository
         var registrationNumber = series.Allocate();
         var student = new Student(registrationNumber, application.ApplicantFullName,
             application.ApplicantEmail, application.AcademicProgramId,
-            application.ApplicationDate, application.PhoneNumber,
+            DateOnly.FromDateTime(occurredAtUtc.UtcDateTime), application.PhoneNumber,
             application.Id, application.OwnerUserId);
         student.RecordAdmissionRegistration(actorUserId, occurredAtUtc);
         _db.Students.Add(student);
