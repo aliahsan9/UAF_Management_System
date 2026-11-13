@@ -4,7 +4,7 @@ using UAF.Domain.Entities;
 
 namespace UAF.Infrastructure.Persistence.Configurations;
 
-internal sealed class AcademicSessionConfiguration : IEntityTypeConfiguration<AcademicSession>
+public sealed class AcademicSessionConfiguration : IEntityTypeConfiguration<AcademicSession>
 {
     public void Configure(EntityTypeBuilder<AcademicSession> builder)
     {
@@ -19,7 +19,7 @@ internal sealed class AcademicSessionConfiguration : IEntityTypeConfiguration<Ac
     }
 }
 
-internal sealed class CourseConfiguration : IEntityTypeConfiguration<Course>
+public sealed class CourseConfiguration : IEntityTypeConfiguration<Course>
 {
     public void Configure(EntityTypeBuilder<Course> builder)
     {
@@ -38,7 +38,7 @@ internal sealed class CourseConfiguration : IEntityTypeConfiguration<Course>
 
 }
 
-internal sealed class CourseOfferingConfiguration : IEntityTypeConfiguration<CourseOffering>
+public sealed class CourseOfferingConfiguration : IEntityTypeConfiguration<CourseOffering>
 {
     public void Configure(EntityTypeBuilder<CourseOffering> builder)
     {
