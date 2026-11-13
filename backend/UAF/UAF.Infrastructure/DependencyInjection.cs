@@ -50,6 +50,7 @@ public static class DependencyInjection
         services.AddScoped<IAuthenticationService, IdentityAuthenticationService>();
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<UafDbContext>());
         services.AddScoped<IAdmissionApplicationRepository, AdmissionApplicationRepository>();
+        services.AddScoped<IAdmissionWorkflowRepository, AdmissionWorkflowRepository>();
         services.AddScoped<IAdmissionDocumentRepository, AdmissionDocumentRepository>();
         services.AddScoped<IAcademicStructureRepository, AcademicStructureRepository>();
         services.AddScoped<IAcademicCatalogRepository, AcademicCatalogRepository>();
