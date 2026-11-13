@@ -75,7 +75,7 @@ public static class ApplicantAdmissionEndpoints
             {
                 var download = await documents.DownloadMyDocumentAsync(
                     GetUserId(user), applicationId, documentId, ct);
-                http.Response.Headers.XContentTypeOptions = "nosniff";
+                http.Response.Headers["X-Content-Type-Options"] = "nosniff";
                 return Results.File(download.Content, download.Document.ContentType,
                     download.Document.OriginalFileName, enableRangeProcessing: false);
             });
