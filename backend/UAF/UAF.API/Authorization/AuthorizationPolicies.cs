@@ -19,4 +19,7 @@ public static class AuthorizationPolicies
     public const string CourseGradeManagement = "Grading.CourseGradeManagement";
     public const string StudentAcademicRecord = "AcademicRecords.Student";
     public const string GradeAppealReview = "Grading.GradeAppealReview";
+    public const string GradeRevisionRequestManagement = "Grading.GradeRevisionRequestManagement";
+    public const string GradeRevisionApproval = "Grading.GradeRevisionApproval";
+    public const string TranscriptIssuance = "Transcripts.Issuance";
 }

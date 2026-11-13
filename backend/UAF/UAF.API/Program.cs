@@ -28,6 +28,16 @@ builder.Services.AddRateLimiter(options =>
         limiter.QueueLimit = 0;
         limiter.AutoReplenishment = true;
     });
+    options.AddPolicy("transcript-verification", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 30,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+                AutoReplenishment = true
+            }));
 });
 builder.Services.AddHealthChecks();
 
@@ -66,6 +76,8 @@ app.MapAttendanceEndpoints();
 app.MapExaminationEndpoints();
 app.MapGradingEndpoints();
 app.MapGradeAppealEndpoints();
+app.MapGradeRevisionEndpoints();
+app.MapTranscriptEndpoints();
 app.MapAuthenticationEndpoints();
 app.Run();
 

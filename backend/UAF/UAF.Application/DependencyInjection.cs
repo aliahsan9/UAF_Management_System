@@ -9,6 +9,7 @@ using UAF.Application.Features.Employees;
 using UAF.Application.Features.Attendance;
 using UAF.Application.Features.Examinations;
 using UAF.Application.Features.Grading;
+using UAF.Application.Features.Transcripts;
 
 namespace UAF.Application;
 
@@ -31,6 +32,8 @@ public static class DependencyInjection
         services.AddScoped<ExaminationService>();
         services.AddScoped<GradingService>();
         services.AddScoped<GradeAppealService>();
+        services.AddScoped<GradeRevisionService>();
+        services.AddScoped<TranscriptService>();
         return services;
     }
 }

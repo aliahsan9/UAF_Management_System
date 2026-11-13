@@ -862,3 +862,70 @@ Registrar and SuperAdmin can review across departments. DepartmentAdmin is restr
 ### Important workflow boundary
 
 Approving an appeal records that it is accepted for academic re-evaluation; it does not itself alter the immutable finalized course grade, examination marks, or GPA. A separately authorized grade-revision workflow must be implemented before any corrected result is published. No appeal deadline or UAF-specific rechecking policy is assumed; these should be configurable after the university confirms its regulations.
+
+
+## Authorized Grade Revision and Official Academic Transcripts
+
+### Grade revision workflow
+
+Finalized `StudentCourseGrade` records remain immutable. A grade correction is represented by a separate approval request and an append-only revision snapshot. A revision request must reference an approved appeal for the same course grade.
+
+- DepartmentAdmin can request a revision only for a course in their active employee department.
+- Registrar and SuperAdmin can request revisions across departments.
+- Only Registrar and SuperAdmin can approve or reject a revision request.
+- The requesting officer cannot approve or reject their own request.
+- Proposed marks cannot exceed the original course total marks.
+- Approval recalculates percentage, letter grade, grade points and pass status using the original published grading scale.
+- Approval stores before/after values, revision number, requester, approver, timestamp and reason in an immutable revision record.
+- The decision and revision snapshot are saved in one SQL Server serializable transaction.
+- A filtered unique index permits only one pending revision request per course grade.
+- Student academic records and GPA/CGPA use the latest approved revision while preserving the original finalized grade and all revision history.
+
+Endpoints:
+
+- `POST /api/v1/grading/grades/{gradeId}/revision-requests`
+- `GET /api/v1/grading/revision-requests/pending`
+- `POST /api/v1/grading/revision-requests/{requestId}/decision`
+- `GET /api/v1/academic-records/me/course-grades/{gradeId}/revision-requests`
+- `GET /api/v1/academic-records/me/course-grades/{gradeId}/revisions`
+
+A revision request body:
+
+```json
+{
+  "appealId": "00000000-0000-0000-0000-000000000001",
+  "proposedMarksObtained": 82.5,
+  "reason": "Approved re-evaluation found a totaling error."
+}
+```
+
+An approval decision body:
+
+```json
+{
+  "approve": true,
+  "remarks": "Re-evaluation evidence reviewed and verified."
+}
+```
+
+### Official transcript issuance
+
+Official transcripts are issued by Registrar or SuperAdmin only. Each issuance stores an immutable JSON snapshot of the student's academic record, including the latest approved grade revisions and GPA/CGPA values. The snapshot is SHA-256 hashed and assigned a cryptographically random 128-bit verification code. PDFs are rendered from the stored snapshot, not from live student data, so a later grade change does not silently alter a previously issued transcript.
+
+Endpoints:
+
+- `POST /api/v1/transcripts/students/{studentId}/issue`
+- `GET /api/v1/academic-records/me/transcripts`
+- `GET /api/v1/academic-records/me/transcripts/{transcriptId}/pdf`
+- `GET /api/v1/transcripts/verify/{verificationCode}` (public)
+
+Students can list and download only transcripts belonging to their own linked student record. Public verification returns limited information: authenticity result, registration number, issue timestamp and snapshot digest. The public verification endpoint is rate-limited to 30 requests per minute per observed client IP.
+
+PDF rendering uses QuestPDF under its Community license. Confirm the library's licensing terms against the project's intended distribution before any commercial deployment.
+
+### Integrity and policy boundaries
+
+- Issued transcripts and grade revision snapshots are immutable at the EF Core context boundary.
+- A transcript's SHA-256 digest detects snapshot corruption, but it is not a digital signature. Production deployment should add a managed signing key/HSM-backed signature and transcript revocation workflow.
+- No official UAF transcript layout, grading regulation, appeal deadline, rechecking fee or transcript signing authority is assumed. Confirm these with the university before presenting generated documents as official UAF records.
+- The database migration for these new tables must be generated, reviewed and applied before using these endpoints.

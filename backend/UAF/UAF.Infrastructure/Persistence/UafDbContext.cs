@@ -48,6 +48,10 @@ public sealed class UafDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<StudentCourseGrade> StudentCourseGrades => Set<StudentCourseGrade>();
     public DbSet<GradeAppeal> GradeAppeals => Set<GradeAppeal>();
     public DbSet<GradeAppealAudit> GradeAppealAudits => Set<GradeAppealAudit>();
+    public DbSet<GradeRevisionRequest> GradeRevisionRequests => Set<GradeRevisionRequest>();
+    public DbSet<GradeRevision> GradeRevisions => Set<GradeRevision>();
+    public DbSet<GradeRevisionAudit> GradeRevisionAudits => Set<GradeRevisionAudit>();
+    public DbSet<AcademicTranscript> AcademicTranscripts => Set<AcademicTranscript>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -87,6 +91,18 @@ public sealed class UafDbContext : IdentityDbContext<ApplicationUser, IdentityRo
 
         if (ChangeTracker.Entries<GradeAppealAudit>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
             throw new InvalidOperationException("Grade appeal audit records are append-only.");
+
+        if (ChangeTracker.Entries<GradeRevisionRequest>().Any(entry => entry.State == EntityState.Deleted))
+            throw new InvalidOperationException("Grade revision requests cannot be deleted.");
+
+        if (ChangeTracker.Entries<GradeRevisionAudit>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
+            throw new InvalidOperationException("Grade revision audit records are append-only.");
+
+        if (ChangeTracker.Entries<GradeRevision>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
+            throw new InvalidOperationException("Grade revision snapshots are immutable.");
+
+        if (ChangeTracker.Entries<AcademicTranscript>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
+            throw new InvalidOperationException("Issued academic transcripts are immutable; issue a new transcript for updated records.");
 
         if (ChangeTracker.Entries<StudentCourseGrade>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
             throw new InvalidOperationException("Finalized student course grades are immutable; use an authorized grade-revision workflow.");

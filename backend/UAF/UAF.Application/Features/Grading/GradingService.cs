@@ -79,6 +79,15 @@ public sealed class GradingService
         return BuildAcademicRecord(source);
     }
 
+    public async Task<StudentAcademicRecordResponse> GetAcademicRecordForStudentAsync(Guid studentId, CancellationToken ct)
+    {
+        if (studentId == Guid.Empty) throw new ArgumentException("Student identifier is required.");
+        var source = await _repository.GetAcademicRecordAsync(studentId, ct) ?? throw new KeyNotFoundException("Student record not found.");
+        return BuildAcademicRecord(source);
+    }
+    public Task<Guid?> GetStudentIdForIdentityUserAsync(Guid actorId, CancellationToken ct) =>
+        _repository.GetStudentIdForIdentityUserAsync(actorId, ct);
+
     private static StudentAcademicRecordResponse BuildAcademicRecord(StudentAcademicRecordSource source)
     {
         var sessions = source.CourseGrades.GroupBy(x => new { x.AcademicSessionId, x.AcademicSessionName, x.AcademicSessionStartDate })
