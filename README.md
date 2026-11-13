@@ -820,3 +820,44 @@ POST /api/v1/examinations/
 ```
 
 The numeric examination type values follow the ExaminationType enum. Configure all non-cancelled examinations so their weight percentages total exactly 100 before final course-grade finalization.
+
+
+## Student Grade Appeals and Review Workflow
+
+Students with a linked Student account can submit a formal appeal against one of their finalized course grades. Ownership is resolved from the authenticated Identity account; the API does not accept a student ID from the caller.
+
+### Student endpoints
+
+- `POST /api/v1/academic-records/me/grade-appeals`
+- `GET /api/v1/academic-records/me/grade-appeals`
+
+Example request:
+
+```json
+{
+  "studentCourseGradeId": "00000000-0000-0000-0000-000000000001",
+  "reason": "Please review the published marks for this course."
+}
+```
+
+A student may have only one pending appeal per finalized course grade. The database enforces this with a filtered unique index, and appeal creation rechecks ownership and pending status in a SQL Server serializable transaction.
+
+### Staff review endpoints
+
+- `GET /api/v1/grading/grade-appeals/pending`
+- `POST /api/v1/grading/grade-appeals/{appealId}/decision`
+
+Example decision:
+
+```json
+{
+  "approve": true,
+  "remarks": "The appeal is accepted for academic re-evaluation."
+}
+```
+
+Registrar and SuperAdmin can review across departments. DepartmentAdmin is restricted to appeals for courses in their active employee department. Decisions require remarks and only pending appeals can be decided. The appeal decision and its append-only audit record are persisted in one SQL Server serializable transaction. Student users can only view their own appeal records.
+
+### Important workflow boundary
+
+Approving an appeal records that it is accepted for academic re-evaluation; it does not itself alter the immutable finalized course grade, examination marks, or GPA. A separately authorized grade-revision workflow must be implemented before any corrected result is published. No appeal deadline or UAF-specific rechecking policy is assumed; these should be configurable after the university confirms its regulations.
