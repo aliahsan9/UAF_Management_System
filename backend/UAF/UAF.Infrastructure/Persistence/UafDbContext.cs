@@ -1,15 +1,18 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using UAF.Application.Common.Abstractions;
 using UAF.Domain.Common;
 using UAF.Domain.Entities;
+using UAF.Infrastructure.Identity;
 
 namespace UAF.Infrastructure.Persistence;
 
 /// <summary>
-/// EF Core database context for the UAF management system.
-/// The context also implements the application's Unit of Work abstraction.
+/// EF Core database context for university records and ASP.NET Core Identity.
+/// Authentication identities are deliberately separate from academic domain entities.
 /// </summary>
-public sealed class UafDbContext : DbContext, IUnitOfWork
+public sealed class UafDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>, IUnitOfWork
 {
     public UafDbContext(DbContextOptions<UafDbContext> options)
         : base(options)
@@ -32,6 +35,12 @@ public sealed class UafDbContext : DbContext, IUnitOfWork
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(UafDbContext).Assembly);
+
+        modelBuilder.Entity<ApplicationUser>(entity =>
+        {
+            entity.Property(user => user.FullName).HasMaxLength(150).IsRequired();
+            entity.Property(user => user.IsActive).IsRequired();
+        });
     }
 
     public override int SaveChanges()
@@ -52,6 +61,9 @@ public sealed class UafDbContext : DbContext, IUnitOfWork
 
         foreach (var entry in ChangeTracker.Entries<AuditableEntity>())
         {
+            if (entry.State == EntityState.Added)
+                entry.Property(entity => entity.CreatedAtUtc).CurrentValue = now;
+
             if (entry.State == EntityState.Modified)
             {
                 entry.Property(entity => entity.CreatedAtUtc).IsModified = false;
