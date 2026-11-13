@@ -58,13 +58,17 @@ internal sealed class GradeAppealRepository : IGradeAppealRepository
     public async Task DecideAppealAsync(GradeAppeal appeal, GradeAppealAudit audit, CancellationToken ct)
     {
         await using var tx = await _db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
+        var approve = appeal.Status == GradeAppealStatus.Approved;
+        var reviewerId = appeal.ReviewedByUserId!.Value;
+        var reviewRemarks = appeal.ReviewRemarks!;
+        var reviewedAt = appeal.ReviewedAtUtc!.Value;
+        _db.Entry(appeal).State = EntityState.Detached;
         var persisted = await _db.GradeAppeals.SingleOrDefaultAsync(x => x.Id == appeal.Id, ct)
             ?? throw new KeyNotFoundException("Grade appeal not found.");
         if (persisted.Status != GradeAppealStatus.Pending) throw new InvalidOperationException("This appeal has already been decided.");
         if (!await _db.StudentCourseGrades.AnyAsync(x => x.Id == appeal.StudentCourseGradeId && x.StudentId == appeal.StudentId, ct))
             throw new InvalidOperationException("The appealed course grade no longer exists.");
-        persisted.Decide(appeal.Status == GradeAppealStatus.Approved, appeal.ReviewedByUserId!.Value,
-            appeal.ReviewRemarks!, appeal.ReviewedAtUtc!.Value);
+        persisted.Decide(approve, reviewerId, reviewRemarks, reviewedAt);
         _db.GradeAppealAudits.Add(audit);
         await _db.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
