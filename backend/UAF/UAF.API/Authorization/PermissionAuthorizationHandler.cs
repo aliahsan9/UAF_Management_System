@@ -9,10 +9,21 @@ public sealed class PermissionAuthorizationHandler : AuthorizationHandler<Permis
         new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
         {
             ["Student"] = [UafPermissions.AdmissionsRead, UafPermissions.StudentsRead],
-            ["Teacher"] = [UafPermissions.StudentsRead, UafPermissions.AttendanceManage, UafPermissions.GradesManage],
-            ["Registrar"] = [UafPermissions.AdmissionsRead, UafPermissions.AdmissionsReview, UafPermissions.AdmissionsDecide, UafPermissions.StudentsRead, UafPermissions.StudentsManage, UafPermissions.GradesManage, UafPermissions.TranscriptsIssue],
-            ["DepartmentAdmin"] = [UafPermissions.AdmissionsRead, UafPermissions.AdmissionsReview,
-                UafPermissions.StudentsRead, UafPermissions.StudentsManage, UafPermissions.AttendanceManage, UafPermissions.GradesManage],
+            ["Teacher"] = [UafPermissions.StudentsRead, UafPermissions.AttendanceManage,
+                UafPermissions.ExaminationsManage, UafPermissions.GradesManage],
+            ["Registrar"] = UafPermissions.All.Where(permission =>
+                permission is not UafPermissions.FinanceRead and not UafPermissions.FinanceManage and
+                not UafPermissions.EmployeesManage).ToArray(),
+            ["DepartmentAdmin"] =
+            [
+                UafPermissions.AdmissionsRead, UafPermissions.AdmissionsReview,
+                UafPermissions.StudentsRead, UafPermissions.StudentsManage,
+                UafPermissions.AcademicStructureManage, UafPermissions.AcademicCatalogManage,
+                UafPermissions.CourseOfferingsManage, UafPermissions.AttendanceManage,
+                UafPermissions.ExaminationsManage, UafPermissions.ExaminationsApprove,
+                UafPermissions.GradesManage, UafPermissions.GradeAppealsReview,
+                UafPermissions.GradeRevisionsManage
+            ],
             ["FinanceOfficer"] = [UafPermissions.FinanceRead, UafPermissions.FinanceManage],
             ["HRManager"] = [UafPermissions.EmployeesManage],
             ["SuperAdmin"] = UafPermissions.All
