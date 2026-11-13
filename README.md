@@ -802,3 +802,21 @@ No marks or total are accepted in the request body. The backend reads the studen
 ### Policy boundary
 
 Weights are explicitly configured per examination; the application does not assume any UAF-specific midterm/final/assignment distribution. The current model supports one weighted examination per configured assessment item. Grade revision/appeal, a formal department-level assessment-plan approval process, and transcript PDF issuance remain separate milestones.
+
+### Create weighted examination request
+
+POST /api/v1/examinations/
+
+```json
+{
+  "courseOfferingId": "00000000-0000-0000-0000-000000000010",
+  "title": "Midterm Examination",
+  "type": 3,
+  "scheduledDate": "2026-11-20",
+  "maximumMarks": 50,
+  "passingMarks": 20,
+  "weightPercentage": 40
+}
+```
+
+The numeric examination type values follow the ExaminationType enum. Configure all non-cancelled examinations so their weight percentages total exactly 100 before final course-grade finalization.
