@@ -4,6 +4,7 @@ using UAF.Application.Features.Admissions.Abstractions;
 using UAF.Application.Features.Admissions.Models;
 using UAF.Domain.Entities;
 using UAF.Domain.Enums;
+using Xunit;
 
 namespace UAF.Tests.Admissions;
 
