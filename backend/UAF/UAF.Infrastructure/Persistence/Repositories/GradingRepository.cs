@@ -15,7 +15,7 @@ internal sealed class GradingRepository : IGradingRepository
         _db.GradeScales.Include("_bands")
             .SingleOrDefaultAsync(x => x.AcademicSessionId == id, ct);
     public Task<GradeScale?> GetScaleAsync(Guid id, CancellationToken ct) =>
-        _db.GradeScales.Include(x => EF.Property<ICollection<GradeScaleBand>>(x, "_bands"))
+        _db.GradeScales.Include("_bands")
             .SingleOrDefaultAsync(x => x.Id == id, ct);
     public Task AddScaleAsync(GradeScale scale, CancellationToken ct) => _db.GradeScales.AddAsync(scale, ct).AsTask();
     public async Task<bool> CanFinalizeGradeAsync(Guid offeringId, Guid actorId, bool privileged, bool departmentAdmin, CancellationToken ct)
