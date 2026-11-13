@@ -66,6 +66,44 @@ public sealed class GradingService
             source.CreditHours, request.TotalMarks, request.MarksObtained, percentage, band.LetterGrade, band.GradePoints, band.IsPassing, now);
     }
 
+    public async Task<CourseGradeResponse> FinalizeCourseGradeFromAssessmentsAsync(Guid offeringId, Guid studentId, Guid actorId, bool privileged, bool departmentAdmin, CancellationToken ct)
+    {
+        if (offeringId == Guid.Empty || studentId == Guid.Empty || actorId == Guid.Empty)
+            throw new ArgumentException("Offering, student and authenticated actor are required.");
+        if (!await _repository.CanFinalizeGradeAsync(offeringId, actorId, privileged, departmentAdmin, ct))
+            throw new UnauthorizedAccessException("You cannot finalize grades for this course offering.");
+        var source = await _repository.GetCourseGradeSourceAsync(offeringId, studentId, ct)
+            ?? throw new KeyNotFoundException("Eligible student enrollment or course offering not found.");
+        if (await _repository.CourseGradeExistsAsync(offeringId, studentId, ct))
+            throw new InvalidOperationException("A finalized course grade already exists for this student and offering.");
+        var scale = await _repository.GetScaleForSessionAsync(source.AcademicSessionId, ct)
+            ?? throw new InvalidOperationException("Configure a grading scale before finalizing course grades.");
+        if (!scale.IsPublished)
+            throw new InvalidOperationException("The academic session grading scale must be published before grade finalization.");
+        var assessments = await _repository.GetAssessmentGradeItemsAsync(offeringId, studentId, ct);
+        if (assessments.Count == 0)
+            throw new InvalidOperationException("No assessment components are configured for this course offering.");
+        if (assessments.Any(x => x.Status != ExaminationStatus.Published))
+            throw new InvalidOperationException("Every configured assessment must be published before a course grade can be finalized.");
+        if (assessments.Any(x => !x.MarksObtained.HasValue || !x.IsAbsent.HasValue))
+            throw new InvalidOperationException("A marks record is required for every published assessment. Record absences explicitly as zero marks.");
+        var totalWeight = assessments.Sum(x => x.WeightPercentage);
+        if (totalWeight != 100m)
+            throw new InvalidOperationException($"Assessment weights must total exactly 100 percent; configured total is {totalWeight:0.##}%.");
+        var weightedPercentage = assessments.Sum(x => (x.MarksObtained!.Value / x.MaximumMarks) * x.WeightPercentage);
+        weightedPercentage = decimal.Round(weightedPercentage, 2, MidpointRounding.AwayFromZero);
+        var band = scale.Bands.Where(x => x.MinimumPercentage <= weightedPercentage)
+            .OrderByDescending(x => x.MinimumPercentage).FirstOrDefault()
+            ?? throw new InvalidOperationException("The published grading scale does not cover the calculated percentage.");
+        var now = DateTimeOffset.UtcNow;
+        var grade = new StudentCourseGrade(source.StudentId, source.CourseOfferingId, source.CourseId, source.AcademicSessionId, scale.Id,
+            source.CourseCode, source.CourseTitle, source.CreditHours, 100m, weightedPercentage, weightedPercentage,
+            band.LetterGrade, band.GradePoints, band.IsPassing, scale.IncludeFailedCoursesInGpa, scale.RepeatCoursePolicy, actorId, now);
+        await _repository.FinalizeCourseGradeAsync(grade, ct);
+        return new CourseGradeResponse(grade.Id, source.StudentId, source.RegistrationNumber, offeringId, source.CourseCode, source.CourseTitle,
+            source.CreditHours, 100m, weightedPercentage, weightedPercentage, band.LetterGrade, band.GradePoints, band.IsPassing, now);
+    }
+
     public async Task<StudentAcademicRecordResponse> GetMyAcademicRecordAsync(Guid actorId, CancellationToken ct)
     {
         if (actorId == Guid.Empty) throw new ArgumentException("Authenticated actor is required.");
