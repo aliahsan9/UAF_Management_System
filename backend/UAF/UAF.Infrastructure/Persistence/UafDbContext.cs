@@ -36,6 +36,9 @@ public sealed class UafDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<FeePayment> FeePayments => Set<FeePayment>();
     public DbSet<Employee> Employees => Set<Employee>();
     public DbSet<TeacherProfile> TeacherProfiles => Set<TeacherProfile>();
+    public DbSet<AttendanceSession> AttendanceSessions => Set<AttendanceSession>();
+    public DbSet<StudentAttendance> StudentAttendances => Set<StudentAttendance>();
+    public DbSet<AttendanceChangeAudit> AttendanceChangeAudits => Set<AttendanceChangeAudit>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -65,6 +68,10 @@ public sealed class UafDbContext : IdentityDbContext<ApplicationUser, IdentityRo
         if (ChangeTracker.Entries<AdmissionDecisionAudit>()
             .Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
             throw new InvalidOperationException("Admission decision audit records are append-only.");
+
+        if (ChangeTracker.Entries<AttendanceChangeAudit>()
+            .Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
+            throw new InvalidOperationException("Attendance change audit records are append-only.");
 
         var now = DateTimeOffset.UtcNow;
         foreach (var entry in ChangeTracker.Entries<AuditableEntity>())
