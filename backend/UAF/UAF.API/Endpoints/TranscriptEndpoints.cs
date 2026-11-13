@@ -30,6 +30,7 @@ public static class TranscriptEndpoints
         endpoints.MapGet("/api/v1/transcripts/verify/{verificationCode}", async (string verificationCode, TranscriptService service, CancellationToken ct) =>
             Results.Ok(await service.VerifyAsync(verificationCode, ct)))
             .AllowAnonymous()
+            .RequireRateLimiting("transcript-verification")
             .WithTags("Public Transcript Verification")
             .WithName("VerifyAcademicTranscript");
         return endpoints;
