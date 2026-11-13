@@ -46,6 +46,7 @@ public sealed class CourseOfferingConfiguration : IEntityTypeConfiguration<Cours
         builder.Property(x => x.Section).HasMaxLength(20).IsRequired();
         builder.Property(x => x.Status).HasConversion<int>().IsRequired();
         builder.HasIndex(x => new { x.CourseId, x.AcademicSessionId, x.Section }).IsUnique();
+        builder.HasIndex(x => new { x.AcademicSessionId, x.Status });
         builder.HasIndex(x => x.InstructorEmployeeId);
         builder.HasOne<Course>().WithMany().HasForeignKey(x => x.CourseId)
             .OnDelete(DeleteBehavior.Restrict);
