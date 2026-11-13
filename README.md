@@ -305,6 +305,7 @@ Staff document review routes require the admissions staff policy (Registrar, Dep
 
 | Method | Route | Purpose |
 |---|---|---|
+| GET | `/api/v1/admissions/documents/requirements/program/{academicProgramId}` | Read a program's configured required document types |
 | PUT | `/api/v1/admissions/documents/requirements/program/{academicProgramId}` | Replace the required document-type checklist for a program |
 | GET | `/api/v1/admissions/documents/application/{applicationId}` | List documents for staff review |
 | GET | `/api/v1/admissions/documents/{documentId}/download` | Download a document for verification |
