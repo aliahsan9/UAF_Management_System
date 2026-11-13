@@ -25,6 +25,12 @@ public static class ExaminationEndpoints
             Results.Ok(await service.GetOfferingExaminationsAsync(offeringId, GetActorId(http.User), IsPrivileged(http.User), IsDepartmentAdmin(http.User), ct)))
             .WithName("GetOfferingExaminations");
 
+        group.MapPost("/{id:guid}/schedule", async (Guid id, HttpContext http, ExaminationService service, CancellationToken ct) =>
+        {
+            await service.ScheduleAsync(id, GetActorId(http.User), IsPrivileged(http.User), IsDepartmentAdmin(http.User), ct);
+            return Results.NoContent();
+        }).WithName("ScheduleExamination");
+
         group.MapPost("/{id:guid}/open-marks-entry", async (Guid id, HttpContext http, ExaminationService service, CancellationToken ct) =>
         {
             await service.OpenMarksEntryAsync(id, GetActorId(http.User), IsPrivileged(http.User), IsDepartmentAdmin(http.User), ct);
