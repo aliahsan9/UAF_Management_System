@@ -364,7 +364,7 @@ The opt-in SQL Server integration test creates a uniquely named temporary databa
 
 ```powershell
 $env:UAF_TEST_SQLSERVER_CONNECTION_STRING = "Server=localhost;Database=master;Trusted_Connection=True;TrustServerCertificate=True;"
-dotnet test UAF.Tests/UAF.Tests.csproj --filter "Category=SqlServerIntegration"
+dotnet test backend/UAF/UAF.Tests/UAF.Tests.csproj --filter "Category=SqlServerIntegration"
 ```
 
 ### Admission API access control
