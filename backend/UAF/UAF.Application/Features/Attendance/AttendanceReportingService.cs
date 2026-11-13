@@ -37,7 +37,7 @@ public sealed class AttendanceReportingService
     {
         if (actorId == Guid.Empty) throw new ArgumentException("Authenticated actor is required.");
         var source = await _reporting.GetReportSourceAsync(offeringId, ct) ?? throw new KeyNotFoundException("Course offering was not found.");
-        if (!await _attendance.CanManageOfferingAsync(offeringId, actorId, privileged, ct, departmentAdmin))
+        if (!await _attendance.CanManageOfferingAsync(offeringId, actorId, privileged, ct, departmentAdmin, allowClosed: true))
             throw new UnauthorizedAccessException("You are not authorized to view this course offering's attendance report.");
         var policy = await _reporting.GetPolicyAsync(source.AcademicSessionId, ct)
             ?? throw new InvalidOperationException("Attendance policy must be configured for this academic session before reports can be calculated.");
