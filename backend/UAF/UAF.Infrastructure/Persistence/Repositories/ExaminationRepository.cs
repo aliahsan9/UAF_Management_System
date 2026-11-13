@@ -47,6 +47,10 @@ internal sealed class ExaminationRepository : IExaminationRepository
         var exam = await _db.Examinations.SingleOrDefaultAsync(x => x.Id == examinationId, ct)
             ?? throw new KeyNotFoundException("Examination not found.");
         if (exam.Status != ExaminationStatus.MarksEntryOpen) throw new InvalidOperationException("Marks entry is not open.");
+        if (!await _db.CourseOfferings.AnyAsync(x => x.Id == exam.CourseOfferingId && x.Status == CourseOfferingStatus.Published, ct))
+            throw new InvalidOperationException("Marks can only be entered for a published course offering.");
+        if (!await _db.CourseOfferings.AnyAsync(x => x.Id == exam.CourseOfferingId && x.Status == CourseOfferingStatus.Published, ct))
+            throw new InvalidOperationException("Results can only be submitted for a published course offering.");
         var enrolledIds = await _db.CourseEnrollments.Where(x => x.CourseOfferingId == exam.CourseOfferingId && x.Status == EnrollmentStatus.Enrolled)
             .Select(x => x.StudentId).ToArrayAsync(ct);
         var requestedIds = marks.Select(x => x.StudentId).ToArray();
