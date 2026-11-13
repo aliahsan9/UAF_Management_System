@@ -97,6 +97,6 @@ public sealed class IdentityAuthenticationService : IAuthenticationService
             expiresAtUtc,
             user.Id.ToString(),
             user.Email,
-            roles);
+            roles.ToArray());
     }
 }
