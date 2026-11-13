@@ -81,17 +81,7 @@ public sealed class GradingService
         if (!scale.IsPublished)
             throw new InvalidOperationException("The academic session grading scale must be published before grade finalization.");
         var assessments = await _repository.GetAssessmentGradeItemsAsync(offeringId, studentId, ct);
-        if (assessments.Count == 0)
-            throw new InvalidOperationException("No assessment components are configured for this course offering.");
-        if (assessments.Any(x => x.Status != ExaminationStatus.Published))
-            throw new InvalidOperationException("Every configured assessment must be published before a course grade can be finalized.");
-        if (assessments.Any(x => !x.MarksObtained.HasValue || !x.IsAbsent.HasValue))
-            throw new InvalidOperationException("A marks record is required for every published assessment. Record absences explicitly as zero marks.");
-        var totalWeight = assessments.Sum(x => x.WeightPercentage);
-        if (totalWeight != 100m)
-            throw new InvalidOperationException($"Assessment weights must total exactly 100 percent; configured total is {totalWeight:0.##}%.");
-        var weightedPercentage = assessments.Sum(x => (x.MarksObtained!.Value / x.MaximumMarks) * x.WeightPercentage);
-        weightedPercentage = decimal.Round(weightedPercentage, 2, MidpointRounding.AwayFromZero);
+        var weightedPercentage = AssessmentWeightCalculator.Calculate(assessments);
         var band = scale.Bands.Where(x => x.MinimumPercentage <= weightedPercentage)
             .OrderByDescending(x => x.MinimumPercentage).FirstOrDefault()
             ?? throw new InvalidOperationException("The published grading scale does not cover the calculated percentage.");
