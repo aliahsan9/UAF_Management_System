@@ -361,3 +361,5 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+# Private applicant uploads and local document storage
+**/App_Data/PrivateAdmissionDocuments/
