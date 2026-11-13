@@ -32,6 +32,9 @@ public static class GradeRevisionEndpoints
         var student = endpoints.MapGroup("/api/v1/academic-records/me/course-grades")
             .WithTags("Student Grade Revision History")
             .RequireAuthorization(AuthorizationPolicies.StudentAcademicRecord);
+        student.MapGet("/{gradeId:guid}/revision-requests", async (Guid gradeId, HttpContext http, GradeRevisionService service, CancellationToken ct) =>
+            Results.Ok(await service.GetMyRequestsAsync(gradeId, GetActorId(http.User), ct)))
+            .WithName("GetMyGradeRevisionRequests");
         student.MapGet("/{gradeId:guid}/revisions", async (Guid gradeId, HttpContext http, GradeRevisionService service, CancellationToken ct) =>
             Results.Ok(await service.GetMyHistoryAsync(gradeId, GetActorId(http.User), ct)))
             .WithName("GetMyGradeRevisionHistory");
