@@ -54,7 +54,7 @@ public sealed class TranscriptService
         if (transcript is null) return new TranscriptVerificationResponse(false, null, null, null);
         try
         {
-            _ = DeserializeAndVerify(transcript);
+            var record = DeserializeAndVerify(transcript);
             return new TranscriptVerificationResponse(true, record.RegistrationNumber, transcript.IssuedAtUtc, transcript.SnapshotSha256);
         }
         catch (InvalidOperationException)
