@@ -76,6 +76,14 @@ public sealed class UafCommandMonitoringInterceptor : DbCommandInterceptor
 
     private void LogCompleted(DbCommand command, CommandExecutedEventData eventData)
     {
+        if (eventData.Duration >= TimeSpan.FromSeconds(1))
+        {
+            _logger.LogWarning(
+                "Slow database command detected. CommandType: {CommandType}, DurationMs: {DurationMs}, ParameterCount: {ParameterCount}",
+                command.CommandType, eventData.Duration.TotalMilliseconds, command.Parameters.Count);
+            return;
+        }
+
         _logger.LogDebug(
             "Database command completed. CommandType: {CommandType}, DurationMs: {DurationMs}, ParameterCount: {ParameterCount}",
             command.CommandType, eventData.Duration.TotalMilliseconds, command.Parameters.Count);
