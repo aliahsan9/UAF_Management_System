@@ -89,10 +89,22 @@ internal sealed class GradingRepository : IGradingRepository
             join session in _db.AcademicSessions.AsNoTracking() on grade.AcademicSessionId equals session.Id
             where grade.StudentId == studentId
             orderby session.StartDate, grade.CourseCode
-            select new AcademicRecordCourseItem(grade.CourseId, grade.CourseOfferingId, grade.AcademicSessionId,
+            select new AcademicRecordCourseItem(grade.Id, grade.CourseId, grade.CourseOfferingId, grade.AcademicSessionId,
                 session.Name, session.StartDate, grade.CourseCode, grade.CourseTitle, grade.CreditHours,
                 grade.TotalMarks, grade.MarksObtained, grade.Percentage, grade.LetterGrade, grade.GradePoints,
                 grade.IsPassed, grade.IncludeFailedCoursesInGpa, grade.RepeatCoursePolicy, grade.FinalizedAtUtc)).ToListAsync(ct);
+        if (grades.Count > 0)
+        {
+            var gradeIds = grades.Select(x => x.GradeId).ToArray();
+            var revisions = await _db.GradeRevisions.AsNoTracking().Where(x => gradeIds.Contains(x.StudentCourseGradeId))
+                .OrderByDescending(x => x.RevisionNumber).ToListAsync(ct);
+            var latestByGrade = revisions.GroupBy(x => x.StudentCourseGradeId).ToDictionary(x => x.Key, x => x.First());
+            grades = grades.Select(item => latestByGrade.TryGetValue(item.GradeId, out var revision)
+                ? item with { MarksObtained = revision.NewMarks, Percentage = revision.NewPercentage,
+                    LetterGrade = revision.NewLetterGrade, GradePoints = revision.NewGradePoints,
+                    IsPassed = revision.NewIsPassed, FinalizedAtUtc = revision.ApprovedAtUtc }
+                : item).ToList();
+        }
         return new StudentAcademicRecordSource(student.Id, student.RegistrationNumber, student.FullName, grades);
     }
 }
