@@ -13,7 +13,7 @@ public sealed class FeeService
   ArgumentNullException.ThrowIfNull(r);
   if(!await _repo.ProgramIsActiveAsync(r.AcademicProgramId,ct)) throw new KeyNotFoundException("Active academic program was not found.");
   if(!await _repo.SessionExistsAsync(r.AcademicSessionId,ct)) throw new KeyNotFoundException("Academic session was not found.");
-  if(r.Items is null||r.Items.Count==0||r.Items.Select(x=>x.FeeHeadId).Distinct().Count()!=r.Items.Count) throw new ArgumentException("At least one unique fee head is required.");
+  if(r.Items is null||r.Items.Count==0||r.Items.Select(x=>x.FeeHeadId).Distinct().Count()!=r.Items.Count||r.Items.Any(x=>x.Amount<=0||decimal.Round(x.Amount,2)!=x.Amount)) throw new ArgumentException("At least one unique fee head with a positive amount to two decimal places is required.");
   var structure=new FeeStructure(r.AcademicProgramId,r.AcademicSessionId,r.SemesterNumber,r.Name);
   foreach(var item in r.Items) if(!await _repo.FeeHeadExistsAsync(item.FeeHeadId,ct)) throw new KeyNotFoundException("Fee head was not found.");
   // Structure items are attached by repository after the generated structure ID is assigned.
