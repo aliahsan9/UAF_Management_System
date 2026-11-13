@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace UAF.API.Authorization;
@@ -8,8 +9,13 @@ public static class AuthorizationPolicyExtensions
     public static IServiceCollection AddUafAuthorization(this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
+        services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
         services.AddAuthorization(options =>
         {
+            foreach (var permission in UafPermissions.All)
+                options.AddPolicy($"Permission:{permission}", policy =>
+                    policy.RequireAuthenticatedUser().AddRequirements(new PermissionRequirement(permission)));
+
             options.AddPolicy(AuthorizationPolicies.AdmissionsStaff, policy =>
                 policy.RequireRole("Registrar", "DepartmentAdmin", "SuperAdmin"));
             options.AddPolicy(AuthorizationPolicies.AdmissionsDecision, policy =>
