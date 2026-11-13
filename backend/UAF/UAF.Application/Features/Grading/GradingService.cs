@@ -61,8 +61,7 @@ public sealed class GradingService
         var grade = new StudentCourseGrade(source.StudentId, source.CourseOfferingId, source.CourseId, source.AcademicSessionId, scale.Id,
             source.CourseCode, source.CourseTitle, source.CreditHours, request.TotalMarks, request.MarksObtained, percentage,
             band.LetterGrade, band.GradePoints, band.IsPassing, scale.IncludeFailedCoursesInGpa, scale.RepeatCoursePolicy, actorId, now);
-        await _repository.AddCourseGradeAsync(grade, ct);
-        await _unitOfWork.SaveChangesAsync(ct);
+        await _repository.FinalizeCourseGradeAsync(grade, ct);
         return new CourseGradeResponse(grade.Id, source.StudentId, source.RegistrationNumber, offeringId, source.CourseCode, source.CourseTitle,
             source.CreditHours, request.TotalMarks, request.MarksObtained, percentage, band.LetterGrade, band.GradePoints, band.IsPassing, now);
     }
