@@ -194,7 +194,21 @@ Authentication routes:
 | POST | `/api/v1/auth/login` | Anonymous |
 | GET | `/api/v1/auth/me` | Valid JWT required |
 
-Send access tokens using the `Authorization: Bearer <token>` header. The current implementation is an initial authentication foundation, not a production-complete identity lifecycle: email verification, refresh-token rotation/revocation, password reset, MFA, audit events, and privileged account provisioning still need implementation and tests. Do not deploy it with real university accounts until those controls and security tests are completed.
+Send access tokens using the `Authorization: Bearer <token>` header.
+
+### Admission API access control
+
+The initial admission API is restricted to authenticated university staff because the current admission domain model does not yet associate an applicant record with the authenticated account. This avoids allowing one student account to submit, review, or withdraw another person's application by guessing or obtaining an application ID.
+
+| Operation | Required role |
+|---|---|
+| Create draft, submit, withdraw | Registrar, DepartmentAdmin, SuperAdmin |
+| Start review | Registrar, DepartmentAdmin, SuperAdmin |
+| Accept, reject, waitlist | Registrar, SuperAdmin |
+
+These requirements are enforced by named ASP.NET Core authorization policies, not by frontend visibility. Student self-service admission endpoints should be introduced only after the domain model includes a trusted applicant-to-account relationship and ownership checks are covered by tests.
+
+The current implementation is an initial authentication foundation, not a production-complete identity lifecycle: email verification, refresh-token rotation/revocation, password reset, MFA, audit events, and privileged account provisioning still need implementation and tests. Do not deploy it with real university accounts until those controls and security tests are completed.
 
 
 ## Security & Engineering Principles
