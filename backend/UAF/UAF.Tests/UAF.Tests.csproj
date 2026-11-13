@@ -20,6 +20,8 @@
   <ItemGroup>
     <ProjectReference Include="..\UAF.Application\UAF.Application.csproj" />
     <ProjectReference Include="..\UAF.Domain\UAF.Domain.csproj" />
+    <ProjectReference Include="..\UAF.API\UAF.API.csproj" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
 </Project>
