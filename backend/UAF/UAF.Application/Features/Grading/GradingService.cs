@@ -43,29 +43,6 @@ public sealed class GradingService
         return ToResponse(scale);
     }
 
-    public async Task<CourseGradeResponse> FinalizeCourseGradeAsync(Guid offeringId, Guid studentId, FinalizeCourseGradeRequest request, Guid actorId, bool privileged, bool departmentAdmin, CancellationToken ct)
-    {
-        ArgumentNullException.ThrowIfNull(request);
-        if (studentId == Guid.Empty || actorId == Guid.Empty) throw new ArgumentException("Student and authenticated actor are required.");
-        if (request.TotalMarks <= 0 || request.MarksObtained < 0 || request.MarksObtained > request.TotalMarks) throw new ArgumentOutOfRangeException(nameof(request), "Marks must be valid and within total marks.");
-        if (!await _repository.CanFinalizeGradeAsync(offeringId, actorId, privileged, departmentAdmin, ct))
-            throw new UnauthorizedAccessException("You cannot finalize grades for this course offering.");
-        var source = await _repository.GetCourseGradeSourceAsync(offeringId, studentId, ct) ?? throw new KeyNotFoundException("Eligible student enrollment or course offering not found.");
-        if (await _repository.CourseGradeExistsAsync(offeringId, studentId, ct)) throw new InvalidOperationException("A finalized course grade already exists for this student and offering.");
-        var scale = await _repository.GetScaleForSessionAsync(source.AcademicSessionId, ct) ?? throw new InvalidOperationException("Configure a grading scale before finalizing course grades.");
-        if (!scale.IsPublished) throw new InvalidOperationException("The academic session grading scale must be published before grade finalization.");
-        var percentage = decimal.Round(request.MarksObtained / request.TotalMarks * 100m, 2, MidpointRounding.AwayFromZero);
-        var band = scale.Bands.Where(x => x.MinimumPercentage <= percentage).OrderByDescending(x => x.MinimumPercentage).FirstOrDefault()
-            ?? throw new InvalidOperationException("The published grading scale does not cover this percentage.");
-        var now = DateTimeOffset.UtcNow;
-        var grade = new StudentCourseGrade(source.StudentId, source.CourseOfferingId, source.CourseId, source.AcademicSessionId, scale.Id,
-            source.CourseCode, source.CourseTitle, source.CreditHours, request.TotalMarks, request.MarksObtained, percentage,
-            band.LetterGrade, band.GradePoints, band.IsPassing, scale.IncludeFailedCoursesInGpa, scale.RepeatCoursePolicy, actorId, now);
-        await _repository.FinalizeCourseGradeAsync(grade, ct);
-        return new CourseGradeResponse(grade.Id, source.StudentId, source.RegistrationNumber, offeringId, source.CourseCode, source.CourseTitle,
-            source.CreditHours, request.TotalMarks, request.MarksObtained, percentage, band.LetterGrade, band.GradePoints, band.IsPassing, now);
-    }
-
     public async Task<CourseGradeResponse> FinalizeCourseGradeFromAssessmentsAsync(Guid offeringId, Guid studentId, Guid actorId, bool privileged, bool departmentAdmin, CancellationToken ct)
     {
         if (offeringId == Guid.Empty || studentId == Guid.Empty || actorId == Guid.Empty)
