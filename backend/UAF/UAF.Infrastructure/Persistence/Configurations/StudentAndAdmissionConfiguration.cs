@@ -4,7 +4,7 @@ using UAF.Domain.Entities;
 
 namespace UAF.Infrastructure.Persistence.Configurations;
 
-internal sealed class StudentConfiguration : IEntityTypeConfiguration<Student>
+public sealed class StudentConfiguration : IEntityTypeConfiguration<Student>
 {
     public void Configure(EntityTypeBuilder<Student> builder)
     {
@@ -22,7 +22,7 @@ internal sealed class StudentConfiguration : IEntityTypeConfiguration<Student>
     }
 }
 
-internal sealed class AdmissionApplicationConfiguration : IEntityTypeConfiguration<AdmissionApplication>
+public sealed class AdmissionApplicationConfiguration : IEntityTypeConfiguration<AdmissionApplication>
 {
     public void Configure(EntityTypeBuilder<AdmissionApplication> builder)
     {
