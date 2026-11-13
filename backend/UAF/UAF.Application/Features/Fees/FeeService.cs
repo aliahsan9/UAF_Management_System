@@ -14,9 +14,8 @@ public sealed class FeeService
   if(!await _repo.ProgramIsActiveAsync(r.AcademicProgramId,ct)) throw new KeyNotFoundException("Active academic program was not found.");
   if(!await _repo.SessionExistsAsync(r.AcademicSessionId,ct)) throw new KeyNotFoundException("Academic session was not found.");
   if(r.Items is null||r.Items.Count==0||r.Items.Select(x=>x.FeeHeadId).Distinct().Count()!=r.Items.Count) throw new ArgumentException("At least one unique fee head is required.");
-  var items=new List<FeeStructureItem>();
-  foreach(var item in r.Items){if(!await _repo.FeeHeadExistsAsync(item.FeeHeadId,ct))throw new KeyNotFoundException($"Fee head '{item.FeeHeadId}' was not found.");items.Add(new FeeStructureItem(Guid.Empty,item.FeeHeadId,item.Amount));}
   var structure=new FeeStructure(r.AcademicProgramId,r.AcademicSessionId,r.SemesterNumber,r.Name);
+  foreach(var item in r.Items) if(!await _repo.FeeHeadExistsAsync(item.FeeHeadId,ct)) throw new KeyNotFoundException("Fee head was not found.");
   // Structure items are attached by repository after the generated structure ID is assigned.
   await _repo.AddStructureAsync(structure,r.Items.Select(x=>new FeeStructureItem(structure.Id,x.FeeHeadId,x.Amount)).ToArray(),ct);
   return structure.Id;
