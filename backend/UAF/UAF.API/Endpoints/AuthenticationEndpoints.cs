@@ -77,23 +77,18 @@ public static class AuthenticationEndpoints
         .WithName("RefreshAccessToken");
 
         group.MapPost("/revoke", async (
-            ClaimsPrincipal user, IAuthenticationService authentication,
-            HttpContext http, CancellationToken ct) =>
+            IAuthenticationService authentication, HttpContext http, CancellationToken ct) =>
         {
             if (!HasRefreshRequestHeader(http) ||
                 !http.Request.Cookies.TryGetValue(RefreshCookieName, out var refreshToken))
                 return Results.BadRequest(new { error = "Refresh credential is missing." });
 
-            var userIdValue = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? user.FindFirstValue("sub");
-            if (!Guid.TryParse(userIdValue, out var userId))
-                return Results.Unauthorized();
-
             await authentication.RevokeAsync(
-                userId, refreshToken, http.Connection.RemoteIpAddress?.ToString(), ct);
+                refreshToken, http.Connection.RemoteIpAddress?.ToString(), ct);
             ClearRefreshCookie(http);
             return Results.NoContent();
         })
-        .RequireAuthorization()
+        .AllowAnonymous()
         .RequireRateLimiting("auth")
         .WithName("RevokeRefreshToken");
 
