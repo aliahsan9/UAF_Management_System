@@ -23,6 +23,7 @@ public sealed class ExaminationConfiguration : IEntityTypeConfiguration<Examinat
         b.Property(x => x.WeightPercentage).HasPrecision(5, 2).IsRequired();
         b.HasIndex(x => new { x.CourseOfferingId, x.Title }).IsUnique();
         b.HasIndex(x => new { x.CourseOfferingId, x.Status, x.ScheduledDate });
+        b.HasIndex(x => new { x.CourseOfferingId, x.Status }).HasDatabaseName("IX_Examinations_Offering_Status_Weight");
         b.HasOne<CourseOffering>().WithMany().HasForeignKey(x => x.CourseOfferingId).OnDelete(DeleteBehavior.Restrict);
         b.HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.SubmittedByUserId).OnDelete(DeleteBehavior.Restrict);
         b.HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.ApprovedByUserId).OnDelete(DeleteBehavior.Restrict);
