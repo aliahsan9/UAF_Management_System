@@ -97,7 +97,7 @@ internal sealed class AttendanceRepository : IAttendanceRepository
     {
         await using var tx = await _db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
         var session = await GetSessionForUpdateAsync(sessionId, ct) ?? throw new KeyNotFoundException("Attendance session was not found.");
-        await EnsureActorCanManageAsync(session, actorId, privileged, ct);
+        await EnsureActorCanManageAsync(session, actorId, privileged, ct, departmentAdmin);
         if (session.Status != AttendanceSessionStatus.Open) throw new InvalidOperationException("Only an open attendance session can be finalized.");
         var enrolledIds = await _db.CourseEnrollments.Where(x => x.CourseOfferingId == session.CourseOfferingId && x.Status == EnrollmentStatus.Enrolled)
             .Select(x => x.StudentId).ToListAsync(ct);
