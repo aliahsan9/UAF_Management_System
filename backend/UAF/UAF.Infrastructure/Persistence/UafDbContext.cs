@@ -87,7 +87,7 @@ public sealed class UafDbContext : IdentityDbContext<ApplicationUser, IdentityRo
             throw new InvalidOperationException("Finalized student course grades are immutable; use an authorized grade-revision workflow.");
 
         if (ChangeTracker.Entries<GradeScaleBand>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
-            throw new InvalidOperationException("Grade scale bands are immutable; create a new scale version instead.");
+            throw new InvalidOperationException("Grade scale bands are immutable after creation.");
 
         if (ChangeTracker.Entries<GradeScale>().Any(entry => entry.State == EntityState.Deleted || (entry.State == EntityState.Modified && entry.OriginalValues.GetValue<bool>(nameof(GradeScale.IsPublished)))))
             throw new InvalidOperationException("Published grading scales cannot be modified or deleted.");
