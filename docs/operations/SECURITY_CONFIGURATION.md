@@ -11,9 +11,9 @@
 
 ## Refresh-token lifecycle
 
-- Refresh tokens are cryptographically random, returned only as a Secure, HttpOnly, SameSite=Strict `__Host-uaf-refresh` cookie, and stored in SQL only as SHA-256 hashes.
+- Refresh tokens are cryptographically random, returned only as a Secure, HttpOnly, SameSite=None `__Host-uaf-refresh` cookie, and stored in SQL only as SHA-256 hashes.
 - Refresh rotates the token on every successful use. The old token is revoked; reuse of a revoked token revokes all active refresh sessions for that account.
-- Browser refresh/revoke requests must send `X-Refresh-Request: 1`. The custom header is a CSRF defense in addition to the strict cookie policy and exact CORS allow-list.
+- Browser refresh/revoke requests must send `X-Refresh-Request: 1`. The custom header is a CSRF defense in addition to the Secure cookie policy and exact CORS allow-list.
 - Access tokens should be held in memory by browser clients, not localStorage/sessionStorage. Do not log or persist raw tokens.
 - The refresh-token table requires an EF migration before deployment.
 
