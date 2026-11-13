@@ -99,7 +99,7 @@ UAF_Management_System/
         └── UAF.sln
 ```
 
-The Domain, Application, Infrastructure, API, and Tests projects have been created. The API currently exposes the initial admission application workflow; authentication and further modules will be added in later stages.
+The Domain, Application, Infrastructure, API, and Tests projects have been created. The API currently exposes the initial admission application workflow and an initial ASP.NET Core Identity/JWT authentication foundation. Email verification, refresh-token rotation, account recovery, and administrative user provisioning remain future security work.
 
 ### Layer responsibilities
 
@@ -171,6 +171,32 @@ The design-time factory uses `UAF_DB_CONNECTION_STRING` when set; otherwise it t
 
 Do not place real database passwords, JWT signing keys, API keys, or other secrets in source control. Use .NET user secrets or environment variables for local development and secure secret storage for deployed environments.
 
+### Authentication configuration
+
+The API uses ASP.NET Core Identity with GUID user and role keys. Public registration always assigns the `Student` role; clients cannot submit a role name or grant themselves elevated privileges. The initial role set is `Student`, `Teacher`, `DepartmentAdmin`, `Registrar`, `FinanceOfficer`, and `SuperAdmin`. Role seeding is opt-in and must be run only after the Identity database migration has been applied.
+
+Configure JWT settings with .NET user secrets (do not commit a signing key):
+
+```bash
+dotnet user-secrets init --project backend/UAF/UAF.API/UAF.API.csproj
+dotnet user-secrets set "Jwt:Issuer" "UAF.Management.Api" --project backend/UAF/UAF.API/UAF.API.csproj
+dotnet user-secrets set "Jwt:Audience" "UAF.Management.Client" --project backend/UAF/UAF.API/UAF.API.csproj
+dotnet user-secrets set "Jwt:SigningKey" "<generate-a-cryptographically-random-secret-of-at-least-32-bytes>" --project backend/UAF/UAF.API/UAF.API.csproj
+```
+
+The API refuses to start if issuer, audience, or a signing key of at least 32 bytes is missing. Access tokens currently expire after 15 minutes. After applying migrations, role creation can be enabled for a one-time development startup using the environment variable `Identity__SeedRolesOnStartup=true`; disable it again after roles are seeded. Production role provisioning should be performed through a controlled administrative process.
+
+Authentication routes:
+
+| Method | Route | Access |
+|---|---|---|
+| POST | `/api/v1/auth/register` | Anonymous; creates a Student account |
+| POST | `/api/v1/auth/login` | Anonymous |
+| GET | `/api/v1/auth/me` | Valid JWT required |
+
+Send access tokens using the `Authorization: Bearer <token>` header. The current implementation is an initial authentication foundation, not a production-complete identity lifecycle: email verification, refresh-token rotation/revocation, password reset, MFA, audit events, and privileged account provisioning still need implementation and tests. Do not deploy it with real university accounts until those controls and security tests are completed.
+
+
 ## Security & Engineering Principles
 
 Security and data integrity are important because university systems can process personal, academic, and financial information. The implementation is expected to address:
@@ -199,7 +225,8 @@ These are engineering objectives; their implementation and verification will be 
 - [x] Create the API project and initial admission HTTP endpoints.
 - [x] Add centralized Problem Details exception handling and health endpoint.
 - [x] Add development-only OpenAPI and Scalar documentation.
-- [ ] Set up ASP.NET Core Identity and JWT authentication.
+- [x] Set up the initial ASP.NET Core Identity and JWT authentication foundation.
+- [ ] Add email verification, refresh-token rotation/revocation, password reset, and MFA.
 - [ ] Implement roles and authorization policies.
 - [ ] Establish the university structure (faculties, departments, programs, and academic sessions).
 - [ ] Develop student and admissions workflows.
