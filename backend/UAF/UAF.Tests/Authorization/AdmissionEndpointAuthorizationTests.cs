@@ -41,6 +41,7 @@ public sealed class AdmissionEndpointAuthorizationTests
     {
         var builder = WebApplication.CreateBuilder();
         builder.Services.AddAuthorization();
+        builder.Services.AddApplication();
         await using var app = builder.Build();
         app.MapAdmissionEndpoints();
 
