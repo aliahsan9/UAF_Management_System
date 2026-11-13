@@ -179,8 +179,6 @@ public sealed class CourseOfferingServiceTests
             Task.FromResult((IReadOnlyList<CourseEnrollment>)_enrollments.Values.Where(x => x.CourseOfferingId == id).ToArray());
         public Task<CourseEnrollment?> GetEnrollmentAsync(Guid id, CancellationToken ct = default)
         { _enrollments.TryGetValue(id, out var x); return Task.FromResult(x); }
-        public Task<bool> StudentIsEligibleAsync(Guid id, CancellationToken ct = default) =>
-            Task.FromResult((StudentActive && id == StudentId) || EligibleStudents.Contains(id));
         public async Task<CourseEnrollment> EnrollAsync(Guid studentId, Guid offeringId, DateOnly enrolledOn, CancellationToken ct = default)
         {
             await _enrollmentGate.WaitAsync(ct);
