@@ -10,6 +10,7 @@ public sealed class CourseOffering : AuditableEntity
 {
     private CourseOffering()
     {
+        Section = string.Empty;
     }
 
     public CourseOffering(
