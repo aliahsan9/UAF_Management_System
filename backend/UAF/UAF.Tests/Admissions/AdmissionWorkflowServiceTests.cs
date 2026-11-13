@@ -47,7 +47,7 @@ public sealed class AdmissionWorkflowServiceTests
     {
         var repository = new FakeWorkflowRepository();
         var service = new AdmissionWorkflowService(repository);
-        var actorId = Guid.NewGuid();
+        var actorId = repository.RegistrarId;
 
         var result = await service.ConvertAcceptedApplicationAsync(Guid.NewGuid(), actorId);
 
@@ -59,7 +59,7 @@ public sealed class AdmissionWorkflowServiceTests
 
     private sealed class FakeWorkflowRepository : IAdmissionWorkflowRepository
     {
-        private readonly Guid _actorId = Guid.NewGuid();
+        public Guid RegistrarId { get; } = Guid.NewGuid();
         public int DecisionCalls { get; private set; }
         public int ConversionCalls { get; private set; }
         public Student Student { get; }
@@ -68,7 +68,7 @@ public sealed class AdmissionWorkflowServiceTests
         {
             Student = new Student("UAF-2026-00001", "Test Student", "student@example.com",
                 Guid.NewGuid(), new DateOnly(2026, 11, 13), null, Guid.NewGuid(), Guid.NewGuid());
-            Student.RecordAdmissionRegistration(_actorId, DateTimeOffset.UtcNow);
+            Student.RecordAdmissionRegistration(RegistrarId, DateTimeOffset.UtcNow);
         }
 
         public Task StartReviewAsync(Guid applicationId, Guid actorUserId, DateTimeOffset occurredAtUtc, CancellationToken ct = default) =>
