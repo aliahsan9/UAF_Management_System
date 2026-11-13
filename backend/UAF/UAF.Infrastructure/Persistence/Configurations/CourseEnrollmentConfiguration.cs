@@ -11,7 +11,8 @@ public sealed class CourseEnrollmentConfiguration : IEntityTypeConfiguration<Cou
         builder.ToTable("CourseEnrollments");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Status).HasConversion<int>().IsRequired();
-        builder.HasIndex(x => new { x.StudentId, x.CourseOfferingId }).IsUnique();
+        builder.HasIndex(x => new { x.StudentId, x.CourseOfferingId }).IsUnique()
+            .HasFilter("[Status] = 1"); // One active enrollment per student and offering; dropped history is retained.
         builder.HasIndex(x => new { x.CourseOfferingId, x.Status });
         builder.HasOne<Student>().WithMany().HasForeignKey(x => x.StudentId)
             .OnDelete(DeleteBehavior.Restrict);
