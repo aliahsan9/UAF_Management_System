@@ -25,6 +25,7 @@ public sealed class GlobalExceptionHandler : IExceptionHandler
         {
             ArgumentException => (StatusCodes.Status400BadRequest, "Invalid request"),
             KeyNotFoundException => (StatusCodes.Status404NotFound, "Resource not found"),
+            UnauthorizedAccessException => (StatusCodes.Status403Forbidden, "Access denied"),
             InvalidOperationException => (StatusCodes.Status409Conflict, "Request conflicts with the current resource state"),
             _ => (StatusCodes.Status500InternalServerError, "An unexpected error occurred")
         };
