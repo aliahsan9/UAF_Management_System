@@ -38,6 +38,17 @@ internal sealed class CourseOfferingRepository : ICourseOfferingRepository
     public Task<int> GetActiveEnrollmentCountAsync(Guid offeringId, CancellationToken ct = default) =>
         _dbContext.CourseEnrollments.CountAsync(x => x.CourseOfferingId == offeringId && x.Status == EnrollmentStatus.Enrolled, ct);
 
+    public async Task<IReadOnlyDictionary<Guid, int>> GetActiveEnrollmentCountsAsync(
+        IReadOnlyCollection<Guid> offeringIds, CancellationToken ct = default)
+    {
+        if (offeringIds.Count == 0) return new Dictionary<Guid, int>();
+        return await _dbContext.CourseEnrollments.AsNoTracking()
+            .Where(x => offeringIds.Contains(x.CourseOfferingId) && x.Status == EnrollmentStatus.Enrolled)
+            .GroupBy(x => x.CourseOfferingId)
+            .Select(group => new { OfferingId = group.Key, Count = group.Count() })
+            .ToDictionaryAsync(x => x.OfferingId, x => x.Count, ct);
+    }
+
     public Task AddOfferingAsync(CourseOffering offering, CancellationToken ct = default) =>
         _dbContext.CourseOfferings.AddAsync(offering, ct).AsTask();
 
