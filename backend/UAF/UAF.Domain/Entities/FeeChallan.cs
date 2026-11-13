@@ -13,6 +13,7 @@ public sealed class FeeChallan : AuditableEntity
         Subtotal = subtotal; LateFeeAmount = lateFeeAmount; CurrencyCode = currencyCode; IssuedByUserId = issuedByUserId; Status = FeeChallanStatus.Issued;
     }
     public Guid StudentFeeAccountId { get; private set; }
+    public StudentFeeAccount StudentFeeAccount { get; private set; } = null!;
     public string ChallanNumber { get; private set; }
     public DateOnly IssueDate { get; private set; }
     public DateOnly DueDate { get; private set; }
