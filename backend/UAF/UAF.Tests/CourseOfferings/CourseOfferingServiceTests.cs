@@ -189,6 +189,16 @@ public sealed class CourseOfferingServiceTests
             Task.FromResult(_offerings.Values.Any(x => x.CourseId == courseId && x.AcademicSessionId == sessionId && x.Section == section && x.Id != excludingId));
         public Task<int> GetActiveEnrollmentCountAsync(Guid id, CancellationToken ct = default) =>
             Task.FromResult(_enrollments.Values.Count(x => x.CourseOfferingId == id && x.Status == EnrollmentStatus.Enrolled));
+
+        public Task<IReadOnlyDictionary<Guid, int>> GetActiveEnrollmentCountsAsync(
+            IReadOnlyCollection<Guid> offeringIds, CancellationToken ct = default)
+        {
+            IReadOnlyDictionary<Guid, int> counts = _enrollments.Values
+                .Where(x => offeringIds.Contains(x.CourseOfferingId) && x.Status == EnrollmentStatus.Enrolled)
+                .GroupBy(x => x.CourseOfferingId)
+                .ToDictionary(group => group.Key, group => group.Count());
+            return Task.FromResult(counts);
+        }
         public Task AddOfferingAsync(CourseOffering offering, CancellationToken ct = default) { _offerings.Add(offering.Id, offering); return Task.CompletedTask; }
         public Task UpdateOfferingAsync(Guid offeringId, int capacity, Guid? instructorEmployeeId, CancellationToken ct = default)
         {
