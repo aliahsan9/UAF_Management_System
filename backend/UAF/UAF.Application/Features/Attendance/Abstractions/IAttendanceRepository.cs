@@ -1,4 +1,5 @@
 using UAF.Domain.Entities;
+using UAF.Application.Features.Attendance.Models;
 using UAF.Domain.Enums;
 namespace UAF.Application.Features.Attendance.Abstractions;
 public interface IAttendanceRepository
