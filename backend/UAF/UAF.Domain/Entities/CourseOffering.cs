@@ -29,6 +29,9 @@ public sealed class CourseOffering : AuditableEntity
         if (string.IsNullOrWhiteSpace(section))
             throw new ArgumentException("Course section is required.", nameof(section));
 
+        if (section.Trim().Length > 20)
+            throw new ArgumentOutOfRangeException(nameof(section), "Course section cannot exceed 20 characters.");
+
         if (capacity <= 0)
             throw new ArgumentOutOfRangeException(nameof(capacity), "Course capacity must be greater than zero.");
 
