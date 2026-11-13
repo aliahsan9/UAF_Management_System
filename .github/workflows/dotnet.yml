@@ -42,11 +42,34 @@ jobs:
         with:
           dotnet-version: "10.0.x"
 
-      - name: Restore
-        run: dotnet restore backend/UAF/UAF.sln
+      - name: Restore with NuGet vulnerability warnings treated as errors
+        run: >-
+          dotnet restore backend/UAF/UAF.sln
+          -p:NuGetAudit=true
+          -p:NuGetAuditLevel=moderate
+          -warnaserror:NU1901,NU1902,NU1903,NU1904
+
+      - name: Report vulnerable direct and transitive packages
+        run: dotnet list backend/UAF/UAF.sln package --vulnerable --include-transitive
+
+      - name: Restore local tools
+        run: dotnet tool restore
 
       - name: Build
         run: dotnet build backend/UAF/UAF.sln --configuration Release --no-restore
+
+      - name: Validate EF Core model snapshot when migrations are committed
+        shell: bash
+        run: |
+          migrations_dir="backend/UAF/UAF.Infrastructure/Persistence/Migrations"
+          if [ -d "$migrations_dir" ] && find "$migrations_dir" -maxdepth 1 -name '*.cs' -print -quit | grep -q .; then
+            dotnet ef migrations has-pending-model-changes \
+              --project backend/UAF/UAF.Infrastructure/UAF.Infrastructure.csproj \
+              --startup-project backend/UAF/UAF.API/UAF.API.csproj \
+              --context UafDbContext
+          else
+            echo "::warning::No committed EF Core migrations found. Generate, review, and commit the InitialCreate migration before deployment."
+          fi
 
       - name: Test
         env:
