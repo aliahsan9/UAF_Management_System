@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using System.Threading.RateLimiting;
 using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -38,6 +39,17 @@ builder.Host.UseSerilog((context, services, loggerConfiguration) =>
             retainedFileCountLimit: 14,
             shared: true);
 });
+
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<BrotliCompressionProvider>();
+    options.Providers.Add<GzipCompressionProvider>();
+});
+builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
+    options.Level = CompressionLevel.Fastest);
+builder.Services.Configure<GzipCompressionProviderOptions>(options =>
+    options.Level = CompressionLevel.Fastest);
 
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
@@ -89,6 +101,8 @@ app.UseSerilogRequestLogging(options =>
     };
 });
 app.UseExceptionHandler();
+app.UseResponseCompression();
+app.UseMiddleware<ReferenceDataCacheInvalidationMiddleware>();
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
