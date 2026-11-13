@@ -98,10 +98,10 @@ public static class AdmissionsEndpoints
 
     private static async Task<IResult> Submit(
         Guid id,
-        AdmissionApplicationService service,
+        AdmissionDocumentService service,
         CancellationToken cancellationToken)
     {
-        await service.SubmitAsync(id, cancellationToken);
+        await service.SubmitStaffApplicationAsync(id, cancellationToken);
         return Results.NoContent();
     }
 
