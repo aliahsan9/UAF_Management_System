@@ -213,6 +213,32 @@ Course catalogue routes (all require Registrar, DepartmentAdmin, or SuperAdmin):
 
 Course codes are unique within their department, not globally. Credit hours must be greater than zero and no more than 10, matching the existing domain and database constraint. A course cannot be deactivated while it has draft or published offerings; historical offerings are retained. The course catalogue is separate from session-specific course offerings and student enrollment.
 
+Course offering routes (all require Registrar, DepartmentAdmin, or SuperAdmin):
+
+| Method | Route | Purpose |
+|---|---|---|
+| GET | `/api/v1/course-offerings?academicSessionId={id}&courseId={id}&status=Published` | Filter scheduled course sections |
+| GET | `/api/v1/course-offerings/{id}` | Offering details and current enrolled count |
+| POST | `/api/v1/course-offerings` | Schedule a course section in a planned or active session |
+| PUT | `/api/v1/course-offerings/{id}` | Update capacity and instructor assignment |
+| POST | `/api/v1/course-offerings/{id}/publish` | Publish a draft offering for enrollment |
+| POST | `/api/v1/course-offerings/{id}/close` | Close a published offering |
+| POST | `/api/v1/course-offerings/{id}/cancel` | Cancel a draft or published offering |
+| GET | `/api/v1/course-offerings/{id}/enrollments` | List registration history for an offering |
+| POST | `/api/v1/course-offerings/{id}/enrollments/{studentId}` | Enroll an active student in a published offering |
+
+Course enrollment lifecycle routes (same staff policy):
+
+| Method | Route | Purpose |
+|---|---|---|
+| POST | `/api/v1/course-enrollments/{id}/drop` | Drop an active registration |
+| POST | `/api/v1/course-enrollments/{id}/withdraw` | Withdraw an active registration |
+| POST | `/api/v1/course-enrollments/{id}/complete` | Mark an active registration completed |
+
+Offering sections are unique per course and academic session. Only active catalogue courses and planned/active sessions can be scheduled. An offering begins as Draft; enrollment is accepted only after publication. Capacity must be positive and cannot be reduced below the active enrollment count. Dropping or withdrawing a registration releases its seat; a student may re-enroll after dropping, while a filtered unique database index prevents two active registrations for the same student and offering.
+
+Enrollment insertion and capacity updates use SQL Server serializable transactions. The database also enforces unique active enrollment and section constraints. These controls are designed to prevent concurrent requests from allocating the same final seat twice; validate with SQL Server integration tests under concurrent load before production use. Instructor IDs are stored as references, but employee existence validation is deferred until the Employee module and its relationship are implemented. Student self-service enrollment is not exposed; these endpoints are staff-only until identity ownership and registration-window rules are designed.
+
 Student management routes (all require Registrar, DepartmentAdmin, or SuperAdmin):
 
 | Method | Route | Purpose |
@@ -287,7 +313,8 @@ These are engineering objectives; their implementation and verification will be 
 - [x] Add admissions and academic-structure authorization policies (role seeding still requires migration and runtime verification).
 - [x] Implement university, campus, faculty, department, and academic-program management endpoints with parent validation and unique-code checks.\n- [x] Add academic-session management endpoints and lifecycle tests. (Execution pending.)
 - [x] Implement initial administrative student-management workflows.
-- [x] Implement academic-session lifecycle and course catalogue management (build/test execution pending).\n- [ ] Extend admissions and undergraduate application workflows with applicant ownership, document handling, and integration tests.
+- [x] Implement academic-session lifecycle and course catalogue management (build/test execution pending).
+- [x] Implement course offering scheduling and student enrollment workflows (build/test execution pending).\n- [ ] Extend admissions and undergraduate application workflows with applicant ownership, document handling, and integration tests.
 - [ ] Develop fee and identity-card workflows.
 - [ ] Expand academic, LMS, examination, and employee modules.
 - [x] Add initial unit tests for admission application workflows (execution still pending).\n- [x] Implement administrative student registration, profile maintenance, program assignment, paginated search, and status lifecycle endpoints.\n- [x] Add student-management application unit tests (execution still pending).
