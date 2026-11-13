@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using UAF.Application.Common.Models;
 using UAF.Application.Features.Students.Abstractions;
 using UAF.Domain.Entities;
 using UAF.Domain.Enums;
@@ -46,7 +47,7 @@ internal sealed class StudentRepository : IStudentRepository
             (_, "desc") => query.OrderByDescending(x => x.RegistrationNumber),
             _ => query.OrderBy(x => x.RegistrationNumber)
         };
-        var items = await ordered.ThenBy(x => x.Id).Skip((page - 1) * pageSize).Take(pageSize).ToListAsync(ct);
+        var items = await ordered.ThenBy(x => x.Id).Skip(PaginationMetadata.Create(page, pageSize, totalCount).Skip).Take(pageSize).ToListAsync(ct);
 
         return (items, totalCount);
     }
