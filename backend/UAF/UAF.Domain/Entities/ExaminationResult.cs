@@ -17,6 +17,7 @@ public sealed class ExaminationResult : AuditableEntity
         RecordedByUserId = recordedByUserId;
         RecordedAtUtc = DateTimeOffset.UtcNow;
     }
+    public byte[] RowVersion { get; private set; } = Array.Empty<byte>();
     public Guid ExaminationId { get; private set; }
     public Guid StudentId { get; private set; }
     public decimal MarksObtained { get; private set; }
