@@ -20,7 +20,7 @@ public static class AdmissionDocumentReviewEndpoints
         {
             await service.ConfigureRequirementsAsync(academicProgramId, GetUserId(user), request.RequiredDocumentTypes, ct);
             return Results.NoContent();
-        });
+        }).RequireAuthorization(AuthorizationPolicies.AdmissionsDecision);
 
         group.MapGet("/application/{applicationId:guid}", async (Guid applicationId,
             AdmissionDocumentService service, CancellationToken ct) =>
