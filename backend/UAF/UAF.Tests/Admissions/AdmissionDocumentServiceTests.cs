@@ -188,6 +188,24 @@ public sealed class AdmissionDocumentServiceTests
     }
 
     [Fact]
+    public async Task ReconfiguringChecklistReplacesPreviousRequirements()
+    {
+        var ownerId = Guid.NewGuid();
+        var app = new AdmissionApplication("UAF-TEST-011", "Applicant", "applicant@example.com",
+            Guid.NewGuid(), new DateOnly(2026, 11, 13), ownerUserId: ownerId);
+        var service = new AdmissionDocumentService(new FakeRepository(app), new FakeStorage(), new FakeUnitOfWork());
+        var staffId = Guid.NewGuid();
+
+        await service.ConfigureRequirementsAsync(app.AcademicProgramId, staffId,
+            new[] { AdmissionDocumentType.IdentityDocument, AdmissionDocumentType.AcademicTranscript });
+        await service.ConfigureRequirementsAsync(app.AcademicProgramId, staffId,
+            new[] { AdmissionDocumentType.Photograph });
+
+        var configured = await service.GetConfiguredRequirementsAsync(app.AcademicProgramId);
+        Assert.Equal(new[] { AdmissionDocumentType.Photograph }, configured);
+    }
+
+    [Fact]
     public async Task SubmissionIsBlockedWhenProgramHasNoConfiguredChecklist()
     {
         var ownerId = Guid.NewGuid();
