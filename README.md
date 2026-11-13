@@ -572,3 +572,55 @@ For a correction, provide a non-empty `reason` for the changed mark. A repeated 
 **Policy and scope limitations:** no UAF-specific attendance percentage threshold, lateness weighting, excused-absence policy, or correction approval process is hardcoded. The current module stores raw statuses and audit history; percentage calculations, configurable attendance policy, correction approval workflow, student self-service attendance views, timetable validation, and notifications are future work. Teachers must have an active Employee record, an active course assignment, a linked Identity account, and a TeacherProfile. Closed offerings remain readable for attendance history, but cancelled/draft offerings do not allow attendance operations.
 
 Attendance domain and authorization tests have been authored. They have **not** been executed, and the new EF Core mappings have not been migrated or validated against SQL Server. Before applying a migration, inspect existing CourseOffering instructor references and ensure they satisfy the Employee foreign key introduced in the Employee milestone. Run the full build/test suite and a dedicated SQL Server integration test before treating this module as production-ready.
+
+## Attendance Reporting and Shortage Monitoring
+
+The reporting milestone adds configurable calculation rules and course-offering reports.
+
+### Configurable attendance policy
+
+Attendance policy is configured once per academic session and can be changed only by **Registrar** or **SuperAdmin**.
+
+- RequiredPercentage: shortage threshold, from 0 to 100.
+- LateCreditPercentage: percentage credit awarded for a Late mark, from 0 to 100. For example, 50 means one Late mark earns half of one Present mark.
+- ExcludeExcusedFromDenominator: when true, Excused sessions are removed from the denominator; when false, they remain in the denominator and earn no attendance credit.
+- A policy must exist for the academic session before a course report can be calculated.
+
+### Calculation
+
+Only **Finalized** attendance sessions are counted. Open and Cancelled sessions are excluded.
+
+```text
+earned = PresentCount + (LateCount * LateCreditPercentage / 100)
+
+denominator = FinalizedSessionCount
+              - (ExcludeExcusedFromDenominator ? ExcusedCount : 0)
+
+attendancePercentage = (earned / denominator) * 100
+```
+
+Percentages are rounded to two decimal places. If the denominator is zero, the percentage is null (not 0%). A student is flagged below threshold only when a percentage exists and it is lower than the configured required percentage. The course average is calculated over students with a non-null percentage.
+
+### Reporting API
+
+| Method | Route | Purpose |
+|---|---|---|
+| PUT | `/api/v1/attendance/policies/{academicSessionId}` | Create or update the academic-session attendance policy |
+| GET | `/api/v1/attendance/policies/{academicSessionId}` | Read the configured policy |
+| GET | `/api/v1/attendance/offerings/{offeringId}/report` | Return student-wise attendance and course summary |
+
+Example policy request:
+
+```json
+{
+  "requiredPercentage": 75,
+  "lateCreditPercentage": 50,
+  "excludeExcusedFromDenominator": true
+}
+```
+
+Policy configuration is restricted to Registrar and SuperAdmin. Teachers can report only on their own assigned offerings. DepartmentAdmin access is checked against an active Employee record linked to the caller and the course's department. Registrar and SuperAdmin can view all published/closed offerings.
+
+**Important policy caveat:** changing the single policy configured for an academic session changes how that session's reports are calculated, including previously finalized attendance. This initial version does not preserve historical policy versions or freeze calculations at a reporting date. Obtain the approved university policy before configuration, and add effective-dated policy versions before relying on historical reports for formal decisions.
+
+Domain, calculation, and authorization tests have been authored but have **not** been executed. The new entity mapping has not been migrated or validated against SQL Server. Run the complete solution build/test suite and SQL Server integration tests before using the reports operationally.
