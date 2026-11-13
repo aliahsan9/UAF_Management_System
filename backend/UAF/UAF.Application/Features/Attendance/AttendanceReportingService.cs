@@ -48,8 +48,8 @@ public sealed class AttendanceReportingService
             var absent = student.Marks.Count(x => x == UAF.Domain.Enums.AttendanceStatus.Absent);
             var late = student.Marks.Count(x => x == UAF.Domain.Enums.AttendanceStatus.Late);
             var excused = student.Marks.Count(x => x == UAF.Domain.Enums.AttendanceStatus.Excused);
-            var counted = source.FinalizedSessionCount - (policy.ExcludeExcusedFromDenominator ? excused : 0);
-            var percentage = AttendancePercentageCalculator.Calculate(source.FinalizedSessionCount, present, late, excused,
+            var counted = student.EligibleFinalizedSessionCount - (policy.ExcludeExcusedFromDenominator ? excused : 0);
+            var percentage = AttendancePercentageCalculator.Calculate(student.EligibleFinalizedSessionCount, present, late, excused,
                 policy.LateCreditPercentage, policy.ExcludeExcusedFromDenominator);
             return new StudentAttendanceReport(student.StudentId, student.RegistrationNumber, student.FullName, student.EnrollmentStatus,
                 present, absent, late, excused, counted, percentage,
