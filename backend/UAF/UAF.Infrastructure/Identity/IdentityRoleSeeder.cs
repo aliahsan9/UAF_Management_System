@@ -13,7 +13,7 @@ public static class IdentityRoleSeeder
         var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>()
             .CreateLogger("IdentityRoleSeeder");
 
-        string[] roles = ["Student", "Teacher", "DepartmentAdmin", "Registrar", "FinanceOfficer", "SuperAdmin"];
+        string[] roles = ["Student", "Teacher", "DepartmentAdmin", "Registrar", "FinanceOfficer", "HRManager", "SuperAdmin"];
 
         foreach (var role in roles)
         {
