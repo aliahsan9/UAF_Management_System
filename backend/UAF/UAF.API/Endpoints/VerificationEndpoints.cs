@@ -1,4 +1,4 @@
-using System.Security.Cryptography;using System.Text;using Microsoft.EntityFrameworkCore;using Microsoft.Extensions.Options;using QRCoder;using UAF.API.Authorization;using UAF.API.Localization;using Microsoft.Extensions.Localization;using UAF.Domain.Enums;using UAF.Infrastructure.Identity;using UAF.Infrastructure.Persistence;
+using System.Security.Cryptography;using System.Text;using Microsoft.EntityFrameworkCore;using Microsoft.Extensions.Options;using QRCoder;using UAF.API.Authorization;using UAF.API;using Microsoft.Extensions.Localization;using UAF.Domain.Enums;using UAF.Infrastructure.Identity;using UAF.Infrastructure.Persistence;
 namespace UAF.API.Endpoints;
 public static class VerificationEndpoints{
  public static IEndpointRouteBuilder MapVerificationEndpoints(this IEndpointRouteBuilder app){
