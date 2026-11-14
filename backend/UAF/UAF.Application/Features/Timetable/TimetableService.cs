@@ -38,6 +38,18 @@ public sealed class TimetableService
         return room.Id;
     }
 
+    public async Task<TeachingRoomResponse> GetRoomAsync(Guid id, CancellationToken ct)
+    {
+        if (id == Guid.Empty) throw new ArgumentException("A valid room ID is required.", nameof(id));
+        return Map(await _repository.GetRoomAsync(id, ct) ?? throw new KeyNotFoundException("Teaching room not found."));
+    }
+
+    public async Task<TimetableEntryResponse> GetEntryAsync(Guid id, CancellationToken ct)
+    {
+        if (id == Guid.Empty) throw new ArgumentException("A valid timetable entry ID is required.", nameof(id));
+        return Map(await _repository.GetEntryAsync(id, ct) ?? throw new KeyNotFoundException("Timetable entry not found."));
+    }
+
     public async Task<IReadOnlyList<TimetableEntryResponse>> GetEntriesAsync(Guid? sessionId, Guid? offeringId, CancellationToken ct)
     {
         if (sessionId == Guid.Empty || offeringId == Guid.Empty)
