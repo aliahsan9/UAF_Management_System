@@ -15,6 +15,9 @@ public static class ApplicantAdmissionEndpoints
             .WithTags("Applicant Admissions")
             .RequireAuthorization(AuthorizationPolicies.ApplicantSelfService);
 
+        group.MapGet("/programs", async (AdmissionApplicationService service, CancellationToken ct) =>
+            Results.Ok(await service.GetApplicantProgramsAsync(ct)));
+
         group.MapGet("/", async (ClaimsPrincipal user, AdmissionApplicationService service, CancellationToken ct) =>
             Results.Ok(await service.GetMyApplicationsAsync(GetUserId(user), ct)));
 
