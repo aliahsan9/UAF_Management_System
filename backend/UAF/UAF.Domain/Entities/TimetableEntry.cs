@@ -23,7 +23,7 @@ public sealed class TimetableEntry : AuditableEntity
         EndTime = endTime;
         EffectiveFrom = effectiveFrom;
         EffectiveTo = effectiveTo;
-        Status = TimetableEntryStatus.Draft;
+        Status = TimetableEntryStatus.Published;
     }
 
     public Guid CourseOfferingId { get; private set; }
@@ -34,13 +34,6 @@ public sealed class TimetableEntry : AuditableEntity
     public DateOnly EffectiveFrom { get; private set; }
     public DateOnly EffectiveTo { get; private set; }
     public TimetableEntryStatus Status { get; private set; }
-
-    public void Publish()
-    {
-        if (Status != TimetableEntryStatus.Draft) throw new InvalidOperationException("Only a draft timetable entry can be published.");
-        Status = TimetableEntryStatus.Published;
-        MarkUpdated();
-    }
 
     public void Cancel()
     {
