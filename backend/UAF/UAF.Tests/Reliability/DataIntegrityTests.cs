@@ -33,7 +33,7 @@ public sealed class DataIntegrityTests
     {
         var now = DateTimeOffset.UtcNow;
         var record = new IdempotencyRecord(
-            Guid.NewGuid().ToString(), "request-001", new string('A', 64), now.AddHours(24));
+            Guid.NewGuid().ToString(), new string('C', 64), "request-001", new string('A', 64), now.AddHours(24));
 
         record.Complete(201, "application/json", "{\"id\":\"created\"}", replayable: true);
 
@@ -49,7 +49,7 @@ public sealed class DataIntegrityTests
     {
         var now = DateTimeOffset.UtcNow;
         var record = new IdempotencyRecord(
-            Guid.NewGuid().ToString(), "request-002", new string('B', 64), now.AddHours(24));
+            Guid.NewGuid().ToString(), new string('D', 64), "request-002", new string('B', 64), now.AddHours(24));
         record.Complete(200, "application/json", "{}", replayable: true);
 
         Assert.Throws<InvalidOperationException>(() =>
