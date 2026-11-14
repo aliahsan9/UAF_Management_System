@@ -36,6 +36,7 @@ public static class AuthorizationPolicyExtensions
             AddPermissionPolicy(options, AuthorizationPolicies.GradeRevisionRequestManagement, UafPermissions.GradeRevisionsManage);
             AddPermissionPolicy(options, AuthorizationPolicies.GradeRevisionApproval, UafPermissions.GradeRevisionsApprove);
             AddPermissionPolicy(options, AuthorizationPolicies.TranscriptIssuance, UafPermissions.TranscriptsIssue);
+            AddPermissionPolicy(options, AuthorizationPolicies.TimetableManagement, UafPermissions.TimetableManage);
         });
         return services;
     }
