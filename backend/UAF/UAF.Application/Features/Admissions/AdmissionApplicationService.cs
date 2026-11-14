@@ -2,6 +2,7 @@ using UAF.Application.Common.Abstractions;
 using UAF.Application.Features.Admissions.Abstractions;
 using UAF.Application.Features.Admissions.Models;
 using UAF.Domain.Entities;
+using UAF.Domain.Enums;
 
 namespace UAF.Application.Features.Admissions;
 
@@ -43,7 +44,7 @@ public sealed class AdmissionApplicationService
             request.AcademicProgramId, DateOnly.FromDateTime(DateTime.UtcNow), request.PhoneNumber, ownerUserId);
         await _repository.AddAsync(application, ct);
         await _unitOfWork.SaveChangesAsync(ct);
-        return Map(application);
+        return MapApplicant(application);
     }
 
     public async Task<IReadOnlyList<ApplicantApplicationResponse>> GetMyApplicationsAsync(
@@ -51,12 +52,12 @@ public sealed class AdmissionApplicationService
     {
         EnsureOwner(ownerUserId);
         var applications = await _repository.GetOwnedAsync(ownerUserId, ct);
-        return applications.Select(Map).ToArray();
+        return applications.Select(MapApplicant).ToArray();
     }
 
     public async Task<ApplicantApplicationResponse> GetMyApplicationAsync(
         Guid ownerUserId, Guid applicationId, CancellationToken ct = default) =>
-        Map(await GetOwnedRequiredAsync(ownerUserId, applicationId, ct));
+        MapApplicant(await GetOwnedRequiredAsync(ownerUserId, applicationId, ct));
 
     public async Task UpdateMyDraftAsync(Guid ownerUserId, Guid applicationId,
         UpdateApplicantDraftRequest request, CancellationToken ct = default)
@@ -72,6 +73,33 @@ public sealed class AdmissionApplicationService
 
     public Task WithdrawAsync(Guid id, CancellationToken ct = default) =>
         UpdateApplicationAsync(id, application => application.Withdraw(), ct);
+
+    public async Task<StaffAdmissionApplicationsPageResponse> GetStaffApplicationsAsync(
+        StaffAdmissionApplicationsQuery query, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        var page = Math.Max(1, query.Page);
+        var pageSize = Math.Clamp(query.PageSize, 1, 100);
+        var search = string.IsNullOrWhiteSpace(query.Search) ? null : query.Search.Trim();
+        if (search?.Length > 100) search = search[..100];
+
+        var (items, totalCount) = await _repository.GetStaffPageAsync(
+            query.Status, query.AcademicProgramId, search, page, pageSize, ct);
+
+        return new StaffAdmissionApplicationsPageResponse(
+            items.Select(MapStaff).ToArray(), page, pageSize, totalCount,
+            (int)Math.Ceiling(totalCount / (double)pageSize));
+    }
+
+    public async Task<StaffAdmissionApplicationResponse> GetStaffApplicationAsync(
+        Guid applicationId, CancellationToken ct = default)
+    {
+        if (applicationId == Guid.Empty)
+            throw new ArgumentException("A valid application ID is required.", nameof(applicationId));
+        var application = await _repository.GetByIdAsync(applicationId, ct)
+            ?? throw new KeyNotFoundException("Admission application was not found.");
+        return MapStaff(application);
+    }
 
     private async Task UpdateOwnedAsync(Guid ownerId, Guid id, Action<AdmissionApplication> update, CancellationToken ct)
     {
@@ -108,7 +136,13 @@ public sealed class AdmissionApplicationService
         return value.Trim().ToUpperInvariant();
     }
 
-    private static ApplicantApplicationResponse Map(AdmissionApplication x) =>
+    private static ApplicantApplicationResponse MapApplicant(AdmissionApplication x) =>
         new(x.Id, x.ApplicationNumber, x.ApplicantFullName, x.ApplicantEmail, x.PhoneNumber,
             x.AcademicProgramId, x.ApplicationDate, x.Status, x.DecisionRemarks, x.CreatedAtUtc, x.UpdatedAtUtc);
+
+    private static StaffAdmissionApplicationResponse MapStaff(AdmissionApplication x) =>
+        new(x.Id, x.ApplicationNumber, x.ApplicantFullName, x.ApplicantEmail, x.PhoneNumber,
+            x.AcademicProgramId, x.ApplicationDate, x.Status, x.DecisionRemarks, x.OwnerUserId,
+            x.ReviewStartedByUserId, x.ReviewStartedAtUtc, x.DecisionByUserId, x.DecisionAtUtc,
+            x.CreatedAtUtc, x.UpdatedAtUtc);
 }
