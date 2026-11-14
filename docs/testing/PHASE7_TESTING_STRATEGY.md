@@ -45,3 +45,16 @@ k6 run -e BASE_URL=https://test.example.edu -e BEARER_TOKEN=<short-lived-test-to
 5. k6 p95 and error-rate thresholds pass in a representative non-production environment.
 6. Security review includes OWASP API1 object-level authorization and API5 function-level authorization for every sensitive endpoint.
 7. End-to-end workflow tests prove atomicity, authorization, auditability and duplicate-request behavior.
+
+
+## Verified CI run
+
+The Phase 7 branch was validated by GitHub Actions run [#43558683035](https://github.com/aliahsan9/UAF_Management_System/actions/runs/43558683035) on commit `718fa90671a6f0921cd2d81cc4dbaae9a517ef46`.
+
+- Release build: passed.
+- SQL Server service initialization: passed.
+- Test result: **257 passed, 0 failed, 0 skipped**.
+- Coverlet generated `backend/UAF/UAF.Tests/TestResults/Coverage/coverage.cobertura.xml`.
+- TRX and Cobertura reports are uploaded as the `uaf-test-and-coverage-reports` workflow artifact.
+
+The CI result validates the tests currently in the repository; it does not mean the complete OWASP API Security Top 10, every business workflow, or production-scale performance have been exhaustively tested. Run the manual k6 workflow against a representative non-production deployment and complete the remaining release criteria above.
