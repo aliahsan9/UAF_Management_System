@@ -1,4 +1,3 @@
-using System.Linq.Expressions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -61,22 +60,13 @@ public sealed class UafDbContext : IdentityDbContext<ApplicationUser, IdentityRo
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(UafDbContext).Assembly);
 
-        // Apply the same soft-delete semantics to every auditable aggregate.
-        // The explicit IgnoreQueryFilters() escape hatch is reserved for audited administrative workflows.
-        foreach (var entityType in modelBuilder.Model.GetEntityTypes()
-                     .Where(type => type.ClrType is not null &&
-                                    typeof(AuditableEntity).IsAssignableFrom(type.ClrType) &&
-                                    !type.ClrType.IsAbstract))
-        {
-            var parameter = Expression.Parameter(entityType.ClrType, "entity");
-            var isDeleted = Expression.Property(parameter, nameof(AuditableEntity.IsDeleted));
-            var filter = Expression.Lambda(Expression.Not(isDeleted), parameter);
-            modelBuilder.Entity(entityType.ClrType).HasQueryFilter(filter);
-
-            modelBuilder.Entity(entityType.ClrType)
-                .Property(nameof(AuditableEntity.RowVersion))
-                .IsRowVersion();
-        }
+        // EF Core permits one global query filter per inheritance root. Every
+        // AuditableEntity aggregate inherits this filter and SQL Server rowversion mapping.
+        modelBuilder.Entity<AuditableEntity>()
+            .HasQueryFilter(entity => !entity.IsDeleted);
+        modelBuilder.Entity<AuditableEntity>()
+            .Property(entity => entity.RowVersion)
+            .IsRowVersion();
 
         modelBuilder.Entity<ApplicationUser>(entity =>
         {
