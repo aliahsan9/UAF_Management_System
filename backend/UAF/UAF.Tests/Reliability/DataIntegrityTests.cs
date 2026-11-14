@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using UAF.Domain.Common;
 using UAF.Domain.Entities;
 using UAF.Infrastructure.Persistence;
 using Xunit;
@@ -63,11 +64,13 @@ public sealed class DataIntegrityTests
             .Options;
         using var db = new UafDbContext(options);
 
+        var root = db.Model.FindEntityType(typeof(Entity));
+        Assert.NotNull(root);
+        Assert.NotNull(root!.GetQueryFilter());
+
         var student = db.Model.FindEntityType(typeof(Student));
         Assert.NotNull(student);
-        Assert.NotNull(student!.GetQueryFilter());
-
-        var rowVersion = student.FindProperty(nameof(Student.RowVersion));
+        var rowVersion = student!.FindProperty(nameof(Student.RowVersion));
         Assert.NotNull(rowVersion);
         Assert.True(rowVersion!.IsConcurrencyToken);
         Assert.True(rowVersion.ValueGenerated == Microsoft.EntityFrameworkCore.Metadata.ValueGenerated.OnAddOrUpdate);
