@@ -24,6 +24,8 @@ public sealed class SqlServerHealthCheck : IHealthCheck
         HealthCheckContext context,
         CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
         try
         {
             var canConnect = await _dbContext.Database.CanConnectAsync(cancellationToken);
