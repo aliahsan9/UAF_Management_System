@@ -16,6 +16,10 @@ public static class TimetableEndpoints
             service.GetRoomsAsync(campusId, ct))
             .WithName("GetTeachingRooms");
 
+        group.MapGet("/rooms/{id:guid}", (Guid id, TimetableService service, CancellationToken ct) =>
+            service.GetRoomAsync(id, ct))
+            .WithName("GetTeachingRoom");
+
         group.MapPost("/rooms", async (CreateTeachingRoomRequest request, TimetableService service, CancellationToken ct) =>
         {
             var id = await service.CreateRoomAsync(request, ct);
@@ -28,6 +32,10 @@ public static class TimetableEndpoints
         group.MapGet("/entries", (Guid? academicSessionId, Guid? courseOfferingId, TimetableService service, CancellationToken ct) =>
             service.GetEntriesAsync(academicSessionId, courseOfferingId, ct))
             .WithName("GetTimetableEntries");
+
+        group.MapGet("/entries/{id:guid}", (Guid id, TimetableService service, CancellationToken ct) =>
+            service.GetEntryAsync(id, ct))
+            .WithName("GetTimetableEntry");
 
         group.MapPost("/entries", async (CreateTimetableEntryRequest request, TimetableService service, CancellationToken ct) =>
         {
