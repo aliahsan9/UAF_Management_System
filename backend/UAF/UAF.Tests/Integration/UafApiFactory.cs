@@ -9,7 +9,7 @@ public sealed class UafApiFactory : WebApplicationFactory<global::Program>
     {
         builder.UseEnvironment("Development");
         builder.UseSetting("ConnectionStrings:UafDatabase",
-            "Server=127.0.0.1,1433;Database=UafApiFactory_NotUsed;User Id=sa;Password=Uaf_CI_StrongPassword_2026!;Encrypt=False;TrustServerCertificate=True");
+            "Server=127.0.0.1,1433;Database=master;User Id=sa;Password=Uaf_CI_StrongPassword_2026!;Encrypt=False;TrustServerCertificate=True");
         builder.UseSetting("Jwt:Issuer", "UAF.Tests");
         builder.UseSetting("Jwt:Audience", "UAF.Tests");
         builder.UseSetting("Jwt:SigningKey", "UAF-Integration-Test-Signing-Key-At-Least-32-Bytes");
