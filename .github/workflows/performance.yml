@@ -1,0 +1,26 @@
+name: Performance smoke test
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: Non-production API base URL
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  k6:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: grafana/setup-k6-action@v1
+      - name: Run authenticated student-list load test
+        env:
+          BASE_URL: ${{ inputs.base_url }}
+          BEARER_TOKEN: ${{ secrets.UAF_PERFORMANCE_TEST_TOKEN }}
+        run: |
+          if [ -z "$BEARER_TOKEN" ]; then
+            echo "::error::Configure UAF_PERFORMANCE_TEST_TOKEN with a short-lived, least-privilege test account token."
+            exit 1
+          fi
+          k6 run tests/performance/k6-student-read.js

@@ -2,7 +2,7 @@ name: .NET CI
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "master", "feature/phase7-testing-quality" ]
     paths:
       - "backend/**"
       - ".github/workflows/dotnet.yml"
@@ -82,6 +82,10 @@ jobs:
             -p:CollectCoverage=true \
             -p:CoverletOutputFormat=cobertura \
             -p:CoverletOutput=./TestResults/Coverage/
+
+      - name: Publish coverage summary
+        if: always()
+        run: python3 scripts/testing/write-coverage-summary.py backend/UAF/UAF.Tests/TestResults/Coverage/coverage.cobertura.xml
 
       - name: Upload test and coverage reports
         if: always()
