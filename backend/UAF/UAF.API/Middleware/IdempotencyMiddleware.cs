@@ -64,11 +64,12 @@ public sealed class IdempotencyMiddleware
                        ?? context.User.FindFirstValue("sub")
                        ?? $"anonymous:{context.Connection.RemoteIpAddress}";
         var operation = $"{context.Request.Method}:{context.Request.Path}{context.Request.QueryString}";
+        var operationKey = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(operation)));
         var fingerprint = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes($"{operation}\n{requestBody}")));
         var now = DateTimeOffset.UtcNow;
 
         var existing = await db.IdempotencyRecords.SingleOrDefaultAsync(
-            x => x.ActorKey == actorKey && x.RequestKey == requestKey, context.RequestAborted);
+            x => x.ActorKey == actorKey && x.OperationKey == operationKey && x.RequestKey == requestKey, context.RequestAborted);
 
         if (existing is not null && existing.HasExpired(now))
         {
@@ -112,7 +113,7 @@ public sealed class IdempotencyMiddleware
             return;
         }
 
-        var record = new IdempotencyRecord(actorKey, requestKey, fingerprint, now.Add(KeyLifetime));
+        var record = new IdempotencyRecord(actorKey, operationKey, requestKey, fingerprint, now.Add(KeyLifetime));
         db.IdempotencyRecords.Add(record);
         try
         {
