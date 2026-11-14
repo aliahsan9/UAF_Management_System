@@ -16,4 +16,16 @@ public abstract class AuditableEntity : Entity
 
     public void MarkUpdated(DateTimeOffset? updatedAtUtc = null) =>
         UpdatedAtUtc = updatedAtUtc ?? DateTimeOffset.UtcNow;
+
+    public override void SoftDelete(DateTimeOffset? deletedAtUtc = null)
+    {
+        base.SoftDelete(deletedAtUtc);
+        MarkUpdated(DeletedAtUtc);
+    }
+
+    public override void Restore()
+    {
+        base.Restore();
+        MarkUpdated();
+    }
 }
