@@ -121,6 +121,9 @@ public sealed class AdmissionApplicationServiceTests
         public Task<bool> AcademicProgramIsActiveAsync(Guid programId, CancellationToken ct = default) =>
             Task.FromResult(programId != Guid.Empty);
 
+        public Task<IReadOnlyList<AcademicProgram>> GetActiveAcademicProgramsAsync(CancellationToken ct = default) =>
+            Task.FromResult((IReadOnlyList<AcademicProgram>)Array.Empty<AcademicProgram>());
+
         public Task AddAsync(AdmissionApplication application, CancellationToken ct = default)
         {
             _applications.Add(application.Id, application);
