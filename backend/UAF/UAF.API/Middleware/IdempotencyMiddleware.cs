@@ -54,6 +54,11 @@ public sealed class IdempotencyMiddleware
                    bufferSize: 4096, leaveOpen: true))
             requestBody = await reader.ReadToEndAsync(context.RequestAborted);
         context.Request.Body.Position = 0;
+        if (Encoding.UTF8.GetByteCount(requestBody) > MaximumRequestBytes)
+        {
+            context.Response.StatusCode = StatusCodes.Status413PayloadTooLarge;
+            return;
+        }
 
         var actorKey = context.User.FindFirstValue(ClaimTypes.NameIdentifier)
                        ?? context.User.FindFirstValue("sub")
@@ -85,7 +90,7 @@ public sealed class IdempotencyMiddleware
             if (!existing.IsCompleted)
             {
                 context.Response.StatusCode = StatusCodes.Status409Conflict;
-                context.Response.Headers.RetryAfter = "2";
+                context.Response.Headers["Retry-After"] = "2";
                 await context.Response.WriteAsJsonAsync(new { title = "A request with this idempotency key is already being processed." });
                 return;
             }
