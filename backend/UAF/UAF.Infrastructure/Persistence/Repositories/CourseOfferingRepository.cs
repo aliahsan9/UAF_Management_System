@@ -79,6 +79,32 @@ internal sealed class CourseOfferingRepository : ICourseOfferingRepository
         if (capacity < enrolledCount)
             throw new InvalidOperationException($"Capacity cannot be lower than the {enrolledCount} currently enrolled students.");
 
+        if (instructorEmployeeId.HasValue)
+        {
+            if (!await _dbContext.Employees.AnyAsync(x => x.Id == instructorEmployeeId.Value &&
+                    x.Status == EmployeeStatus.Active, ct))
+                throw new InvalidOperationException("The assigned instructor is not an active employee.");
+
+            var scheduleConflict =
+                from currentSlot in _dbContext.TimetableEntries
+                from otherSlot in _dbContext.TimetableEntries
+                join otherOffering in _dbContext.CourseOfferings
+                    on otherSlot.CourseOfferingId equals otherOffering.Id
+                where currentSlot.CourseOfferingId == offeringId &&
+                      currentSlot.Status == TimetableEntryStatus.Published &&
+                      otherSlot.CourseOfferingId != offeringId &&
+                      otherSlot.Status == TimetableEntryStatus.Published &&
+                      otherOffering.InstructorEmployeeId == instructorEmployeeId &&
+                      currentSlot.DayOfWeek == otherSlot.DayOfWeek &&
+                      currentSlot.EffectiveFrom <= otherSlot.EffectiveTo &&
+                      otherSlot.EffectiveFrom <= currentSlot.EffectiveTo &&
+                      currentSlot.StartTime < otherSlot.EndTime &&
+                      otherSlot.StartTime < currentSlot.EndTime
+                select otherSlot.Id;
+            if (await scheduleConflict.AnyAsync(ct))
+                throw new InvalidOperationException("The selected instructor has an overlapping published timetable entry.");
+        }
+
         offering.UpdateCapacity(capacity);
         offering.AssignInstructor(instructorEmployeeId);
         await _dbContext.SaveChangesAsync(ct);
