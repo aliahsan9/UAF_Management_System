@@ -117,6 +117,27 @@ internal sealed class CourseOfferingRepository : ICourseOfferingRepository
         if (!studentIsActive)
             throw new InvalidOperationException("The student is not active and eligible for enrollment.");
 
+        // A student must not be registered into an offering whose published timetable
+        // overlaps any of their already-enrolled offerings in the same recurring week.
+        var timetableConflict =
+            from newSlot in _dbContext.TimetableEntries
+            from existingEnrollment in _dbContext.CourseEnrollments
+            join existingSlot in _dbContext.TimetableEntries
+                on existingEnrollment.CourseOfferingId equals existingSlot.CourseOfferingId
+            where newSlot.CourseOfferingId == offeringId &&
+                  newSlot.Status == TimetableEntryStatus.Published &&
+                  existingEnrollment.StudentId == studentId &&
+                  existingEnrollment.Status == EnrollmentStatus.Enrolled &&
+                  existingSlot.Status == TimetableEntryStatus.Published &&
+                  newSlot.DayOfWeek == existingSlot.DayOfWeek &&
+                  newSlot.EffectiveFrom <= existingSlot.EffectiveTo &&
+                  existingSlot.EffectiveFrom <= newSlot.EffectiveTo &&
+                  newSlot.StartTime < existingSlot.EndTime &&
+                  existingSlot.StartTime < newSlot.EndTime
+            select existingSlot.Id;
+        if (await timetableConflict.AnyAsync(ct))
+            throw new InvalidOperationException("The student's timetable conflicts with another active course enrollment.");
+
         var enrollment = new CourseEnrollment(studentId, offeringId, enrolledOn);
         _dbContext.CourseEnrollments.Add(enrollment);
         await _dbContext.SaveChangesAsync(ct);
