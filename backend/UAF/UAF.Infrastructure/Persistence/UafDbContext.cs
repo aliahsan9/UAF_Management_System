@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -58,6 +59,24 @@ public sealed class UafDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(UafDbContext).Assembly);
+
+        // Apply the same soft-delete semantics to every auditable aggregate.
+        // The explicit IgnoreQueryFilters() escape hatch is reserved for audited administrative workflows.
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes()
+                     .Where(type => type.ClrType is not null &&
+                                    typeof(AuditableEntity).IsAssignableFrom(type.ClrType) &&
+                                    !type.ClrType.IsAbstract))
+        {
+            var parameter = Expression.Parameter(entityType.ClrType, "entity");
+            var isDeleted = Expression.Property(parameter, nameof(AuditableEntity.IsDeleted));
+            var filter = Expression.Lambda(Expression.Not(isDeleted), parameter);
+            modelBuilder.Entity(entityType.ClrType).HasQueryFilter(filter);
+
+            modelBuilder.Entity(entityType.ClrType)
+                .Property(nameof(AuditableEntity.RowVersion))
+                .IsRowVersion();
+        }
+
         modelBuilder.Entity<ApplicationUser>(entity =>
         {
             entity.Property(user => user.FullName).HasMaxLength(150).IsRequired();
@@ -79,6 +98,14 @@ public sealed class UafDbContext : IdentityDbContext<ApplicationUser, IdentityRo
 
     private void ApplyAuditInformation()
     {
+        // Convert ordinary Remove() calls into updates so historical records remain available.
+        foreach (var entry in ChangeTracker.Entries<AuditableEntity>()
+                     .Where(entry => entry.State == EntityState.Deleted))
+        {
+            entry.Entity.SoftDelete();
+            entry.State = EntityState.Modified;
+        }
+
         if (ChangeTracker.Entries<AdmissionDecisionAudit>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
             throw new InvalidOperationException("Admission decision audit records are append-only.");
         if (ChangeTracker.Entries<AttendanceChangeAudit>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
