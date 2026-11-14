@@ -15,7 +15,7 @@ Audit baseline: the repository `master` branch at the time this document was cre
 | 7 | Enrollment & Registration | Partially implemented | Course offering enrollment, capacity controls and lifecycle exist. University registration, add/drop windows, prerequisite checks, holds and student self-service registration are not complete. |
 | 8 | Fee Management & Scholarships | Partially implemented | Fee structures, accounts, challans, payments and receipts exist. Scholarship awards, eligibility, budgets, approval, disbursement and fee-waiver integration are absent. |
 | 9 | Course & Curriculum Management | Partially implemented | Course catalogue and session-specific offerings exist. Program curriculum versions, course requirements, prerequisites, equivalencies and study plans are absent. |
-| 10 | Timetable Management | Missing | No timetable/meeting, room, availability, conflict-detection or timetable publication module/API was found. |
+| 10 | Timetable Management | Initial foundation implemented on Phase 5 branch | Teaching-room inventory and recurring weekly timetable entries are implemented with serializable room/instructor/offering/enrolled-student conflict checks. Remaining: teacher availability calendars, one-off events, holidays, exam seating, timezone conversion and SQL Server concurrency integration tests. |
 | 11 | Attendance Management | Implemented foundation | Session attendance, correction audit, policies and shortage reporting exist. Validate policy configuration and end-to-end SQL Server behavior before production. |
 | 12 | Examination & Results | Implemented foundation | Examination scheduling, marks/results, approval, grading, appeals and revisions exist. Exam hall/seat planning and moderation workflows are not included. |
 | 13 | Transcript & Degree Management | Partially implemented | Immutable transcript snapshots, PDF and public verification exist. Degree eligibility/audit, award approval, certificate issuance and revocation are absent. |
@@ -39,7 +39,7 @@ Audit baseline: the repository `master` branch at the time this document was cre
 ## Phase 5 implementation order
 
 1. Complete academic foundations: institute/campus ownership, semester, program curriculum versions and prerequisites.
-2. Add timetable scheduling with room/instructor/cohort conflict prevention.
+2. Extend timetable scheduling with teacher availability, holidays, exam seating and schedule change notifications.
 3. Add scholarship awards integrated with fee accounts and approvals.
 4. Add employee HR and payroll with immutable pay-run snapshots and approvals.
 5. Add library circulation, hostel allocation and transport routing/capacity.
