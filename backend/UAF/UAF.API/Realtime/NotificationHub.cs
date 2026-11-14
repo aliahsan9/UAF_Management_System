@@ -1,0 +1,4 @@
+using System.Security.Claims;using Microsoft.AspNetCore.Authorization;using Microsoft.AspNetCore.SignalR;using UAF.Application.Features.Notifications;
+namespace UAF.API.Realtime;
+[Authorize]public sealed class NotificationHub:Hub{public override async Task OnConnectedAsync(){var value=Context.User?.FindFirstValue(ClaimTypes.NameIdentifier);if(Guid.TryParse(value,out var id))await Groups.AddToGroupAsync(Context.ConnectionId,$"user:{id:N}");await base.OnConnectedAsync();}}
+public sealed class SignalRNotificationPublisher:INotificationPublisher{private readonly IHubContext<NotificationHub> _hub;public SignalRNotificationPublisher(IHubContext<NotificationHub> hub)=>_hub=hub;public Task PublishAsync(Guid user,object payload,CancellationToken ct)=>_hub.Clients.Group($"user:{user:N}").SendAsync("notification.received",payload,ct);}

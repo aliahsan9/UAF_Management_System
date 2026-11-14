@@ -1,37 +1,5 @@
 namespace UAF.API.Authorization;
-
-public static class UafPermissions
-{
-    public const string AdmissionsRead = "admissions.read";
-    public const string AdmissionsReview = "admissions.review";
-    public const string AdmissionsDecide = "admissions.decide";
-    public const string StudentsRead = "students.read";
-    public const string StudentsManage = "students.manage";
-    public const string AcademicStructureManage = "academic-structure.manage";
-    public const string AcademicCatalogManage = "academic-catalog.manage";
-    public const string CourseOfferingsManage = "course-offerings.manage";
-    public const string FinanceRead = "finance.read";
-    public const string FinanceManage = "finance.manage";
-    public const string EmployeesManage = "employees.manage";
-    public const string AttendanceManage = "attendance.manage";
-    public const string AttendancePolicyManage = "attendance-policy.manage";
-    public const string ExaminationsManage = "examinations.manage";
-    public const string ExaminationsApprove = "examinations.approve";
-    public const string GradingScalesManage = "grading-scales.manage";
-    public const string GradesManage = "grades.manage";
-    public const string CourseGradesManage = "course-grades.manage";
-    public const string GradeAppealsReview = "grade-appeals.review";
-    public const string GradeRevisionsManage = "grade-revisions.manage";
-    public const string GradeRevisionsApprove = "grade-revisions.approve";
-    public const string TranscriptsIssue = "transcripts.issue";
-    public const string TimetableManage = "timetable.manage";
-
-    public static readonly string[] All =
-    [
-        AdmissionsRead, AdmissionsReview, AdmissionsDecide, StudentsRead, StudentsManage,
-        AcademicStructureManage, AcademicCatalogManage, CourseOfferingsManage,
-        FinanceRead, FinanceManage, EmployeesManage, AttendanceManage, AttendancePolicyManage,
-        ExaminationsManage, ExaminationsApprove, GradingScalesManage, GradesManage, CourseGradesManage,
-        GradeAppealsReview, GradeRevisionsManage, GradeRevisionsApprove, TranscriptsIssue, TimetableManage
-    ];
+public static class UafPermissions{
+ public const string AdmissionsRead="admissions.read";public const string AdmissionsReview="admissions.review";public const string AdmissionsDecide="admissions.decide";public const string StudentsRead="students.read";public const string StudentsManage="students.manage";public const string AcademicStructureManage="academic-structure.manage";public const string AcademicCatalogManage="academic-catalog.manage";public const string CourseOfferingsManage="course-offerings.manage";public const string FinanceRead="finance.read";public const string FinanceManage="finance.manage";public const string EmployeesManage="employees.manage";public const string AttendanceManage="attendance.manage";public const string AttendancePolicyManage="attendance-policy.manage";public const string ExaminationsManage="examinations.manage";public const string ExaminationsApprove="examinations.approve";public const string GradingScalesManage="grading-scales.manage";public const string GradesManage="grades.manage";public const string CourseGradesManage="course-grades.manage";public const string GradeAppealsReview="grade-appeals.review";public const string GradeRevisionsManage="grade-revisions.manage";public const string GradeRevisionsApprove="grade-revisions.approve";public const string TranscriptsIssue="transcripts.issue";public const string TimetableManage="timetable.manage";public const string WorkflowsManage="workflows.manage";public const string AuditTrailRead="audit-trail.read";public const string AnalyticsRead="analytics.read";
+ public static readonly string[] All=[AdmissionsRead,AdmissionsReview,AdmissionsDecide,StudentsRead,StudentsManage,AcademicStructureManage,AcademicCatalogManage,CourseOfferingsManage,FinanceRead,FinanceManage,EmployeesManage,AttendanceManage,AttendancePolicyManage,ExaminationsManage,ExaminationsApprove,GradingScalesManage,GradesManage,CourseGradesManage,GradeAppealsReview,GradeRevisionsManage,GradeRevisionsApprove,TranscriptsIssue,TimetableManage,WorkflowsManage,AuditTrailRead,AnalyticsRead];
 }

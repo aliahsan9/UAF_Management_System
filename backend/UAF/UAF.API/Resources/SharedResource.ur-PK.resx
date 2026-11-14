@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="Import_File_Required" xml:space="preserve"><value>براہِ کرم ایک غیر خالی CSV یا XLSX فائل اپ لوڈ کریں۔</value></data>
+  <data name="Import_File_Too_Large" xml:space="preserve"><value>درآمدی فائل کا سائز 10 MB سے زیادہ نہیں ہو سکتا۔</value></data>
+  <data name="Import_Unsupported_Format" xml:space="preserve"><value>صرف CSV اور XLSX فائلیں معاون ہیں۔</value></data>
+  <data name="Document_Verified" xml:space="preserve"><value>دستاویز کی کامیابی سے تصدیق ہو گئی ہے۔</value></data>
+  <data name="Document_Not_Verified" xml:space="preserve"><value>دستاویز کی تصدیق زیرِ التوا ہے یا مسترد کر دی گئی ہے۔</value></data>
+</root>
