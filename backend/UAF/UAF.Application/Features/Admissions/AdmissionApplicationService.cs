@@ -47,7 +47,13 @@ public sealed class AdmissionApplicationService
         return MapApplicant(application);
     }
 
-    public async Task<IReadOnlyList<ApplicantAcademicProgramResponse>> GetApplicantProgramsAsync(CancellationToken ct = default)\n    {\n        var programs = await _repository.GetActiveAcademicProgramsAsync(ct);\n        return programs.Select(x => new ApplicantAcademicProgramResponse(x.Id, x.Name, x.Code, (int)x.DegreeLevel, x.DurationInYears)).ToArray();\n    }\n\n    public async Task<IReadOnlyList<ApplicantApplicationResponse>> GetMyApplicationsAsync(
+    public async Task<IReadOnlyList<ApplicantAcademicProgramResponse>> GetApplicantProgramsAsync(CancellationToken ct = default)
+    {
+        var programs = await _repository.GetActiveAcademicProgramsAsync(ct);
+        return programs.Select(x => new ApplicantAcademicProgramResponse(x.Id, x.Name, x.Code, (int)x.DegreeLevel, x.DurationInYears)).ToArray();
+    }
+
+    public async Task<IReadOnlyList<ApplicantApplicationResponse>> GetMyApplicationsAsync(
         Guid ownerUserId, CancellationToken ct = default)
     {
         EnsureOwner(ownerUserId);
