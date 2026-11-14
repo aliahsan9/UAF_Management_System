@@ -1,4 +1,4 @@
-using System.Security.Claims;using System.Text.Json;using Microsoft.EntityFrameworkCore;using Microsoft.EntityFrameworkCore.Diagnostics;using UAF.Domain.Common;using UAF.Domain.Entities;
+using System.Security.Claims;using Microsoft.AspNetCore.Http;using System.Text.Json;using Microsoft.EntityFrameworkCore;using Microsoft.EntityFrameworkCore.Diagnostics;using UAF.Domain.Common;using UAF.Domain.Entities;
 namespace UAF.Infrastructure.Persistence.Interceptors;
 /// <summary>Persists domain create/update/delete snapshots atomically with the business change.</summary>
 public sealed class UafCentralAuditInterceptor:SaveChangesInterceptor{
