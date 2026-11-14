@@ -95,3 +95,33 @@ At minimum alert on:
 - Repeated authentication failures and authorization denials.
 
 Every incident record should include the correlation ID, UTC timestamps, deployment version, affected component, impact, mitigation, and follow-up actions. Do not include secrets or student personal data in incident tickets.
+
+
+## 9. Automated restore procedure
+
+The repository includes `scripts/database/Restore-UafDatabase.ps1` for a controlled SQL Server restore. First inspect the backup's logical file names:
+
+```sql
+RESTORE FILELISTONLY FROM DISK = N'<backup-path>';
+```
+
+Then restore only to an isolated recovery target during a drill:
+
+```powershell
+./scripts/database/Restore-UafDatabase.ps1 `
+  -Server "sql01" `
+  -Database "UafRecoveryTest" `
+  -BackupPath "E:\\SqlBackups\\UafManagementDb_FULL.bak" `
+  -DataLogicalName "UafManagementDb" `
+  -LogLogicalName "UafManagementDb_log" `
+  -DataDirectory "F:\\SqlData" `
+  -LogDirectory "G:\\SqlLogs" `
+  -WhatIf
+
+# After peer review, run without -WhatIf and explicitly confirm the destructive operation.
+./scripts/database/Restore-UafDatabase.ps1 -Server "sql01" -Database "UafRecoveryTest" -BackupPath "E:\\SqlBackups\\UafManagementDb_FULL.bak" -DataLogicalName "UafManagementDb" -LogLogicalName "UafManagementDb_log" -DataDirectory "F:\\SqlData" -LogDirectory "G:\\SqlLogs" -Confirm
+```
+
+The restore script performs `RESTORE VERIFYONLY`, restores with explicit logical-file MOVE paths, and runs `DBCC CHECKDB`. It uses Windows Integrated Authentication. A production restore must remain a separately approved DBA operation.
+
+For automation, register `Backup-UafDatabase.ps1` in Windows Task Scheduler or SQL Server Agent under a dedicated least-privilege service identity. Configure a nightly full backup initially, then add differential/log backups only after the DBA approves the recovery model and RPO/RTO. Capture exit codes and alert on failures. Replicate verified backups to encrypted off-host storage; the local script's retention is not a substitute for off-site retention.

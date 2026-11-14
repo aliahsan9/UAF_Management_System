@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -53,11 +54,29 @@ public sealed class UafDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<GradeRevisionAudit> GradeRevisionAudits => Set<GradeRevisionAudit>();
     public DbSet<AcademicTranscript> AcademicTranscripts => Set<AcademicTranscript>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<IdempotencyRecord> IdempotencyRecords => Set<IdempotencyRecord>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(UafDbContext).Assembly);
+
+        // Entity is a shared CLR base, not an EF inheritance root. Configure each
+        // concrete persisted aggregate independently to avoid creating a synthetic base table.
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes()
+                     .Where(type => type.ClrType is not null &&
+                                    typeof(Entity).IsAssignableFrom(type.ClrType) &&
+                                    !type.ClrType.IsAbstract))
+        {
+            var parameter = Expression.Parameter(entityType.ClrType, "entity");
+            var isDeleted = Expression.Property(parameter, nameof(Entity.IsDeleted));
+            var filter = Expression.Lambda(Expression.Not(isDeleted), parameter);
+            modelBuilder.Entity(entityType.ClrType).HasQueryFilter(filter);
+            modelBuilder.Entity(entityType.ClrType)
+                .Property(nameof(Entity.RowVersion))
+                .IsRowVersion();
+        }
+
         modelBuilder.Entity<ApplicationUser>(entity =>
         {
             entity.Property(user => user.FullName).HasMaxLength(150).IsRequired();
@@ -79,6 +98,7 @@ public sealed class UafDbContext : IdentityDbContext<ApplicationUser, IdentityRo
 
     private void ApplyAuditInformation()
     {
+        // Append-only and immutable invariants must be checked before delete conversion.
         if (ChangeTracker.Entries<AdmissionDecisionAudit>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
             throw new InvalidOperationException("Admission decision audit records are append-only.");
         if (ChangeTracker.Entries<AttendanceChangeAudit>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
@@ -101,6 +121,14 @@ public sealed class UafDbContext : IdentityDbContext<ApplicationUser, IdentityRo
             throw new InvalidOperationException("Grade scale bands are immutable after creation.");
         if (ChangeTracker.Entries<GradeScale>().Any(entry => entry.State == EntityState.Deleted || (entry.State == EntityState.Modified && entry.OriginalValues.GetValue<bool>(nameof(GradeScale.IsPublished)))))
             throw new InvalidOperationException("Published grading scales cannot be modified or deleted.");
+
+        // Convert ordinary Remove() calls into updates so historical records remain available.
+        foreach (var entry in ChangeTracker.Entries<Entity>()
+                     .Where(entry => entry.State == EntityState.Deleted))
+        {
+            entry.Entity.SoftDelete();
+            entry.State = EntityState.Modified;
+        }
 
         var now = DateTimeOffset.UtcNow;
         foreach (var entry in ChangeTracker.Entries<AuditableEntity>())

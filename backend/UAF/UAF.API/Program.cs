@@ -71,8 +71,8 @@ builder.Services.AddCors(options => options.AddPolicy("UafFrontend", policy =>
         policy.WithOrigins(allowedOrigins);
 
     policy.AllowAnyMethod()
-        .WithHeaders("Authorization", "Content-Type", "X-Correlation-ID", "X-Refresh-Request")
-        .WithExposedHeaders("X-Correlation-ID")
+        .WithHeaders("Authorization", "Content-Type", "X-Correlation-ID", "X-Refresh-Request", "Idempotency-Key")
+        .WithExposedHeaders("X-Correlation-ID", "Idempotency-Replayed")
         .AllowCredentials()
         .SetPreflightMaxAge(TimeSpan.FromMinutes(10));
 }));
@@ -140,6 +140,7 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseCors("UafFrontend");
 app.UseAuthentication();
+app.UseMiddleware<IdempotencyMiddleware>();
 app.UseMiddleware<SecurityAuditMiddleware>();
 app.UseAuthorization();
 app.UseRateLimiter();

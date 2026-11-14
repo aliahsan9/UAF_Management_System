@@ -67,6 +67,8 @@ public static class DependencyInjection
                     serviceProvider.GetRequiredService<UafCommandMonitoringInterceptor>(),
                     serviceProvider.GetRequiredService<UafSaveChangesAuditInterceptor>()));
 
+        services.AddHostedService<IdempotencyCleanupService>();
+
         services.AddIdentityCore<ApplicationUser>(options =>
         {
             options.User.RequireUniqueEmail = true;
