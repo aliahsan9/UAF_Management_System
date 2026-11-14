@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using UAF.Application.Features.Admissions.Abstractions;
 using UAF.Domain.Entities;
+using UAF.Domain.Enums;
 
 namespace UAF.Infrastructure.Persistence.Repositories;
 
@@ -23,6 +24,33 @@ internal sealed class AdmissionApplicationRepository : IAdmissionApplicationRepo
             .Where(x => x.OwnerUserId == ownerId)
             .OrderByDescending(x => x.CreatedAtUtc)
             .ToListAsync(ct);
+
+    public async Task<(IReadOnlyList<AdmissionApplication> Items, int TotalCount)> GetStaffPageAsync(
+        AdmissionStatus? status, Guid? academicProgramId, string? search, int page, int pageSize,
+        CancellationToken ct = default)
+    {
+        var query = _dbContext.AdmissionApplications.AsNoTracking().AsQueryable();
+
+        if (status.HasValue)
+            query = query.Where(x => x.Status == status.Value);
+        if (academicProgramId.HasValue && academicProgramId.Value != Guid.Empty)
+            query = query.Where(x => x.AcademicProgramId == academicProgramId.Value);
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim();
+            query = query.Where(x => x.ApplicationNumber.Contains(term) ||
+                x.ApplicantFullName.Contains(term) || x.ApplicantEmail.Contains(term));
+        }
+
+        var totalCount = await query.CountAsync(ct);
+        var items = await query.OrderByDescending(x => x.CreatedAtUtc)
+            .ThenBy(x => x.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToArrayAsync(ct);
+
+        return (items, totalCount);
+    }
 
     public Task<bool> AcademicProgramIsActiveAsync(Guid programId, CancellationToken ct = default) =>
         _dbContext.AcademicPrograms.AnyAsync(x => x.Id == programId && x.IsActive, ct);
