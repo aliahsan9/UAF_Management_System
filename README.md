@@ -255,9 +255,9 @@ The timetable API is restricted to Registrar, DepartmentAdmin and SuperAdmin thr
 | Method | Route | Purpose |
 |---|---|---|
 | GET | `/api/v1/timetable/rooms?campusId={id}` | List teaching rooms, optionally by campus |
-| POST | `/api/v1/timetable/rooms` | Register a room against an active campus |
+| GET / POST | `/api/v1/timetable/rooms/{id}` / `/api/v1/timetable/rooms` | Read a room / register a room against an active campus |
 | GET | `/api/v1/timetable/entries?academicSessionId={id}&courseOfferingId={id}` | Read published timetable entries with optional filters |
-| POST | `/api/v1/timetable/entries` | Schedule a recurring weekly meeting for a course offering |
+| GET / POST | `/api/v1/timetable/entries/{id}` / `/api/v1/timetable/entries` | Read an entry / schedule a recurring weekly meeting |
 | DELETE | `/api/v1/timetable/entries/{id}` | Cancel a timetable entry without deleting its history |
 
 A timetable entry uses campus-local time, a day of week, and an effective date range contained within its academic session. Room capacity must accommodate the offering capacity; inactive rooms, closed offerings, inactive instructors and completed/cancelled sessions are rejected. Scheduling runs in a SQL Server serializable transaction and checks overlapping room, instructor, course-offering and already-enrolled student slots. Student enrollment also checks the published timetable for clashes before allocating a seat. Cancelled entries are retained for audit history.
