@@ -13,5 +13,6 @@ public interface IAdmissionApplicationRepository
         AdmissionStatus? status, Guid? academicProgramId, string? search, int page, int pageSize,
         CancellationToken cancellationToken = default);
     Task<bool> AcademicProgramIsActiveAsync(Guid academicProgramId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<AcademicProgram>> GetActiveAcademicProgramsAsync(CancellationToken cancellationToken = default);
     Task AddAsync(AdmissionApplication application, CancellationToken cancellationToken = default);
 }
