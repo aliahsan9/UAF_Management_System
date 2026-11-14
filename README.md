@@ -997,3 +997,21 @@ dotnet test backend/UAF/UAF.sln --configuration Release
 ```
 
 Without that environment variable, SQL Server integration tests are intentionally skipped. The CI workflow supplies it automatically.
+
+
+## Phase 6 – Advanced Enterprise Capabilities
+
+The Phase 6 branch adds the initial integrated foundations for notifications, real-time updates, approvals, workflow history, centralized audit, search, analytics, localization, storage abstraction, PDF documents, data exchange and verification.
+
+- **Notifications and SignalR:** authenticated inbox at `/api/v1/notifications`; SignalR hub at `/hubs/notifications`. Email uses SMTP configuration and SMS uses a configurable HTTP gateway.
+- **Approvals and history:** generic multi-stage workflow endpoints under `/api/v1/workflows`; append-only state history.
+- **Central audit:** `GET /api/v1/audit-trail` is SuperAdmin-only; domain changes are captured by an EF Core interceptor.
+- **Search and analytics:** `/api/v1/search/students`, `/api/v1/search/admissions`, and `/api/v1/analytics/dashboard`.
+- **PDFs:** accepted admission letters and fee challans are downloadable as PDFs; transcript PDF generation remains based on immutable transcript snapshots.
+- **Data exchange:** student import/export supports CSV and XLSX under `/api/v1/data-exchange/students`.
+- **Verification:** staff can generate signed student QR codes and admission-document verification links; public verification endpoints expose limited metadata only.
+- **Localization and files:** API request culture supports `en-US` and `ur-PK`; the generic `IFileStorage` contract preserves the existing private local admission-document provider.
+
+Configure `NotificationDelivery__Smtp__*`, `NotificationDelivery__Sms__*`, and `PublicBaseUrl` through deployment secrets/environment settings. Do not commit provider credentials.
+
+See [Phase 6 capability status and release gates](docs/architecture/PHASE6_ENTERPRISE_CAPABILITIES.md) for implemented scope, authorization boundaries and remaining production hardening. The new EF Core tables require a reviewed migration before deployment; this branch does not claim that every integration has been load-tested or deployed.
