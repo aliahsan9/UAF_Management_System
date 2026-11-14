@@ -29,7 +29,6 @@ public sealed class RefreshToken
     public string? CreatedByIpAddress { get; private set; }
     public string? RevokedByIpAddress { get; private set; }
     public string? ReplacedByTokenHash { get; private set; }
-    public byte[] RowVersion { get; private set; } = [];
 
     public void Revoke(DateTimeOffset revokedAtUtc, string? remoteIpAddress, string? replacedByTokenHash)
     {
