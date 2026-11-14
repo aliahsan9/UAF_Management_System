@@ -61,6 +61,8 @@ internal sealed class TimetableRepository : ITimetableRepository
             ?? throw new KeyNotFoundException("Academic session not found.");
 
         if (!room.IsActive) throw new InvalidOperationException("Inactive rooms cannot be scheduled.");
+        if (!await _db.Campuses.AnyAsync(x => x.Id == room.CampusId && x.IsActive, ct))
+            throw new InvalidOperationException("A room on an inactive campus cannot be scheduled.");
         if (room.Capacity < offering.Capacity)
             throw new InvalidOperationException("Room capacity cannot be lower than the course offering capacity.");
         if (offering.Status is CourseOfferingStatus.Cancelled or CourseOfferingStatus.Closed)
