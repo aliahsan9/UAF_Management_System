@@ -16,14 +16,14 @@ public abstract class Entity
     public bool IsDeleted { get; private set; }
     public DateTimeOffset? DeletedAtUtc { get; private set; }
 
-    public void SoftDelete(DateTimeOffset? deletedAtUtc = null)
+    public virtual void SoftDelete(DateTimeOffset? deletedAtUtc = null)
     {
         if (IsDeleted) return;
         IsDeleted = true;
         DeletedAtUtc = deletedAtUtc ?? DateTimeOffset.UtcNow;
     }
 
-    public void Restore()
+    public virtual void Restore()
     {
         if (!IsDeleted) return;
         IsDeleted = false;
