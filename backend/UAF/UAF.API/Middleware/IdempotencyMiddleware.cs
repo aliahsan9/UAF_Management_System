@@ -119,7 +119,8 @@ public sealed class IdempotencyMiddleware
         {
             await db.SaveChangesAsync(context.RequestAborted);
         }
-        catch (DbUpdateException)
+        catch (DbUpdateException exception) when (
+            exception.InnerException is Microsoft.Data.SqlClient.SqlException { Number: 2601 or 2627 })
         {
             db.ChangeTracker.Clear();
             context.Response.StatusCode = StatusCodes.Status409Conflict;
