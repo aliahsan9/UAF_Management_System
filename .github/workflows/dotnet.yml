@@ -2,7 +2,7 @@ name: .NET CI
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "master", "feature/phase7-testing-quality" ]
     paths:
       - "backend/**"
       - ".github/workflows/dotnet.yml"
