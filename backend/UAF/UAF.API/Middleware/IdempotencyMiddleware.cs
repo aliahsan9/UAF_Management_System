@@ -72,8 +72,10 @@ public sealed class IdempotencyMiddleware
 
         if (existing is not null && existing.HasExpired(now))
         {
-            db.IdempotencyRecords.Remove(existing);
-            await db.SaveChangesAsync(context.RequestAborted);
+            await db.IdempotencyRecords
+                .Where(record => record.Id == existing.Id)
+                .ExecuteDeleteAsync(context.RequestAborted);
+            db.Entry(existing).State = EntityState.Detached;
             existing = null;
         }
 
@@ -138,8 +140,16 @@ public sealed class IdempotencyMiddleware
 
             record.Complete(context.Response.StatusCode, context.Response.ContentType, responseText, canReplay);
             if (context.Response.StatusCode >= 500)
-                db.IdempotencyRecords.Remove(record);
-            await db.SaveChangesAsync(context.RequestAborted);
+            {
+                await db.IdempotencyRecords
+                    .Where(item => item.Id == record.Id)
+                    .ExecuteDeleteAsync(context.RequestAborted);
+                db.Entry(record).State = EntityState.Detached;
+            }
+            else
+            {
+                await db.SaveChangesAsync(context.RequestAborted);
+            }
 
             responseBuffer.Position = 0;
             context.Response.Body = originalBody;
@@ -148,8 +158,13 @@ public sealed class IdempotencyMiddleware
         catch
         {
             context.Response.Body = originalBody;
-            db.IdempotencyRecords.Remove(record);
-            try { await db.SaveChangesAsync(CancellationToken.None); }
+            try
+            {
+                await db.IdempotencyRecords
+                    .Where(item => item.Id == record.Id)
+                    .ExecuteDeleteAsync(CancellationToken.None);
+                db.Entry(record).State = EntityState.Detached;
+            }
             catch (Exception cleanupException)
             {
                 _logger.LogWarning(cleanupException, "Could not release failed idempotency reservation {RecordId}.", record.Id);
