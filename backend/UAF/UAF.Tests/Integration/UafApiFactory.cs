@@ -1,5 +1,10 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using UAF.Infrastructure.Persistence;
 
 namespace UAF.Tests.Integration;
 
@@ -18,5 +23,14 @@ public sealed class UafApiFactory : WebApplicationFactory<global::Program>
         builder.UseSetting("AdmissionDocumentStorage:RootPath",
             Path.Combine(Path.GetTempPath(), "uaf-api-tests", Guid.NewGuid().ToString("N")));
         builder.UseSetting("Cors:AllowedOrigins:0", "https://localhost:4200");
+
+        builder.ConfigureServices(services =>
+        {
+            services.RemoveAll<IDbContextOptionsConfiguration<UafDbContext>>();
+            services.RemoveAll<DbContextOptions<UafDbContext>>();
+            services.RemoveAll<UafDbContext>();
+            services.AddDbContext<UafDbContext>(options =>
+                options.UseInMemoryDatabase($"UafApiPipeline_{Guid.NewGuid():N}"));
+        });
     }
 }
