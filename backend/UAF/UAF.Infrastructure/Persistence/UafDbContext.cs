@@ -60,11 +60,11 @@ public sealed class UafDbContext : IdentityDbContext<ApplicationUser, IdentityRo
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(UafDbContext).Assembly);
 
-        // EF Core permits one global query filter per inheritance root. Every
-        // AuditableEntity aggregate inherits this filter and SQL Server rowversion mapping.
-        modelBuilder.Entity<AuditableEntity>()
+        // EF Core permits one global query filter per inheritance root. Every persisted
+        // domain entity inherits this filter and SQL Server rowversion mapping.
+        modelBuilder.Entity<Entity>()
             .HasQueryFilter(entity => !entity.IsDeleted);
-        modelBuilder.Entity<AuditableEntity>()
+        modelBuilder.Entity<Entity>()
             .Property(entity => entity.RowVersion)
             .IsRowVersion();
 
@@ -89,14 +89,7 @@ public sealed class UafDbContext : IdentityDbContext<ApplicationUser, IdentityRo
 
     private void ApplyAuditInformation()
     {
-        // Convert ordinary Remove() calls into updates so historical records remain available.
-        foreach (var entry in ChangeTracker.Entries<AuditableEntity>()
-                     .Where(entry => entry.State == EntityState.Deleted))
-        {
-            entry.Entity.SoftDelete();
-            entry.State = EntityState.Modified;
-        }
-
+        // Append-only and immutable invariants must be checked before delete conversion.
         if (ChangeTracker.Entries<AdmissionDecisionAudit>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
             throw new InvalidOperationException("Admission decision audit records are append-only.");
         if (ChangeTracker.Entries<AttendanceChangeAudit>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
@@ -119,6 +112,14 @@ public sealed class UafDbContext : IdentityDbContext<ApplicationUser, IdentityRo
             throw new InvalidOperationException("Grade scale bands are immutable after creation.");
         if (ChangeTracker.Entries<GradeScale>().Any(entry => entry.State == EntityState.Deleted || (entry.State == EntityState.Modified && entry.OriginalValues.GetValue<bool>(nameof(GradeScale.IsPublished)))))
             throw new InvalidOperationException("Published grading scales cannot be modified or deleted.");
+
+        // Convert ordinary Remove() calls into updates so historical records remain available.
+        foreach (var entry in ChangeTracker.Entries<Entity>()
+                     .Where(entry => entry.State == EntityState.Deleted))
+        {
+            entry.Entity.SoftDelete();
+            entry.State = EntityState.Modified;
+        }
 
         var now = DateTimeOffset.UtcNow;
         foreach (var entry in ChangeTracker.Entries<AuditableEntity>())
