@@ -14,6 +14,7 @@ using UAF.Application.Features.Attendance.Abstractions;
 using UAF.Application.Features.Examinations.Abstractions;
 using UAF.Application.Features.Grading.Abstractions;
 using UAF.Application.Features.Transcripts.Abstractions;
+using UAF.Application.Features.Timetable.Abstractions;
 using UAF.Application.Features.Authentication.Abstractions;
 using UAF.Infrastructure.Identity;
 using UAF.Infrastructure.Persistence;
@@ -105,6 +106,7 @@ public static class DependencyInjection
         services.AddScoped<IGradeAppealRepository, GradeAppealRepository>();
         services.AddScoped<IGradeRevisionRepository, GradeRevisionRepository>();
         services.AddScoped<ITranscriptRepository, TranscriptRepository>();
+        services.AddScoped<ITimetableRepository, TimetableRepository>();
         services.AddSingleton<ITranscriptPdfGenerator, QuestPdfTranscriptGenerator>();
         return services;
     }

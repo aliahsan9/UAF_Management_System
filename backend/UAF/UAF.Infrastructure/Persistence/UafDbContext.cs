@@ -55,6 +55,8 @@ public sealed class UafDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<AcademicTranscript> AcademicTranscripts => Set<AcademicTranscript>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<IdempotencyRecord> IdempotencyRecords => Set<IdempotencyRecord>();
+    public DbSet<TeachingRoom> TeachingRooms => Set<TeachingRoom>();
+    public DbSet<TimetableEntry> TimetableEntries => Set<TimetableEntry>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

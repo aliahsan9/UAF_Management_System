@@ -24,6 +24,7 @@ public static class UafPermissions
     public const string GradeRevisionsManage = "grade-revisions.manage";
     public const string GradeRevisionsApprove = "grade-revisions.approve";
     public const string TranscriptsIssue = "transcripts.issue";
+    public const string TimetableManage = "timetable.manage";
 
     public static readonly string[] All =
     [
@@ -31,6 +32,6 @@ public static class UafPermissions
         AcademicStructureManage, AcademicCatalogManage, CourseOfferingsManage,
         FinanceRead, FinanceManage, EmployeesManage, AttendanceManage, AttendancePolicyManage,
         ExaminationsManage, ExaminationsApprove, GradingScalesManage, GradesManage, CourseGradesManage,
-        GradeAppealsReview, GradeRevisionsManage, GradeRevisionsApprove, TranscriptsIssue
+        GradeAppealsReview, GradeRevisionsManage, GradeRevisionsApprove, TranscriptsIssue, TimetableManage
     ];
 }

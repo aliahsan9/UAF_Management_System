@@ -22,4 +22,5 @@ public static class AuthorizationPolicies
     public const string GradeRevisionRequestManagement = "Grading.GradeRevisionRequestManagement";
     public const string GradeRevisionApproval = "Grading.GradeRevisionApproval";
     public const string TranscriptIssuance = "Transcripts.Issuance";
+    public const string TimetableManagement = "Timetable.Management";
 }

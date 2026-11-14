@@ -79,6 +79,32 @@ internal sealed class CourseOfferingRepository : ICourseOfferingRepository
         if (capacity < enrolledCount)
             throw new InvalidOperationException($"Capacity cannot be lower than the {enrolledCount} currently enrolled students.");
 
+        if (instructorEmployeeId.HasValue)
+        {
+            if (!await _dbContext.Employees.AnyAsync(x => x.Id == instructorEmployeeId.Value &&
+                    x.Status == EmployeeStatus.Active, ct))
+                throw new InvalidOperationException("The assigned instructor is not an active employee.");
+
+            var scheduleConflict =
+                from currentSlot in _dbContext.TimetableEntries
+                from otherSlot in _dbContext.TimetableEntries
+                join otherOffering in _dbContext.CourseOfferings
+                    on otherSlot.CourseOfferingId equals otherOffering.Id
+                where currentSlot.CourseOfferingId == offeringId &&
+                      currentSlot.Status == TimetableEntryStatus.Published &&
+                      otherSlot.CourseOfferingId != offeringId &&
+                      otherSlot.Status == TimetableEntryStatus.Published &&
+                      otherOffering.InstructorEmployeeId == instructorEmployeeId &&
+                      currentSlot.DayOfWeek == otherSlot.DayOfWeek &&
+                      currentSlot.EffectiveFrom <= otherSlot.EffectiveTo &&
+                      otherSlot.EffectiveFrom <= currentSlot.EffectiveTo &&
+                      currentSlot.StartTime < otherSlot.EndTime &&
+                      otherSlot.StartTime < currentSlot.EndTime
+                select otherSlot.Id;
+            if (await scheduleConflict.AnyAsync(ct))
+                throw new InvalidOperationException("The selected instructor has an overlapping published timetable entry.");
+        }
+
         offering.UpdateCapacity(capacity);
         offering.AssignInstructor(instructorEmployeeId);
         await _dbContext.SaveChangesAsync(ct);
@@ -116,6 +142,27 @@ internal sealed class CourseOfferingRepository : ICourseOfferingRepository
             x => x.Id == studentId && x.Status == StudentStatus.Active, ct);
         if (!studentIsActive)
             throw new InvalidOperationException("The student is not active and eligible for enrollment.");
+
+        // A student must not be registered into an offering whose published timetable
+        // overlaps any of their already-enrolled offerings in the same recurring week.
+        var timetableConflict =
+            from newSlot in _dbContext.TimetableEntries
+            from existingEnrollment in _dbContext.CourseEnrollments
+            join existingSlot in _dbContext.TimetableEntries
+                on existingEnrollment.CourseOfferingId equals existingSlot.CourseOfferingId
+            where newSlot.CourseOfferingId == offeringId &&
+                  newSlot.Status == TimetableEntryStatus.Published &&
+                  existingEnrollment.StudentId == studentId &&
+                  existingEnrollment.Status == EnrollmentStatus.Enrolled &&
+                  existingSlot.Status == TimetableEntryStatus.Published &&
+                  newSlot.DayOfWeek == existingSlot.DayOfWeek &&
+                  newSlot.EffectiveFrom <= existingSlot.EffectiveTo &&
+                  existingSlot.EffectiveFrom <= newSlot.EffectiveTo &&
+                  newSlot.StartTime < existingSlot.EndTime &&
+                  existingSlot.StartTime < newSlot.EndTime
+            select existingSlot.Id;
+        if (await timetableConflict.AnyAsync(ct))
+            throw new InvalidOperationException("The student's timetable conflicts with another active course enrollment.");
 
         var enrollment = new CourseEnrollment(studentId, offeringId, enrolledOn);
         _dbContext.CourseEnrollments.Add(enrollment);

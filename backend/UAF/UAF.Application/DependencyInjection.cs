@@ -11,6 +11,7 @@ using UAF.Application.Features.Attendance;
 using UAF.Application.Features.Examinations;
 using UAF.Application.Features.Grading;
 using UAF.Application.Features.Transcripts;
+using UAF.Application.Features.Timetable;
 
 namespace UAF.Application;
 
@@ -38,6 +39,7 @@ public static class DependencyInjection
         services.AddScoped<GradeAppealService>();
         services.AddScoped<GradeRevisionService>();
         services.AddScoped<TranscriptService>();
+        services.AddScoped<TimetableService>();
         return services;
     }
 }

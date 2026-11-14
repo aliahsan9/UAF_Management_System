@@ -248,6 +248,22 @@ Offering sections are unique per course and academic session. Only active catalo
 
 Enrollment insertion and capacity updates use SQL Server serializable transactions with an update lock on the offering row. The database also enforces unique active/completed enrollment and section constraints. The application unit tests include concurrent enrollment attempts against a synchronized repository test double. These controls are designed to prevent concurrent requests from allocating the same final seat twice; SQL Server integration tests under concurrent load are still required before production use. Instructor IDs are stored as references, but employee existence validation is deferred until the Employee module and its relationship are implemented. Student self-service enrollment is not exposed; these endpoints are staff-only until identity ownership and registration-window rules are designed.
 
+### Timetable and teaching-room management
+
+The timetable API is restricted to Registrar, DepartmentAdmin and SuperAdmin through the dedicated `timetable.manage` permission.
+
+| Method | Route | Purpose |
+|---|---|---|
+| GET | `/api/v1/timetable/rooms?campusId={id}` | List teaching rooms, optionally by campus |
+| GET / POST | `/api/v1/timetable/rooms/{id}` / `/api/v1/timetable/rooms` | Read a room / register a room against an active campus |
+| GET | `/api/v1/timetable/entries?academicSessionId={id}&courseOfferingId={id}` | Read published timetable entries with optional filters |
+| GET / POST | `/api/v1/timetable/entries/{id}` / `/api/v1/timetable/entries` | Read an entry / schedule a recurring weekly meeting |
+| DELETE | `/api/v1/timetable/entries/{id}` | Cancel a timetable entry without deleting its history |
+
+A timetable entry uses campus-local time, a day of week, and an effective date range contained within its academic session. Room capacity must accommodate the offering capacity; inactive rooms, closed offerings, inactive instructors and completed/cancelled sessions are rejected. Scheduling runs in a SQL Server serializable transaction and checks overlapping room, instructor, course-offering and already-enrolled student slots. Student enrollment also checks the published timetable for clashes before allocating a seat. Cancelled entries are retained for audit history.
+
+This is the initial recurring timetable foundation. One-off events, holidays, exam-room seating, teacher availability calendars, time-zone conversion and schedule change notifications remain future extensions.
+
 Student management routes (all require Registrar, DepartmentAdmin, or SuperAdmin):
 
 | Method | Route | Purpose |

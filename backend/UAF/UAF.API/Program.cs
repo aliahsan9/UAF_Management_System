@@ -199,6 +199,7 @@ app.MapGradingEndpoints();
 app.MapGradeAppealEndpoints();
 app.MapGradeRevisionEndpoints();
 app.MapTranscriptEndpoints();
+app.MapTimetableEndpoints();
 app.MapAuthenticationEndpoints();
 
 try
