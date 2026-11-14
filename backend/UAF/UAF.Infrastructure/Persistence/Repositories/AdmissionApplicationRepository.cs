@@ -55,6 +55,10 @@ internal sealed class AdmissionApplicationRepository : IAdmissionApplicationRepo
     public Task<bool> AcademicProgramIsActiveAsync(Guid programId, CancellationToken ct = default) =>
         _dbContext.AcademicPrograms.AnyAsync(x => x.Id == programId && x.IsActive, ct);
 
+    public async Task<IReadOnlyList<AcademicProgram>> GetActiveAcademicProgramsAsync(CancellationToken ct = default) =>
+        await _dbContext.AcademicPrograms.AsNoTracking().Where(x => x.IsActive)
+            .OrderBy(x => x.Name).ThenBy(x => x.Code).ToArrayAsync(ct);
+
     public async Task AddAsync(AdmissionApplication application, CancellationToken ct = default) =>
         await _dbContext.AdmissionApplications.AddAsync(application, ct);
 }
