@@ -22,7 +22,7 @@ public sealed class PermissionAuthorizationHandler : AuthorizationHandler<Permis
                 UafPermissions.CourseOfferingsManage, UafPermissions.CourseGradesManage, UafPermissions.AttendanceManage,
                 UafPermissions.ExaminationsManage, UafPermissions.ExaminationsApprove,
                 UafPermissions.GradesManage, UafPermissions.GradeAppealsReview,
-                UafPermissions.GradeRevisionsManage
+                UafPermissions.GradeRevisionsManage, UafPermissions.TimetableManage
             ],
             ["FinanceOfficer"] = [UafPermissions.FinanceRead, UafPermissions.FinanceManage],
             ["HRManager"] = [UafPermissions.EmployeesManage],
