@@ -1,7 +1,0 @@
-<Solution>
-  <Project Path="UAF.API/UAF.API.csproj" Id="e61e5802-f11b-453e-8817-4bba79d6f5d8" />
-  <Project Path="UAF.Application/UAF.Application.csproj" />
-  <Project Path="UAF.Domain/UAF.Domain.csproj" />
-  <Project Path="UAF.Infrastructure/UAF.Infrastructure.csproj" />
-  <Project Path="UAF.Tests/UAF.Tests.csproj" Id="d4929117-c651-4def-a4c3-bb63d63bd75d" />
-</Solution>

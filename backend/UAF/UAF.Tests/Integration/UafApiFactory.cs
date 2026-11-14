@@ -26,11 +26,12 @@ public sealed class UafApiFactory : WebApplicationFactory<global::Program>
 
         builder.ConfigureServices(services =>
         {
+            var databaseName = $"UafApiPipeline_{Guid.NewGuid():N}";
             services.RemoveAll<IDbContextOptionsConfiguration<UafDbContext>>();
             services.RemoveAll<DbContextOptions<UafDbContext>>();
             services.RemoveAll<UafDbContext>();
             services.AddDbContext<UafDbContext>(options =>
-                options.UseInMemoryDatabase($"UafApiPipeline_{Guid.NewGuid():N}"));
+                options.UseInMemoryDatabase(databaseName));
         });
     }
 }
