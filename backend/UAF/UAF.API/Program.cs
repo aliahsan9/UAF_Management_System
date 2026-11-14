@@ -72,7 +72,7 @@ builder.Services.AddCors(options => options.AddPolicy("UafFrontend", policy =>
 
     policy.AllowAnyMethod()
         .WithHeaders("Authorization", "Content-Type", "X-Correlation-ID", "X-Refresh-Request", "Idempotency-Key")
-        .WithExposedHeaders("X-Correlation-ID")
+        .WithExposedHeaders("X-Correlation-ID", "Idempotency-Replayed")
         .AllowCredentials()
         .SetPreflightMaxAge(TimeSpan.FromMinutes(10));
 }));
