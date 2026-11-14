@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="Import_File_Required" xml:space="preserve"><value>Upload a non-empty CSV or XLSX file.</value></data>
+  <data name="Import_File_Too_Large" xml:space="preserve"><value>The import file cannot exceed 10 MB.</value></data>
+  <data name="Import_Unsupported_Format" xml:space="preserve"><value>Only CSV and XLSX files are supported.</value></data>
+  <data name="Document_Verified" xml:space="preserve"><value>Document verified successfully.</value></data>
+  <data name="Document_Not_Verified" xml:space="preserve"><value>Document verification is pending or was rejected.</value></data>
+</root>
