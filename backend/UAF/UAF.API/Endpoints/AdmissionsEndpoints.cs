@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using FluentValidation;
+using Microsoft.AspNetCore.Mvc;
 using UAF.API.Authorization;
 using UAF.Application.Features.Admissions;
 using UAF.Application.Features.Admissions.Models;
@@ -18,6 +19,20 @@ public static class AdmissionsEndpoints
         var group = endpoints.MapGroup("/api/v1/admissions")
             .WithTags("Admissions")
             .RequireAuthorization(AuthorizationPolicies.AdmissionsStaff);
+
+        group.MapGet("/", async ([AsParameters] StaffAdmissionApplicationsQuery query,
+            AdmissionApplicationService service, CancellationToken ct) =>
+            Results.Ok(await service.GetStaffApplicationsAsync(query, ct)))
+            .WithName("GetStaffAdmissionApplications")
+            .WithSummary("Get a paged, filterable admission application queue")
+            .Produces<StaffAdmissionApplicationsPageResponse>();
+
+        group.MapGet("/{id:guid}", async (Guid id, AdmissionApplicationService service, CancellationToken ct) =>
+            Results.Ok(await service.GetStaffApplicationAsync(id, ct)))
+            .WithName("GetStaffAdmissionApplication")
+            .WithSummary("Get an admission application for staff review")
+            .Produces<StaffAdmissionApplicationResponse>()
+            .ProducesProblem(StatusCodes.Status404NotFound);
 
         group.MapPost("/", CreateDraft)
             .WithName("CreateAdmissionDraft")
@@ -122,9 +137,7 @@ public static class AdmissionsEndpoints
     }
 
     private static async Task<IResult> Submit(
-        Guid id,
-        AdmissionDocumentService service,
-        CancellationToken cancellationToken)
+        Guid id, AdmissionDocumentService service, CancellationToken cancellationToken)
     {
         await service.SubmitStaffApplicationAsync(id, cancellationToken);
         return Results.NoContent();
@@ -162,9 +175,7 @@ public static class AdmissionsEndpoints
     }
 
     private static async Task<IResult> Withdraw(
-        Guid id,
-        AdmissionApplicationService service,
-        CancellationToken cancellationToken)
+        Guid id, AdmissionApplicationService service, CancellationToken cancellationToken)
     {
         await service.WithdrawAsync(id, cancellationToken);
         return Results.NoContent();
