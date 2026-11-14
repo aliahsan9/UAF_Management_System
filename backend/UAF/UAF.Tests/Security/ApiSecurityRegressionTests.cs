@@ -20,11 +20,13 @@ public sealed class ApiSecurityRegressionTests : IClassFixture<UafApiFactory>
     [Fact]
     public async Task LoginEndpoint_EnforcesIpBasedRateLimit()
     {
+        using var isolatedFactory = new UafApiFactory();
+        using var isolatedClient = isolatedFactory.CreateClient();
         var statuses = new List<HttpStatusCode>();
 
         for (var requestNumber = 0; requestNumber < 11; requestNumber++)
         {
-            using var response = await _client.PostAsJsonAsync(
+            using var response = await isolatedClient.PostAsJsonAsync(
                 "/api/v1/auth/login",
                 new { email = "", password = "" });
             statuses.Add(response.StatusCode);
@@ -37,7 +39,9 @@ public sealed class ApiSecurityRegressionTests : IClassFixture<UafApiFactory>
     [Fact]
     public async Task RefreshEndpoint_RejectsRequestsWithoutCsrfHeaderAndCookie()
     {
-        var response = await _client.PostAsync("/api/v1/auth/refresh", content: null);
+        using var isolatedFactory = new UafApiFactory();
+        using var isolatedClient = isolatedFactory.CreateClient();
+        var response = await isolatedClient.PostAsync("/api/v1/auth/refresh", content: null);
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
