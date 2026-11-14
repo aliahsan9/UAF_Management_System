@@ -25,7 +25,7 @@ public sealed class IdempotencyCleanupService : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         using var timer = new PeriodicTimer(TimeSpan.FromHours(6));
-        do
+        while (await timer.WaitForNextTickAsync(stoppingToken))
         {
             try
             {
@@ -40,7 +40,6 @@ public sealed class IdempotencyCleanupService : BackgroundService
                 _logger.LogError(exception, "Idempotency retention cleanup failed.");
             }
         }
-        while (await timer.WaitForNextTickAsync(stoppingToken));
     }
 
     private async Task RemoveExpiredRecordsAsync(CancellationToken cancellationToken)
