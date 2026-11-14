@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -60,13 +61,21 @@ public sealed class UafDbContext : IdentityDbContext<ApplicationUser, IdentityRo
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(UafDbContext).Assembly);
 
-        // EF Core permits one global query filter per inheritance root. Every persisted
-        // domain entity inherits this filter and SQL Server rowversion mapping.
-        modelBuilder.Entity<Entity>()
-            .HasQueryFilter(entity => !entity.IsDeleted);
-        modelBuilder.Entity<Entity>()
-            .Property(entity => entity.RowVersion)
-            .IsRowVersion();
+        // Entity is a shared CLR base, not an EF inheritance root. Configure each
+        // concrete persisted aggregate independently to avoid creating a synthetic base table.
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes()
+                     .Where(type => type.ClrType is not null &&
+                                    typeof(Entity).IsAssignableFrom(type.ClrType) &&
+                                    !type.ClrType.IsAbstract))
+        {
+            var parameter = Expression.Parameter(entityType.ClrType, "entity");
+            var isDeleted = Expression.Property(parameter, nameof(Entity.IsDeleted));
+            var filter = Expression.Lambda(Expression.Not(isDeleted), parameter);
+            modelBuilder.Entity(entityType.ClrType).HasQueryFilter(filter);
+            modelBuilder.Entity(entityType.ClrType)
+                .Property(nameof(Entity.RowVersion))
+                .IsRowVersion();
+        }
 
         modelBuilder.Entity<ApplicationUser>(entity =>
         {
