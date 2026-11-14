@@ -16,7 +16,6 @@ public sealed class GradeScale : AuditableEntity
         RepeatCoursePolicy = repeatCoursePolicy;
         ConfiguredByUserId = configuredByUserId;
     }
-    public byte[] RowVersion { get; private set; } = Array.Empty<byte>();
     public Guid AcademicSessionId { get; private set; }
     public string Name { get; private set; }
     public bool IncludeFailedCoursesInGpa { get; private set; }
