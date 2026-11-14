@@ -21,15 +21,16 @@ When adding a transaction:
 
 ## Migration rollout
 
-The Phase 4 model adds `IsDeleted`, `DeletedAtUtc` and `RowVersion` to every concrete `AuditableEntity` table and adds `IdempotencyRecords`. Generate an incremental migration against the current database baseline, inspect the generated SQL, and test it against a restored copy before applying it:
+There are currently no committed EF Core migrations in the repository. The first migration must therefore be a reviewed `InitialCreate` for the complete current model (including Phase 4 metadata and `IdempotencyRecords`), generated with `scripts/database/New-UafInitialMigration.ps1`. Do not label it an incremental Phase 4 migration.
+
+If a target database already contains tables created outside EF migrations, do not apply `InitialCreate` blindly. First compare the complete EF model with the live schema, create and review a baseline strategy with the DBA, and only then establish migration history. For a database already managed by a committed migration baseline, create an ordinary incremental migration instead.
 
 ```powershell
 $env:UAF_DB_CONNECTION_STRING = "<development SQL Server connection string>"
-dotnet ef migrations add Phase4ReliabilityAndDataIntegrity --project backend/UAF/UAF.Infrastructure/UAF.Infrastructure.csproj --startup-project backend/UAF/UAF.API/UAF.API.csproj --context UafDbContext --output-dir Persistence/Migrations
-dotnet ef migrations script --idempotent --project backend/UAF/UAF.Infrastructure/UAF.Infrastructure.csproj --startup-project backend/UAF/UAF.API/UAF.API.csproj --context UafDbContext --output artifacts/database/Phase4ReliabilityAndDataIntegrity.sql
+./scripts/database/New-UafInitialMigration.ps1
 ```
 
-Do not apply a generated migration to production before reviewing data volume, lock duration, index build behavior, and backup status. The rowversion and soft-delete columns are additive; existing rows receive default values. Verify that any existing migration baseline is committed before generating this incremental migration.
+Review the generated C# and idempotent SQL, then test them against a restored staging copy before applying. Do not apply a generated migration to production before reviewing data volume, lock duration, index build behavior, and backup status. Existing rows need safe defaults for the new root soft-delete columns; SQL Server generates rowversion values during schema/data operations.
 
 ## Backup and recovery runbook
 
